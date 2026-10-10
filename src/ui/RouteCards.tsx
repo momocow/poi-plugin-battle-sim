@@ -9,7 +9,7 @@ import React, { useLayoutEffect, useRef, useState } from 'react'
 
 import { t } from '../i18n'
 import type { RouteRow } from './state'
-import { formatRoute, pct, retreats, routeReach, rowCells, sortForCards } from './views'
+import { formatRoute, pct, retreats, routeReach, rowCells, sortForCards, type RateCells } from './views'
 
 /** Circle size, and the room a retreat label like "−14.7%" needs between two node centres. */
 const NODE_PX = 21
@@ -67,6 +67,27 @@ function Stepper({ route }: { route: RouteRow }) {
   )
 }
 
+/** The boss results; without cells, an invisible stand-in of the same size. */
+function Results({ cells }: { cells: RateCells | undefined }) {
+  return (
+    <div
+      className={cells ? 'battle-sim-card-results' : 'battle-sim-card-results battle-sim-hidden'}
+      title={t('When the boss is reached')}
+    >
+      <span className="battle-sim-rank-s">S</span>
+      <span className="battle-sim-rank-s">{pct(cells?.sAtBoss)}</span>
+      <span className="battle-sim-rank-a">A+</span>
+      <span className="battle-sim-rank-a">{pct(cells?.aPlusAtBoss)}</span>
+      <span className="battle-sim-rank-b">B+</span>
+      <span className="battle-sim-rank-b">{pct(cells?.bPlusAtBoss)}</span>
+      <span>{t('Sunk')}</span>
+      <span>{pct(cells?.bossSunkAtBoss)}</span>
+      {/* Holds the value column at its widest, 100.0%, so cards line up whatever their rates. */}
+      <span className="battle-sim-card-results-sizer">{pct(1)}</span>
+    </div>
+  )
+}
+
 function RouteCard({ route }: { route: RouteRow }) {
   const cells = rowCells(route)
   return (
@@ -78,23 +99,16 @@ function RouteCard({ route }: { route: RouteRow }) {
         <span>{cells.kind === 'done' ? pct(cells.reachBoss) : '—'}</span>
       </div>
       <Stepper route={route} />
-      {cells.kind === 'done' ? (
-        <div className="battle-sim-card-results" title={t('When the boss is reached')}>
-          <span className="battle-sim-rank-s">S</span>
-          <span className="battle-sim-rank-s">{pct(cells.sAtBoss)}</span>
-          <span className="battle-sim-rank-a">A+</span>
-          <span className="battle-sim-rank-a">{pct(cells.aPlusAtBoss)}</span>
-          <span className="battle-sim-rank-b">B+</span>
-          <span className="battle-sim-rank-b">{pct(cells.bPlusAtBoss)}</span>
-          <span>{t('Sunk')}</span>
-          <span>{pct(cells.bossSunkAtBoss)}</span>
+      {cells.kind === 'not-simulated' ? (
+        <div className="battle-sim-card-results-note battle-sim-muted">
+          <span title={t('Not simulated (does not reach the boss)')}>{t('Not simulated')}</span>
         </div>
       ) : (
-        <div className="battle-sim-card-results-note battle-sim-muted">
-          {cells.kind === 'pending' ? (
-            t('Simulating…')
-          ) : (
-            <span title={t('Not simulated (does not reach the boss)')}>{t('Not simulated')}</span>
+        // A pending card keeps the results' room, hidden under its note, so finishing does not move anything.
+        <div className="battle-sim-card-results-area">
+          <Results cells={cells.kind === 'done' ? cells : undefined} />
+          {cells.kind === 'pending' && (
+            <div className="battle-sim-card-results-note battle-sim-muted">{t('Simulating…')}</div>
           )}
         </div>
       )}

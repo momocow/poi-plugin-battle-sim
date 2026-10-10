@@ -72,6 +72,11 @@ export const PANEL_CSS = `
 .battle-sim-card-results { display: grid; grid-template-columns: auto auto; gap: 0 6px; font-size: 11px; line-height: 1.3; text-align: right; }
 .battle-sim-card-results > :nth-child(odd) { text-align: left; }
 .battle-sim-card-results-note { font-size: 11px; white-space: nowrap; }
+/* The results and, while pending, their note share one cell. */
+.battle-sim-card-results-area { display: grid; align-items: center; justify-items: center; }
+.battle-sim-card-results-area > * { grid-area: 1 / 1; }
+.battle-sim-card-results-sizer { grid-column: 2; height: 0; overflow: hidden; visibility: hidden; }
+.battle-sim-hidden { visibility: hidden; }
 /* Stepper: circles spread over a track; a retreat rate hangs under its node. */
 /* Equal room above and below the circles keeps them on the card's centre line, level with the probability. */
 .battle-sim-steps { position: relative; display: flex; justify-content: space-between; gap: 2px; min-width: 0; padding: 15px 0; }
