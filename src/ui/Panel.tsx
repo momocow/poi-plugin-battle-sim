@@ -1,12 +1,17 @@
 /**
  * The plugin panel, filling poi's plugin area without an outer scrollbar:
- * controls bar (with the run status), fleet (collapsible), result header and
- * summary, all fixed; below them the error and the route cards, the only part
- * that scrolls. The result is dimmed once the settings no longer match it.
+ * controls bar, fleet (collapsible) and summary, all fixed; below them the
+ * error and the route cards, the only part that scrolls; and a footer fixed at
+ * the bottom, naming what the result was run with and, on the right, the run
+ * status. The result is dimmed once the settings no longer match it.
  *
  * Before a run the fleet display follows the live store; from the start of a
  * run it shows the run's snapshot. The fleet for a run is read from the store
  * at the moment Simulate is clicked.
+ *
+ * A run also starts by itself when the selected fleet, its ships or equipment,
+ * the map, the route choices or the trial count change, once every ship has
+ * all its main slots filled, unless the automatic-run switch is off.
  */
 import { Tag } from '@blueprintjs/core'
 import React, { useEffect, useMemo, useReducer, useRef, useState } from 'react'
@@ -15,14 +20,14 @@ import { useSelector } from 'react-redux'
 import { SimError } from '../errors'
 import { buildFleetViewModel, type FleetViewModel } from '../fleet-view/model'
 import { FleetView } from '../fleet-view/FleetView'
-import { snapshotFleet } from '../fleet/snapshot'
+import { fleetLoadout, snapshotFleet } from '../fleet/snapshot'
 import type { PoiState } from '../fleet/types'
 import { t } from '../i18n'
 import { getStoreState } from '../poi'
 import { Controls } from './Controls'
 import { errorSummary, ErrorView } from './ErrorView'
 import { choicesForMap, clampTrials, groupMapsByArea, loadInputs, normalMaps, saveInputs, type SavedInputs } from './inputs'
-import { ResultHeader } from './ResultHeader'
+import { ResultFooter } from './ResultFooter'
 import { RouteCards } from './RouteCards'
 import { runSimulation } from './runner'
 import { initialRunState, isRunning, runReducer, type RunInput } from './state'
@@ -30,6 +35,9 @@ import { StatusArea } from './StatusArea'
 import { PANEL_CSS } from './styles'
 import { Summary } from './Summary'
 import { isStale } from './views'
+
+/** How long the inputs must stay unchanged before an automatic run starts. */
+const AUTO_RUN_DELAY_MS = 800
 
 /** The store slices the live fleet display depends on. */
 function useLiveState(): PoiState {
@@ -75,14 +83,25 @@ export function Panel() {
   const current: RunInput = { fleetId: inputs.fleetId, map: inputs.map, choices, trials: inputs.trials }
   const simulate = () => start(current)
 
+  // Auto-run on a change, not on opening the panel; a change mid-run restarts it. Changes are
+  // settled first, so typing a custom trial count or a two-step equipment swap starts one run.
+  const loadout = useMemo(() => fleetLoadout(live, [inputs.fleetId]), [live, inputs.fleetId])
+  const autoKey = loadout && JSON.stringify([inputs.fleetId, loadout.key, inputs.map, choices, inputs.trials])
+  const lastAutoKey = useRef<string | undefined>(undefined)
+  useEffect(() => {
+    if (!autoKey) return
+    const changed = lastAutoKey.current !== undefined && lastAutoKey.current !== autoKey
+    lastAutoKey.current = autoKey
+    if (!changed || !inputs.auto || !loadout?.complete) return
+    const timer = setTimeout(simulate, AUTO_RUN_DELAY_MS)
+    return () => clearTimeout(timer)
+  }, [autoKey, inputs.auto])
+
   // Live before a run; the run's snapshot from its start through its result, at the run's map.
-  let fleet: { model?: FleetViewModel; error?: SimError; capturedAt?: number }
+  let fleet: { model?: FleetViewModel; error?: SimError }
   try {
     fleet = run.snapshot
-      ? {
-          model: buildFleetViewModel(run.snapshot, live.const ?? {}, run.input?.map ?? inputs.map),
-          capturedAt: run.snapshot.capturedAt,
-        }
+      ? { model: buildFleetViewModel(run.snapshot, live.const ?? {}, run.input?.map ?? inputs.map) }
       : { model: buildFleetViewModel(snapshotFleet(live, inputs.fleetId), live.const ?? {}, inputs.map) }
   } catch (err) {
     fleet = { error: err instanceof SimError ? err : new SimError('INTERNAL', String(err)) }
@@ -105,23 +124,22 @@ export function Panel() {
         maps={maps}
         choices={choices}
         trials={inputs.trials}
+        auto={inputs.auto}
         running={running}
         onFleet={(fleetId) => update({ fleetId })}
         onMap={(map) => update({ map })}
         onChoice={(key, value) => update({ choices: { ...inputs.choices, [inputs.map]: { ...choices, [key]: value } } })}
         onTrials={(trials) => update({ trials: clampTrials(trials) })}
+        onAuto={(auto) => update({ auto })}
         onSimulate={simulate}
         onCancel={() => abortRef.current?.abort()}
-        status={<StatusArea run={run} />}
       />
 
       <div className="battle-sim-section">
         <div className="battle-sim-section-head" onClick={() => setFleetOpen(!fleetOpen)}>
           <span>{fleetOpen ? '▾' : '▸'}</span>
           <span>{t('Fleet {id}', { id: run.snapshot?.fleetId ?? inputs.fleetId })}</span>
-          {fleet.capturedAt !== undefined ? (
-            <Tag minimal>{t('Snapshot {time}', { time: new Date(fleet.capturedAt).toLocaleTimeString() })}</Tag>
-          ) : (
+          {!run.snapshot && (
             <Tag minimal intent="success">
               {t('Live')}
             </Tag>
@@ -137,7 +155,6 @@ export function Panel() {
 
       {result && (
         <div className={`battle-sim-section battle-sim-result${stale ? ' battle-sim-stale' : ''}`}>
-          <ResultHeader input={result.input} capturedAt={result.capturedAt} stale={stale} />
           <Summary routes={result.routes} />
         </div>
       )}
@@ -148,6 +165,8 @@ export function Panel() {
         )}
         {result?.routes && <RouteCards routes={result.routes} />}
       </div>
+
+      <ResultFooter result={result} stale={stale} status={<StatusArea run={run} />} />
     </div>
   )
 }

@@ -64,5 +64,7 @@
   "When the boss is reached": "When the boss is reached",
   "Sunk": "Sunk",
   "Not simulated": "Not simulated",
-  "Route": "Route"
+  "Route": "Route",
+  "Auto": "Auto",
+  "Simulate when the fleet or these settings change": "Simulate when the fleet or these settings change"
 }

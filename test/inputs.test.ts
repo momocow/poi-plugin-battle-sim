@@ -41,10 +41,10 @@ describe('saved inputs', () => {
   it('round-trips through poi config, with defaults when nothing is saved', () => {
     const store = new Map<string, unknown>()
     g.window = { config: { get: (k: string, f: unknown) => (store.has(k) ? store.get(k) : f), set: (k: string, v: unknown) => store.set(k, v) } }
-    expect(loadInputs()).toEqual({ fleetId: 1, map: '1-1', trials: 2000, choices: {} })
-    saveInputs({ fleetId: 2, map: '5-2', trials: 500, choices: { '7-5': { F: 'J', H: 'I', O: 'P' } } })
+    expect(loadInputs()).toEqual({ fleetId: 1, map: '1-1', trials: 2000, auto: true, choices: {} })
+    saveInputs({ fleetId: 2, map: '5-2', trials: 500, auto: false, choices: { '7-5': { F: 'J', H: 'I', O: 'P' } } })
     const loaded = loadInputs()
-    expect(loaded).toMatchObject({ fleetId: 2, map: '5-2', trials: 500 })
+    expect(loaded).toMatchObject({ fleetId: 2, map: '5-2', trials: 500, auto: false })
     expect(choicesForMap(loaded, '7-5')).toEqual({ F: 'J', H: 'I', O: 'P' })
     expect(choicesForMap(loaded, '5-6')).toEqual({ I: 'J', O: 'P', phase: '1' })
   })

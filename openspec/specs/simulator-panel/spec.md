@@ -40,7 +40,7 @@ When the selected map has player-selected branches or a phase, the panel SHALL s
 - **THEN** the trials control shows Custom with 3000
 
 ### Requirement: Fleet display
-The panel SHALL show the fleet being simulated. Before a run, it SHALL show the selected fleet from live game state and update when that state changes. Once a run starts, it SHALL show the captured snapshot instead, labeled with the time it was taken, and it SHALL keep showing that snapshot through the results, even if the game state changes.
+The panel SHALL show the fleet being simulated. Before a run, it SHALL show the selected fleet from live game state and update when that state changes, marked Live next to the fleet label. Once a run starts, it SHALL show the captured snapshot instead, and it SHALL keep showing that snapshot through the results, even if the game state changes.
 
 The display SHALL have:
 - **A summary row** with the following:
@@ -69,7 +69,7 @@ Names SHALL follow poi's language setting.
 
 #### Scenario: Snapshot during and after a run
 - **WHEN** a run has started and the user then changes fleet 2 in game
-- **THEN** the panel keeps showing the snapshot taken when the run started, with its capture time
+- **THEN** the panel keeps showing the snapshot taken when the run started, and the footer shows its capture time
 
 #### Scenario: Improved and skilled equipment
 - **WHEN** a ship carries a ★10 gun and a fighter with proficiency 7
@@ -87,8 +87,61 @@ Names SHALL follow poi's language setting.
 - **WHEN** the selected map is 6-1
 - **THEN** the summary row shows the ×4 LoS value labeled ×4
 
+### Requirement: Automatic runs
+The panel SHALL start a run by itself, as if Simulate were clicked, when any of these changes while the panel is open:
+- the selected fleet;
+- a ship in the selected fleet: added, removed, moved, swapped or remodeled;
+- equipment on a ship in the selected fleet: equipped, removed, moved between slots, or improved;
+- the selected map;
+- a branch or phase choice of the selected map;
+- the trial count.
+
+The run SHALL start once the inputs have stayed unchanged for a moment (under one second), so typing a custom trial count or a change made in several steps in game starts one run, with the final values.
+
+It SHALL do so only when every ship present in the selected fleet has all its main slots filled, counting only the slots that ship has. The expansion slot SHALL NOT count, and the fleet need not be full: a fleet of three ships with every main slot filled qualifies. A fleet with no ships SHALL NOT start a run.
+
+The control bar SHALL have an Auto switch, next to the Simulate button, that turns automatic runs on or off. It SHALL be on by default and SHALL be remembered between poi sessions. While it is off, no run starts by itself, and turning it on SHALL NOT start a run for changes made while it was off. The switch SHALL stay usable while a run is in progress; turning it off does not cancel that run.
+
+Opening the panel and the game data loading SHALL NOT start a run. Changes to HP, morale, level, or aircraft proficiency SHALL NOT start a run. A qualifying change while a run is in progress SHALL cancel that run and start a new one with the current fleet. When the fleets are combined and the combined fleet is selected, the scope is the ships of both fleets.
+
+#### Scenario: Equipment filled
+- **WHEN** fleet 1 has four ships, one of them with an empty main slot, and the user equips an item into that slot
+- **THEN** a run starts for fleet 1 without the user clicking Simulate
+
+#### Scenario: Empty slot left
+- **WHEN** the user swaps a gun on one ship while another ship in the fleet still has an empty main slot
+- **THEN** no run starts
+
+#### Scenario: Expansion slot ignored
+- **WHEN** every main slot is filled but a ship's expansion slot is empty, and the user changes the map
+- **THEN** a run starts for the new map
+
+#### Scenario: Branch choice
+- **WHEN** the selected fleet has every main slot filled and the user changes the F → choice on 7-5
+- **THEN** a run starts with the new choice
+
+#### Scenario: Fleet switched
+- **WHEN** the user switches from fleet 1 to fleet 2, and every ship in fleet 2 has all main slots filled
+- **THEN** a run starts for fleet 2
+
+#### Scenario: Custom trial count typed
+- **WHEN** the user types 3000 into the custom trial count
+- **THEN** one run starts, with 3000 trials
+
+#### Scenario: Auto switched off
+- **WHEN** the Auto switch is off and the user swaps equipment, leaving every main slot filled
+- **THEN** no run starts until the user clicks Simulate
+
+#### Scenario: Change during a run
+- **WHEN** a run is in progress and the user swaps equipment on a ship in the selected fleet, leaving every main slot filled
+- **THEN** that run is cancelled and a new one starts with the changed fleet
+
+#### Scenario: Sortie return
+- **WHEN** the fleet returns from a sortie with lower HP and morale and no ship or equipment changed
+- **THEN** no run starts
+
 ### Requirement: Progress and cancel
-The panel SHALL show the run's status in a compact area at the end of the controls bar, without taking a line of its own:
+The panel SHALL show the run's status in a compact area at the right of the footer, without taking a line of its own:
 - While routes are predicted, it shows that routes are being predicted.
 - While routes are simulated, it shows how many routes are finished out of the total, with a progress bar.
 - While the run waits for the map's enemy-data fetch, it shows a short "fetching enemy data" note until that fetch ends. Hovering over the note shows the full explanation, including that this may take 15 seconds or more.
@@ -147,8 +200,8 @@ A card's results SHALL show that they are pending until that route's simulation 
 - **WHEN** 1 of 2 simulated routes has finished
 - **THEN** that card shows its results, and the other card's results still show pending
 
-### Requirement: Result header
-Above the summary, from the start of route prediction and for as long as the run has routes, the panel SHALL show a result header naming the following:
+### Requirement: Result footer
+The panel SHALL have a footer, fixed at the bottom of the plugin area, with the run's status on its right (see Progress and cancel). From the start of route prediction and for as long as the run has routes, its left part SHALL name the following:
 - the map;
 - the fleet number;
 - the snapshot time;
@@ -156,11 +209,11 @@ Above the summary, from the start of route prediction and for as long as the run
 - the run's margin of error: ±(98 / √trials)%, to one decimal place, which is the worst-case 95% interval for a single route's rate;
 - any branch and phase choices used, for example "F→J, H→I, O→P".
 
-When the selected fleet, map, choices, or trial count no longer match the run's, the header, summary, and route cards SHALL be dimmed. The header SHALL then note that the settings have changed since this result.
+When the selected fleet, map, choices, or trial count no longer match the run's, the footer's result line, summary, and route cards SHALL be dimmed. The footer SHALL then note that the settings have changed since this result.
 
-#### Scenario: Header after a run
+#### Scenario: Footer after a run
 - **WHEN** fleet 1 finished a run on 7-5 with 2000 trials and choices F→J, H→I, O→P
-- **THEN** the header shows 7-5, fleet 1, the snapshot time, 2000 trials, ±2.2%, and "F→J, H→I, O→P"
+- **THEN** the footer shows 7-5, fleet 1, the snapshot time, 2000 trials, ±2.2%, and "F→J, H→I, O→P"
 
 #### Scenario: Stale result
 - **WHEN** a run on 1-4 has finished and the user selects 1-5
@@ -171,7 +224,7 @@ Below the fleet display and above the route cards, the panel SHALL show a summar
 1. **S**, **A or better**, and **B or better** as the primary, most prominent values. These are probability-weighted over all trials, so they are the chance per sortie. Each SHALL show its rate when the boss is reached as a smaller secondary value, for example "56.7% (96.0% when reached)".
 2. The chance of reaching the boss and the chance of sinking the boss.
 
-The summary SHALL NOT show a chance of losing a ship. It SHALL be shown whenever the result header is, and every value in it SHALL read 0 until the routes are predicted and every simulated route has finished. All percentages in the summary and the route cards SHALL be shown to one decimal place.
+The summary SHALL NOT show a chance of losing a ship. It SHALL be shown whenever the result footer is, and every value in it SHALL read 0 until the routes are predicted and every simulated route has finished. All percentages in the summary and the route cards SHALL be shown to one decimal place.
 
 #### Scenario: Summary after completion
 - **WHEN** every simulated route has finished
@@ -194,12 +247,13 @@ Every failure SHALL be shown in the panel with a short summary and expandable de
 
 ### Requirement: Narrow, top-down layout
 poi's plugin area is narrow and tall, so the panel SHALL use a single column that fills the plugin area exactly, with no scrollbar for the panel as a whole. From top to bottom it SHALL contain:
-1. the controls bar: fleet, map, Simulate/Cancel and the status area on the first row; trials (with the custom count field) on the second; and, for maps that have them, the branch and phase choices on a third;
+1. the controls bar: fleet, map, Simulate/Cancel and the Auto switch on the first row; trials (with the custom count field) on the second; and, for maps that have them, the branch and phase choices on a third;
 2. the fleet display, which SHALL be collapsible;
-3. the result header and the summary;
-4. any error, then the route cards.
+3. the summary;
+4. any error, then the route cards;
+5. the footer: the result on the left, the run status on the right.
 
-The first three SHALL stay in place. Only the last area SHALL scroll, vertically and on its own, when its content is taller than the room left.
+All but the fourth SHALL stay in place, the footer at the bottom of the plugin area. Only the fourth area SHALL scroll, vertically and on its own, when its content is taller than the room left.
 
 The panel SHALL fit 400px wide without horizontal scrolling.
 
@@ -209,7 +263,7 @@ The panel SHALL fit 400px wide without horizontal scrolling.
 
 #### Scenario: Only the routes scroll
 - **WHEN** a finished run has more route cards than fit below the summary
-- **THEN** the route cards scroll, while the controls bar, the fleet display and the summary stay in place, and the panel shows no outer scrollbar
+- **THEN** the route cards scroll, while the controls bar, the fleet display, the summary and the footer stay in place, and the panel shows no outer scrollbar
 
 #### Scenario: Fleet collapsed
 - **WHEN** the user collapses the fleet display

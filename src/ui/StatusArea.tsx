@@ -1,5 +1,5 @@
 /**
- * The run's status, compact enough to sit beside the Simulate button: route
+ * The run's status, compact enough to sit at the right of the footer: route
  * prediction, routes finished with a progress bar, the enemy-data fetch note,
  * "Done" for a few seconds, and a marker for a development optimizer.
  */
@@ -46,7 +46,7 @@ export function StatusArea({ run }: { run: RunState }) {
       {run.phase === 'simulating' && run.fetchingEnemyData && (
         <Tooltip
           content={t('First run of this map — fetching enemy data, this may take 15 seconds or more')}
-          placement="bottom"
+          placement="top"
           targetTagName="span"
           targetProps={{ className: 'battle-sim-status-note' }}
         >
@@ -55,7 +55,7 @@ export function StatusArea({ run }: { run: RunState }) {
       )}
       {doneShown && <span>{t('Done')}</span>}
       {run.devOptimizer && (
-        <Tooltip content={t('Development optimizer')} placement="bottom">
+        <Tooltip content={t('Development optimizer')} placement="top">
           <Icon icon="warning-sign" intent="warning" />
         </Tooltip>
       )}

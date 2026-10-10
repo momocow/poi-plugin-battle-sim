@@ -19,6 +19,6 @@
 
 ## 4. Panel
 
-- [ ] 4.1 Fleet selector: add "Combined (1+2) · <type>" while combined, select it automatically when the fleets are combined, drop it and fall back to fleet 1 when split, and handle a stored selection on load
+- [ ] 4.1 Fleet selector: add "Combined (1+2) · <type>" while combined, select it automatically when the fleets are combined, drop it and fall back to fleet 1 when split, and handle a stored selection on load; pass fleets `[1, 2]` to `fleetLoadout` for the automatic-run check when combined is selected
 - [ ] 4.2 Fleet view: a header with the combined type, then main and escort groups each with its own summary row, collapsing together, in the single column
 - [ ] 4.3 Add the combined choice and the two-fleet view to the demo page

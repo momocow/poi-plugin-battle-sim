@@ -166,7 +166,7 @@ describe('retreats by node', () => {
   })
 })
 
-describe('result header', () => {
+describe('result footer', () => {
   const input = { fleetId: 1, map: '7-5', choices: { F: 'J', H: 'I', O: 'P' }, trials: 2000 }
 
   it('gives ±2.2% for 2000 trials', () => {

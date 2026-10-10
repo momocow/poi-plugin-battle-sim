@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { SimError } from '../src/errors'
-import { snapshotFleet } from '../src/fleet/snapshot'
+import { fleetLoadout, snapshotFleet } from '../src/fleet/snapshot'
 import { toDeckbuilder } from '../src/fleet/toDeckbuilder'
 import { fleetShipsToml } from '../src/fleet/toToml'
 import type { PoiState } from '../src/fleet/types'
@@ -134,5 +134,46 @@ describe('fleet outputs', () => {
     expect(blocks[0]).toContain(`proficiency = ${snap.ships[0]!.slots[0]!.proficiency}`)
     expect(blocks[0]).not.toContain('hp_now')
     expect(blocks[1]).toContain(`hp_now = ${snap.ships[1]!.hp}`)
+  })
+})
+
+describe('fleetLoadout', () => {
+  it('is complete when every main slot is filled, ignoring the expansion slot', () => {
+    const state = loadStore()
+    // The fixture's last two ships have empty slots; 169 also fills a fifth slot.
+    state.info!.fleets![0]!.api_ship = [545, 344, 132, 169, -1, -1]
+    state.info!.ships!['545']!.api_slot_ex = -1
+    expect(fleetLoadout(state, [1])?.complete).toBe(true)
+    state.info!.ships!['169']!.api_slotnum = 4
+    expect(fleetLoadout(state, [1])?.complete).toBe(true)
+  })
+
+  it('is incomplete with an empty main slot', () => {
+    expect(fleetLoadout(withMiddleHole(), [1])?.complete).toBe(false)
+  })
+
+  it('counts only the ships present', () => {
+    const state = loadStore()
+    state.info!.fleets![0]!.api_ship = [545, -1, -1, -1, -1, -1]
+    expect(fleetLoadout(state, [1])?.complete).toBe(true)
+    state.info!.fleets![0]!.api_ship = [-1, -1, -1, -1, -1, -1]
+    expect(fleetLoadout(state, [1])?.complete).toBe(false)
+  })
+
+  it('changes with equipment or ships, not with HP or morale', () => {
+    const state = loadStore()
+    const before = fleetLoadout(state, [1])!.key
+    const flagship = state.info!.ships!['545']!
+    flagship.api_nowhp -= 1
+    flagship.api_cond = 10
+    expect(fleetLoadout(state, [1])!.key).toBe(before)
+    flagship.api_slot = [flagship.api_slot[1]!, flagship.api_slot[0]!, ...flagship.api_slot.slice(2)]
+    expect(fleetLoadout(state, [1])!.key).not.toBe(before)
+    state.info!.fleets![0]!.api_ship = [344, 545, 132, 169, 7455, 388]
+    expect(fleetLoadout(state, [1])!.key).not.toBe(fleetLoadout(loadStore(), [1])!.key)
+  })
+
+  it('is undefined before the game data loads', () => {
+    expect(fleetLoadout(undefined, [1])).toBeUndefined()
   })
 })

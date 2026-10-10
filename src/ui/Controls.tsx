@@ -1,5 +1,8 @@
-/** Fleet, map, branch and phase choices, trials, the Simulate / Cancel button, and the run status. */
-import { Button, HTMLSelect } from '@blueprintjs/core'
+/**
+ * Fleet, map, branch and phase choices, trials, the automatic-run switch, and
+ * the Simulate / Cancel button.
+ */
+import { Button, HTMLSelect, Switch } from '@blueprintjs/core'
 import React, { useState } from 'react'
 
 import { gameName, t } from '../i18n'
@@ -15,13 +18,13 @@ export interface ControlsProps {
   maps: MapGroup[]
   choices: ChoiceValues
   trials: number
+  auto: boolean
   running: boolean
-  /** The status area, shown after the Simulate / Cancel button. */
-  status: React.ReactNode
   onFleet: (fleetId: number) => void
   onMap: (map: string) => void
   onChoice: (key: string, value: string) => void
   onTrials: (trials: number) => void
+  onAuto: (auto: boolean) => void
   onSimulate: () => void
   onCancel: () => void
 }
@@ -95,7 +98,13 @@ export function Controls(p: ControlsProps) {
             {t('Simulate')}
           </Button>
         )}
-        {p.status}
+        <Switch
+          className="battle-sim-auto"
+          checked={p.auto}
+          label={t('Auto')}
+          title={t('Simulate when the fleet or these settings change')}
+          onChange={(e: { currentTarget: { checked: boolean } }) => p.onAuto(e.currentTarget.checked)}
+        />
       </div>
       <div className="battle-sim-control-row">
         <label>

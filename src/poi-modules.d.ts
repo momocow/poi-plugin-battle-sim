@@ -50,6 +50,7 @@ declare module '@blueprintjs/core' {
   export const Popover: ComponentType<Props>
   export const ProgressBar: ComponentType<Props>
   export const Spinner: ComponentType<Props>
+  export const Switch: ComponentType<Props>
   export const Tooltip: ComponentType<Props>
   export const Tag: ComponentType<Props>
 }

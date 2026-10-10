@@ -3,7 +3,8 @@
  * without sideways scrolling. poi gives the plugin a bounded height (a
  * `height:100%` flex-column card, or a `height:100%` tabpane in its own
  * window); the panel fills it exactly, every section but the route list keeps
- * its natural height, and only the route list scrolls.
+ * its natural height, and only the route list scrolls, so the footer stays at
+ * the bottom.
  */
 export const PANEL_CSS = `
 /* poi's wrappers scroll on overflow; this pane never overflows, so keep their scrollbar away. */
@@ -16,21 +17,22 @@ export const PANEL_CSS = `
 .battle-sim-controls, .battle-sim-control-row { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; }
 .battle-sim-controls { flex: none; flex-direction: column; align-items: stretch; padding: 8px 8px 6px; border-bottom: 1px solid rgba(128, 128, 128, 0.3); }
 .battle-sim-trials { width: 7em; }
+.battle-sim-auto { margin: 0; }
 /* Fixed, so the long map names in the list do not widen the closed select. */
 .battle-sim-map-select { width: 5.5em; }
 .battle-sim-map-select select { min-width: 0; }
 /*
- * The status takes only the room left after the Simulate button (zero basis),
- * so it never wraps the row or moves the button. It fills from the left; when
- * short of room the progress bar narrows, then the fetch note ends in "…".
+ * The status sits at the right of the footer, the result line taking the rest.
+ * When short of room the progress bar narrows, then the fetch note ends in "…".
  */
-.battle-sim-status { display: flex; flex: 1 1 0; gap: 6px; align-items: center; min-width: 0; overflow: hidden; white-space: nowrap; }
+.battle-sim-status { display: flex; flex: 0 1 auto; max-width: 50%; gap: 6px; align-items: center; justify-content: flex-end; min-width: 0; overflow: hidden; white-space: nowrap; }
 .battle-sim-status > * { flex: none; }
 .battle-sim-status > .battle-sim-progress { flex: 0 1 64px; min-width: 24px; }
 .battle-sim-status > .battle-sim-status-note { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .battle-sim-result { display: flex; flex-direction: column; gap: 8px; }
 .battle-sim-stale { opacity: 0.5; }
-.battle-sim-result-header { font-size: 12px; overflow-wrap: anywhere; }
+.battle-sim-footer { flex: none; display: flex; gap: 8px; align-items: center; min-height: 26px; padding: 4px 8px; font-size: 12px; border-top: 1px solid rgba(128, 128, 128, 0.3); }
+.battle-sim-footer-result { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
 .battle-sim-section-head { display: flex; gap: 6px; align-items: center; cursor: pointer; user-select: none; }
 .battle-sim-fleet-summary { display: flex; flex-wrap: wrap; gap: 2px 12px; margin: 2px 0; }
 .battle-sim-hover { text-decoration: underline dotted; cursor: help; }

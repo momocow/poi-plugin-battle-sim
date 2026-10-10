@@ -64,6 +64,8 @@ export interface SavedInputs {
   fleetId: number
   map: string
   trials: number
+  /** Start a run by itself when the fleet or the inputs change. */
+  auto: boolean
   /** Per map. */
   choices: Record<string, ChoiceValues>
 }
@@ -72,10 +74,12 @@ export function loadInputs(): SavedInputs {
   const fleetId = readConfig<unknown>(`${PREFIX}.fleetId`, 1)
   const map = readConfig<unknown>(`${PREFIX}.map`, '1-1')
   const choices = readConfig<unknown>(`${PREFIX}.choices`, {})
+  const auto = readConfig<unknown>(`${PREFIX}.auto`, true)
   return {
     fleetId: typeof fleetId === 'number' && fleetId >= 1 && fleetId <= 4 ? fleetId : 1,
     map: typeof map === 'string' ? map : '1-1',
     trials: clampTrials(readConfig<unknown>(`${PREFIX}.trials`, DEFAULT_TRIALS)),
+    auto: auto !== false,
     choices: choices !== null && typeof choices === 'object' ? (choices as Record<string, ChoiceValues>) : {},
   }
 }
@@ -84,6 +88,7 @@ export function saveInputs(inputs: SavedInputs): void {
   writeConfig(`${PREFIX}.fleetId`, inputs.fleetId)
   writeConfig(`${PREFIX}.map`, inputs.map)
   writeConfig(`${PREFIX}.trials`, inputs.trials)
+  writeConfig(`${PREFIX}.auto`, inputs.auto)
   writeConfig(`${PREFIX}.choices`, inputs.choices)
 }
 

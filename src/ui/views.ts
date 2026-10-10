@@ -1,5 +1,5 @@
 /**
- * What the route cards, the summary and the result header show, as plain values.
+ * What the route cards, the summary and the result footer show, as plain values.
  *
  * Per-route cells count all of that route's trials, so each value weighted
  * by the route's probability adds up to the summary's value; the "when

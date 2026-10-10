@@ -13,6 +13,8 @@ export interface ApiShip {
   api_soku: number
   api_slot: number[]
   api_onslot: number[]
+  /** Main slots the ship has; `api_slot` is padded with -1 past it. */
+  api_slotnum: number
   /** Equipment roster id; -1 = opened but empty, 0 = not opened. */
   api_slot_ex: number
   /** Modernization: firepower, torpedo, anti-air, armor, luck, HP, ASW. */
