@@ -10,6 +10,21 @@
     "data"
   ],
   "license": "MIT",
+  "keywords": [
+    "poi",
+    "plugin",
+    "kancolle",
+    "simulator",
+    "compass"
+  ],
+  "homepage": "https://github.com/momocow/poi-plugin-battle-sim#readme",
+  "bugs": {
+    "url": "https://github.com/momocow/poi-plugin-battle-sim/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/momocow/poi-plugin-battle-sim.git"
+  },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "test": "vitest run",

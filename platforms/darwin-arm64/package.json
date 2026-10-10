@@ -3,9 +3,20 @@
   "version": "0.1.0",
   "description": "kancolle-fleet-optimizer binary for poi-plugin-battle-sim on macOS (Apple silicon)",
   "license": "MIT",
-  "os": ["darwin"],
-  "cpu": ["arm64"],
-  "files": ["bin"],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/momocow/poi-plugin-battle-sim.git",
+    "directory": "platforms/darwin-arm64"
+  },
+  "os": [
+    "darwin"
+  ],
+  "cpu": [
+    "arm64"
+  ],
+  "files": [
+    "bin"
+  ],
   "author": {
     "name": "MomoCow",
     "url": "https://github.com/momocow"
