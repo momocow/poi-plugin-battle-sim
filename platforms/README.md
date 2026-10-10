@@ -8,5 +8,5 @@ asset exists: add its entry under `assets` in `optimizer.json`, add
 `platforms/<platform>-<arch>/package.json` (with `os`/`cpu`), and add it to
 `optionalDependencies`; the fetch script refuses to run while those disagree.
 
-Publishing, after `npm run fetch-optimizer`: each `npm publish platforms/<key>`
+Publishing, after `npm run fetch-optimizer`: each `npm publish ./platforms/<key>` (the `./` matters: without it npm reads `platforms/<key>` as a GitHub repo)
 first, then `npm publish` for the main package, all at the same version.
