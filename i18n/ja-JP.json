@@ -61,5 +61,5 @@
   "Absolute path; leave empty to use the bundled optimizer": "絶対パス。空欄なら同梱の optimizer を使用",
   "Absolute path; leave empty to use the bundled data": "絶対パス。空欄なら同梱のデータを使用",
   "A binary set here skips the integrity check and applies from the next run": "ここで指定した実行ファイルは整合性チェックを省略し、次回の実行から適用されます",
-  "First run of this map — fetching enemy data, this may take 15 seconds or more": "この海域の初回実行 — 敵データを取得中です。15 秒以上かかる場合があります"
+  "First run of this map — fetching enemy data, this may take a minute or more": "この海域の初回実行 — 敵データを取得中です。1 分以上かかる場合があります"
 }

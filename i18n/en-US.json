@@ -61,5 +61,5 @@
   "Absolute path; leave empty to use the bundled optimizer": "Absolute path; leave empty to use the bundled optimizer",
   "Absolute path; leave empty to use the bundled data": "Absolute path; leave empty to use the bundled data",
   "A binary set here skips the integrity check and applies from the next run": "A binary set here skips the integrity check and applies from the next run",
-  "First run of this map — fetching enemy data, this may take 15 seconds or more": "First run of this map — fetching enemy data, this may take 15 seconds or more"
+  "First run of this map — fetching enemy data, this may take a minute or more": "First run of this map — fetching enemy data, this may take a minute or more"
 }

@@ -33,7 +33,7 @@ export interface RunState {
   /** Sorted by probability, highest first. */
   routes?: RouteRow[]
   devOptimizer?: boolean
-  /** The optimizer is fetching this map's enemy data (first run); cleared when a route finishes. */
+  /** Waiting for this map's shared enemy-data fetch (first run); cleared when it ends. */
   fetchingEnemyData?: boolean
   error?: SimError
 }
@@ -42,6 +42,7 @@ export type RunAction =
   | { type: 'start'; input: RunInput; snapshot: FleetSnapshot }
   /** `routes` already sorted with `sortRoutes`; `routeDone` indexes refer to this order. */
   | { type: 'predicted'; routes: RouteCandidate[]; devOptimizer: boolean; fetchingEnemyData?: boolean }
+  | { type: 'enemyDataReady' }
   | { type: 'routeDone'; index: number; diag: SimulateDiag }
   | { type: 'finished' }
   | { type: 'failed'; error: SimError; input?: RunInput }
@@ -68,10 +69,12 @@ export function runReducer(state: RunState, action: RunAction): RunState {
         fetchingEnemyData: action.fetchingEnemyData ?? false,
         routes: action.routes,
       }
+    case 'enemyDataReady':
+      return state.phase === 'simulating' ? { ...state, fetchingEnemyData: false } : state
     case 'routeDone': {
       if (state.phase !== 'simulating' || !state.routes) return state
       const routes = state.routes.map((r, i) => (i === action.index ? { ...r, diag: action.diag } : r))
-      return { ...state, routes, fetchingEnemyData: false }
+      return { ...state, routes }
     }
     case 'finished':
       return state.phase === 'simulating' ? { ...state, phase: 'done' } : state

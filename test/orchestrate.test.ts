@@ -39,7 +39,7 @@ const controllable = () => {
     pending.get(index)?.(d)
     await new Promise((r) => setImmediate(r))
   }
-  return { run, release, aborted, peak: () => peak, started: () => [...pending.keys()] }
+  return { run, release, aborted, peak: () => peak }
 }
 
 describe('simulateRoutes', () => {
@@ -86,18 +86,6 @@ describe('simulateRoutes', () => {
     })
     await expect(promise).rejects.toBe(failing)
     expect(aborted).toEqual([1])
-  })
-
-  it('with firstAlone, starts the others only after the first route finished', async () => {
-    const c = controllable()
-    const promise = simulateRoutes({ routes: ['a', 'b', 'c'], run: c.run, firstAlone: true })
-    await new Promise((r) => setImmediate(r))
-    expect(c.started()).toEqual([0])
-    await c.release(0)
-    expect(c.started().sort()).toEqual([0, 1, 2])
-    await c.release(1)
-    await c.release(2)
-    expect((await promise).map((r) => r.ranks.S)).toEqual([0, 0.1, 0.2])
   })
 
   it('returns immediately for no routes', async () => {

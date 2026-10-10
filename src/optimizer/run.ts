@@ -63,11 +63,28 @@ export interface RunOptions {
   spawn?: SpawnFn
 }
 
-const defaultSpawn: SpawnFn = (bin, args, opts) =>
+export const defaultSpawn: SpawnFn = (bin, args, opts) =>
   nodeSpawn(bin, args, { cwd: opts.cwd, stdio: ['pipe', 'pipe', 'pipe'], windowsHide: true })
 
 /** The optimizer's kcnav cache: in poi's app data, so it survives plugin updates. */
 export const kcnavDir = (workDir: string): string => join(workDir, 'kcnav')
+
+/** `kcnav fetch` for every node of `map`; nodes already cached are skipped by the optimizer. */
+export function kcnavFetchArgs(opts: Pick<RunOptions, 'dataDir' | 'workDir'> & { map: string }): string[] {
+  return [
+    'kcnav',
+    'fetch',
+    '--map',
+    opts.map,
+    '--all-nodes',
+    '--data-dir',
+    opts.dataDir,
+    '--kcnav-dir',
+    kcnavDir(opts.workDir),
+    '--log-file',
+    join(opts.workDir, 'logs', `kcnav-fetch-${opts.map}.log`),
+  ]
+}
 
 export function simulateArgs(opts: Pick<RunOptions, 'dataDir' | 'workDir' | 'logName'>): string[] {
   return [

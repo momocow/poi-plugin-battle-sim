@@ -1,10 +1,13 @@
 /**
  * One run, start to finish: capture the fleet, find the optimizer, predict
- * routes, simulate the boss routes, dispatching each step to the panel.
+ * routes, wait for the map's enemy data, simulate the boss routes, dispatching
+ * each step to the panel.
  *
  * The optimizer is resolved before compass is loaded, so a missing or corrupt
- * binary fails before any network use. Every failure ends in `failed` and a
- * cancel in `cancelled`, so the panel never stays in a running state.
+ * binary fails before any network use. The map's shared kcnav fetch starts
+ * right after, overlapping prediction; a cancel stops only this run's wait for
+ * it. Every failure ends in `failed` and a cancel in `cancelled`, so the panel
+ * never stays in a running state.
  */
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
@@ -14,10 +17,10 @@ import { snapshotFleet } from '../fleet/snapshot'
 import { toDeckbuilder } from '../fleet/toDeckbuilder'
 import type { PoiState } from '../fleet/types'
 import { simulateToml } from '../optimizer/config'
-import { isMapCached } from '../optimizer/kcnav'
 import { simulateRoutes } from '../optimizer/orchestrate'
+import { ensureMapFetched, untilAborted } from '../optimizer/prefetch'
 import { resolveOptimizer, type OptimizerManifest } from '../optimizer/resolve'
-import { Cancelled, kcnavDir, runSimulate } from '../optimizer/run'
+import { Cancelled, runSimulate } from '../optimizer/run'
 import { findPackageRoot, workDir } from '../paths'
 import { bossLettersFor, loadBossLetters } from '../routes/boss'
 import { runCompass } from '../routes/compass'
@@ -51,6 +54,16 @@ export async function runSimulation(
     const cwd = workDir()
     if (signal.aborted) throw new Cancelled()
 
+    // Not awaited here: the fetch overlaps prediction and outlives a cancel.
+    let enemyDataReady = false
+    const enemyData = ensureMapFetched(input.map, {
+      binPath: optimizer.binPath,
+      dataDir: optimizer.dataDir,
+      workDir: cwd,
+    }).finally(() => {
+      enemyDataReady = true
+    })
+
     const candidates = await predictor.predict({
       deck: toDeckbuilder(snapshot),
       map: input.map,
@@ -60,12 +73,16 @@ export async function runSimulation(
     if (signal.aborted) throw new Cancelled()
     const rows: RouteRow[] = sortRoutes(candidates)
     const indexes = bossRouteIndexes(rows)
-    const fetchingEnemyData = indexes.length > 0 && !isMapCached(kcnavDir(cwd), input.map)
+    const fetchingEnemyData = indexes.length > 0 && !enemyDataReady
     dispatch({ type: 'predicted', routes: rows, devOptimizer: optimizer.dev, fetchingEnemyData })
+    if (fetchingEnemyData) {
+      // A failed fetch is not an error: each simulate fetches what its route still lacks.
+      await untilAborted(enemyData, signal)
+      dispatch({ type: 'enemyDataReady' })
+    }
 
     await simulateRoutes({
       routes: indexes,
-      firstAlone: fetchingEnemyData,
       signal,
       run: (rowIndex, _i, routeSignal) =>
         runSimulate({

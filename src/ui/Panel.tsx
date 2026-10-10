@@ -98,7 +98,7 @@ export function Panel() {
         {run.phase === 'predicting' && <span>{t('Predicting routes…')}</span>}
         {run.phase === 'simulating' && <span>{t('Simulating {finished} / {total}', { finished, total })}</span>}
         {run.phase === 'simulating' && run.fetchingEnemyData && (
-          <span className="battle-sim-muted">{t('First run of this map — fetching enemy data, this may take 15 seconds or more')}</span>
+          <span className="battle-sim-muted">{t('First run of this map — fetching enemy data, this may take a minute or more')}</span>
         )}
         {run.phase === 'done' && <span>{t('Done')}</span>}
         {run.devOptimizer && <Tag intent="warning">{t('Development optimizer')}</Tag>}
