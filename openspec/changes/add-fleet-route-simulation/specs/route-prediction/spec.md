@@ -1,0 +1,63 @@
+## Purpose
+
+Works out which routes a fleet can take on the chosen map and how likely each one is, so the simulator runs the routes the fleet would actually sail.
+
+## ADDED Requirements
+
+### Requirement: Route candidates carry probabilities
+Route prediction SHALL return a list of candidates. Each candidate SHALL contain the node letters from the start node to the last node, and a probability between 0 and 1. The probabilities SHALL add up to 1, within a tolerance of 1e-6.
+
+#### Scenario: Map with probabilistic branches
+- **WHEN** the map branches by chance for the given fleet (for example 2-5 has three outcomes)
+- **THEN** one candidate is returned for each outcome, each with its probability, and the probabilities add up to 1
+
+### Requirement: Compass is the only predictor
+The system SHALL predict routes only with the compass route simulator. It SHALL load the fleet's deck-builder document and the chosen map, then read the predicted routes and their probabilities. Compass SHALL run in a browser session that is isolated from poi's game view and from the user's other browsing data. The system SHALL NOT query any other routing service, such as kcnav, to predict routes.
+
+#### Scenario: Compass succeeds
+- **WHEN** compass loads and returns at least one route within the timeout
+- **THEN** those routes are the candidates
+
+#### Scenario: Compass state is isolated
+- **WHEN** a prediction runs
+- **THEN** cookies and storage in poi's game view are not read or changed
+
+### Requirement: Prediction failure is an error
+If compass fails, the prediction SHALL fail with an error that names the cause, and no simulation SHALL run. Failure means the page cannot be loaded, the page's internal state cannot be found or has an unexpected shape, or no route arrives within 20 seconds. The causes SHALL be distinguished as: page unreachable, unexpected page structure, map not supported by compass, or timeout. The system SHALL NOT retry automatically.
+
+#### Scenario: Compass page changed
+- **WHEN** the compass page loads but its route state is missing
+- **THEN** the prediction fails with an "unexpected page structure" error, and no request is sent to any other service
+
+#### Scenario: Offline
+- **WHEN** the compass page cannot be loaded
+- **THEN** the prediction fails with a "page unreachable" error, and the user can retry by hand
+
+### Requirement: Player-selected branches and phase
+For maps where the player chooses a branch (for example 4-5, 5-3, 5-5, 5-6, 6-3, 7-4, and 7-5) or a map phase (for example 5-6 and 7-3), prediction SHALL use the choices the user set in the panel. Each choice is applied to compass as a fixed decision before the routes are read. The returned candidates and their probabilities therefore apply only to those choices. Prediction SHALL fail with an "unexpected page structure" error when compass's set of choosable nodes for the map does not match the plugin's set. It SHALL NOT silently drop a choice or fall back to compass's defaults.
+
+#### Scenario: Choice changes the route
+- **WHEN** the user sets 7-5 node F to J instead of G
+- **THEN** every candidate passes F→J and none passes F→G
+
+#### Scenario: Phase changes the route
+- **WHEN** the user sets 7-3 to phase 2
+- **THEN** the candidates are those for phase 2, which differ from phase 1
+
+#### Scenario: Compass changed its choices
+- **WHEN** compass lists a choosable node for 7-5 that the plugin does not know about
+- **THEN** the prediction fails with an "unexpected page structure" error that names the map and node
+
+### Requirement: Boss reach is determined from bundled map data
+Each candidate SHALL be marked as reaching the boss when its last node is one of the map's boss nodes, as listed in the optimizer's bundled map data. This SHALL NOT require any network request.
+
+#### Scenario: Route ending before the boss
+- **WHEN** a 2-5 candidate ends at node D and the bundled data lists the boss node as O
+- **THEN** that candidate is marked as not reaching the boss
+
+### Requirement: Cache predictions
+Predictions SHALL be cached for the current poi session, keyed by map, branch and phase choices, fleet composition, and the equipment that affects routing. Repeating a simulation with the same inputs SHALL NOT load compass again. Failed predictions SHALL NOT be cached.
+
+#### Scenario: Re-run with the same fleet
+- **WHEN** the user runs the same fleet on the same map twice in one poi session
+- **THEN** the second run does not load compass

@@ -1,0 +1,44 @@
+{
+ "2-5": {
+  "name": "2-5",
+  "boss_nodes": [
+   15
+  ],
+  "boss_letters": [
+   "O"
+  ],
+  "world_name": "World 2",
+  "boss_hp": 4
+ },
+ "4-2": {
+  "name": "4-2",
+  "boss_nodes": [
+   12
+  ],
+  "boss_letters": [
+   "L"
+  ],
+  "world_name": "World 4"
+ },
+ "5-2": {
+  "name": "5-2",
+  "boss_nodes": [
+   15
+  ],
+  "boss_letters": [
+   "O"
+  ],
+  "world_name": "World 5",
+  "boss_hp": 4
+ },
+ "7-5": {
+  "name": "7-5",
+  "boss_nodes": [],
+  "boss_letters": [
+   "K",
+   "Q",
+   "T"
+  ],
+  "world_name": "World 7"
+ }
+}

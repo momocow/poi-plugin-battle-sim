@@ -1,0 +1,2 @@
+{"command":"simulate","schema":1,"type":"start","version":"0.2.0"}
+{"chain":["simulate 設定檔解析失敗: <stdin>\nTOML parse error at line 51, column 1\n   |\n51 | trialz = 300\n   | ^^^^^^\nunknown field `trialz`, expected `trials` or `seed`\n"],"message":"simulate 設定檔解析失敗: <stdin>\nTOML parse error at line 51, column 1\n   |\n51 | trialz = 300\n   | ^^^^^^\nunknown field `trialz`, expected `trials` or `seed`\n","schema":1,"type":"error"}

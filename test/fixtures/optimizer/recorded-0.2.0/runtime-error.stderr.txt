@@ -1,0 +1,14 @@
+2026-10-10T08:45:09.693105Z ERROR fleet-optimizer failed error=simulate 設定檔解析失敗: <stdin>
+TOML parse error at line 51, column 1
+   |
+51 | trialz = 300
+   | ^^^^^^
+unknown field `trialz`, expected `trials` or `seed`
+
+錯誤: simulate 設定檔解析失敗: <stdin>
+TOML parse error at line 51, column 1
+   |
+51 | trialz = 300
+   | ^^^^^^
+unknown field `trialz`, expected `trials` or `seed`
+

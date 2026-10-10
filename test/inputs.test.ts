@@ -1,0 +1,55 @@
+import { afterEach, describe, expect, it } from 'vitest'
+
+import { choicesForMap, clampTrials, loadInputs, normalMaps, saveInputs } from '../src/ui/inputs'
+import { loadStore } from './helpers'
+
+describe('map list', () => {
+  it('offers worlds 1–7 including sub-maps, and no event maps', () => {
+    const maps = normalMaps(loadStore().const!.$maps)
+    expect(maps[0]).toBe('1-1')
+    expect(maps).toContain('7-2')
+    expect(maps).toContain('7-5')
+    expect(maps.every((m) => Number(m.split('-')[0]) <= 7)).toBe(true)
+    expect(normalMaps({ 611: { api_id: 611, api_maparea_id: 61, api_no: 1, api_name: 'event' } })).toEqual([])
+  })
+})
+
+describe('saved inputs', () => {
+  const g = globalThis as { window?: unknown }
+  afterEach(() => delete g.window)
+
+  it('round-trips through poi config, with defaults when nothing is saved', () => {
+    const store = new Map<string, unknown>()
+    g.window = { config: { get: (k: string, f: unknown) => (store.has(k) ? store.get(k) : f), set: (k: string, v: unknown) => store.set(k, v) } }
+    expect(loadInputs()).toEqual({ fleetId: 1, map: '1-1', trials: 2000, choices: {} })
+    saveInputs({ fleetId: 2, map: '5-2', trials: 500, choices: { '7-5': { F: 'J', H: 'I', O: 'P' } } })
+    const loaded = loadInputs()
+    expect(loaded).toMatchObject({ fleetId: 2, map: '5-2', trials: 500 })
+    expect(choicesForMap(loaded, '7-5')).toEqual({ F: 'J', H: 'I', O: 'P' })
+    expect(choicesForMap(loaded, '5-6')).toEqual({ I: 'J', O: 'P', phase: '1' })
+  })
+
+  it('clamps the trial count', () => {
+    expect(clampTrials(0)).toBe(2000)
+    expect(clampTrials(1.5)).toBe(2000)
+    expect(clampTrials(10_000_000)).toBe(100_000)
+  })
+})
+
+describe('optimizer override', () => {
+  const g = globalThis as { window?: unknown }
+  afterEach(() => delete g.window)
+  const withConfig = (values: Record<string, unknown>) =>
+    (g.window = { config: { get: (k: string, f: unknown) => (k in values ? values[k] : f) } })
+
+  it('prefers poi config over the environment, taking both paths from one source', async () => {
+    const { loadOptimizerOverride, OPTIMIZER_BIN_KEY, OPTIMIZER_DATA_KEY } = await import('../src/ui/inputs')
+    const env = { BATTLE_SIM_OPTIMIZER_BIN: '/env/bin', BATTLE_SIM_OPTIMIZER_DATA: '/env/data' }
+    withConfig({ [OPTIMIZER_BIN_KEY]: ' /cfg/bin ', [OPTIMIZER_DATA_KEY]: '' })
+    expect(loadOptimizerOverride(env)).toEqual({ bin: '/cfg/bin', data: undefined })
+    withConfig({ [OPTIMIZER_BIN_KEY]: '' })
+    expect(loadOptimizerOverride(env)).toEqual({ bin: '/env/bin', data: '/env/data' })
+    withConfig({})
+    expect(loadOptimizerOverride({})).toEqual({ bin: undefined, data: undefined })
+  })
+})

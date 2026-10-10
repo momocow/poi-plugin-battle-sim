@@ -1,0 +1,46 @@
+{
+  "name": "poi-plugin-battle-sim",
+  "version": "0.1.0",
+  "description": "Simulate a fleet's odds on a map: routes from compass, battles from kancolle-fleet-optimizer",
+  "main": "dist/index.js",
+  "files": [
+    "dist",
+    "i18n",
+    "optimizer.json",
+    "data"
+  ],
+  "license": "MIT",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "prepack": "npm run build",
+    "fetch-optimizer": "node scripts/fetch-optimizer.mjs",
+    "prepublishOnly": "npm run fetch-optimizer"
+  },
+  "dependencies": {
+    "lz-string": "^1.5.0"
+  },
+  "optionalDependencies": {
+    "poi-plugin-battle-sim-darwin-arm64": "0.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.1",
+    "@types/react": "^18.3.12",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
+  },
+  "poiPlugin": {
+    "title": "Battle Sim",
+    "description": "Simulate your fleet's odds on a map",
+    "icon": "fa/dice",
+    "priority": 100,
+    "id": "poi_battle_sim",
+    "i18nDir": "./i18n",
+    "earliestCompatibleMain": "12.0.0"
+  },
+  "author": {
+    "name": "MomoCow",
+    "url": "https://github.com/momocow"
+  }
+}

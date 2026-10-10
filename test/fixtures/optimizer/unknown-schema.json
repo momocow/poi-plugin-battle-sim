@@ -1,0 +1,5 @@
+{
+  "exitCode": 0,
+  "stderr": "",
+  "stdout": "{\"type\":\"start\",\"schema\":2,\"version\":\"0.9.0\",\"trials\":2000}\n{\"type\":\"result\",\"schema\":2,\"diag\":{}}\n"
+}

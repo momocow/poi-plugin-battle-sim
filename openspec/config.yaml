@@ -1,0 +1,50 @@
+schema: spec-driven
+
+context: |
+  poi plugin (Electron renderer, React + Redux store provided by poi) that runs
+  KanColle battle simulations with the sibling Rust project
+  ../kancolle-fleet-optimizer (CLI binary, spawned as a child process).
+  - Optimizer contract: `simulate --config - --json` (TOML on stdin, NDJSON on
+    stdout: start / arm_result / result / error lines with `schema` integer;
+    exit 0/1/2). `--data-dir` (bundled, read-only) and `--kcnav-dir`
+    (userData, writable). These flags are agreed but implemented in the
+    optimizer repo, not here.
+  - Binaries are NOT committed. Optimizer CI publishes per-platform release
+    assets; this package pins version + SHA256. Dev override env var points
+    at a local build.
+  - Route prediction: x-20a.github.io/compass in a hidden, isolated webview
+    (deck-builder v4 via ?predeck/?pdz, read Pinia store `compass`.simResult).
+    No fallback: on failure show an error. Manual route picker is future work.
+    The plugin never calls kcnav itself (only the optimizer's cached topology fetch).
+  - Users are mostly on Windows; UI text should support zh-TW / ja / en.
+
+# Project context (optional)
+# This is shown to AI when creating artifacts.
+# Add your tech stack, conventions, style guides, domain knowledge, etc.
+# Example:
+#   context: |
+#     Tech stack: TypeScript, React, Node.js
+#     We use conventional commits
+#     Domain: e-commerce platform
+
+# Per-artifact rules (optional)
+# Add custom rules for specific artifacts.
+# Example:
+#   rules:
+#     proposal:
+#       - Keep proposals under 500 words
+#       - Always include a "Non-goals" section
+#     tasks:
+#       - Break tasks into chunks of max 2 hours
+
+# Per-operation guidance (optional)
+# Add advisory guidance for how apply and archive work should be conducted.
+# This is separate from artifact rules above.
+# Example:
+#   operations:
+#     apply:
+#       guidance:
+#         - Keep test summaries concise
+#     archive:
+#       guidance:
+#         - Summarize the archive outcome before finishing

@@ -1,0 +1,20 @@
+{
+  "repo": "momocow/kancolle-fleet-optimizer",
+  "version": "0.2.0",
+  "data": "data",
+  "dataArchive": {
+    "name": "kancolle-fleet-optimizer-v0.2.0-data.tar.gz",
+    "sha256": "02086a259ac96a89612b320bdf3364b3e1afe118eb943d5ac13aed09690b5bb2"
+  },
+  "assets": {
+    "darwin-arm64": {
+      "package": "poi-plugin-battle-sim-darwin-arm64",
+      "path": "bin/kancolle-fleet-optimizer",
+      "sha256": "d7d729c4c8a5dd13f0c1937d1ea4afd217da74bdd4c8292d09476cd5116e49d0",
+      "archive": {
+        "name": "kancolle-fleet-optimizer-v0.2.0-darwin-arm64.tar.gz",
+        "sha256": "2695239676f679e14c57ae6bd3acb6c90ca2745cd053e4f9cd904660ed0e1490"
+      }
+    }
+  }
+}
