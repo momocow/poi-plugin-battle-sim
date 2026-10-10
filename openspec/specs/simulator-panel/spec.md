@@ -46,7 +46,7 @@ Names SHALL follow poi's language setting.
 - **THEN** the gun shows ★10, and the fighter shows the proficiency-7 marker
 
 ### Requirement: Progress and cancel
-While routes are being predicted or simulated, the panel SHALL show which stage is running, and how many routes are finished out of the total. It SHALL offer a Cancel action. The Simulate action SHALL be disabled while a run is in progress. On a map's first run, while the optimizer fetches enemy data, the panel SHALL say so until the first route finishes.
+While routes are being predicted or simulated, the panel SHALL show which stage is running, and how many routes are finished out of the total. It SHALL offer a Cancel action. The Simulate action SHALL be disabled while a run is in progress. While the run waits for the map's enemy-data fetch, the panel SHALL say that enemy data is being fetched, until that fetch ends.
 
 #### Scenario: Running
 - **WHEN** 1 of 3 routes has finished
@@ -54,7 +54,7 @@ While routes are being predicted or simulated, the panel SHALL show which stage 
 
 #### Scenario: First run of a map
 - **WHEN** a map is simulated for the first time
-- **THEN** the status says enemy data is being fetched, and the message clears once the first route finishes
+- **THEN** the status says enemy data is being fetched, and the message clears once the fetch ends
 
 ### Requirement: Route table
 Once routes are predicted, the panel SHALL show them in a table, one row per candidate, ordered by probability with the highest first. Simulation SHALL start straight away, with no confirmation step. Each row SHALL contain:
