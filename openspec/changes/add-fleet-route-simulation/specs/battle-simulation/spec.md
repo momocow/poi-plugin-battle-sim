@@ -63,7 +63,7 @@ The system SHALL use the optimizer binary for the current platform at the versio
 The optimizer's working directory, kcnav cache, and log files SHALL be inside poi's app data directory for this plugin. The plugin's install directory and the bundled game data SHALL NOT be written to.
 
 #### Scenario: First run of a map
-- **WHEN** a map is simulated for the first time and the optimizer fetches that map's kcnav data
+- **WHEN** a map is simulated for the first time and the optimizer fetches that map's topology and enemy data
 - **THEN** the fetched files are written under the plugin's app data directory
 
 ### Requirement: Cancel

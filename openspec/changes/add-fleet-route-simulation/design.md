@@ -1,11 +1,12 @@
 ## Context
 
-The project starts empty. It will be a poi plugin, which means an npm package that poi loads into its Electron renderer. The renderer gives the plugin React, poi's Redux store, `<webview>`, and Node APIs. The simulation engine is the Rust CLI in `../kancolle-fleet-optimizer`. Its maintainers have agreed to add a machine-readable interface, which is not built yet:
+The project starts empty. It will be a poi plugin, which means an npm package that poi loads into its Electron renderer. The renderer gives the plugin React, poi's Redux store, `<webview>`, and Node APIs. The simulation engine is the Rust CLI in `../kancolle-fleet-optimizer`. Its machine-readable interface shipped in optimizer 0.2.0:
 
 - `simulate --config -` reads TOML from stdin.
 - `--json` makes stdout emit one JSON object per line: `start`, then exactly one `result` or `error`. Every line has `type` and `schema: 1`. Exit code 0 means a result was emitted, 1 means a runtime error with an `error` line, and 2 means a usage error reported on stderr only.
 - The `result` line contains `diag`, the optimizer's existing simulate statistics object. Its fields include `ranks` (counting only trials that reached the boss), `ranks_marginal` (counting all trials), `reach_boss_rate`, `boss_sunk_rate`, and `player_sunk_any_rate`.
 - `--data-dir` sets where game data is read from, and `--kcnav-dir` sets the writable cache location.
+- Missing kcnav node caches are fetched automatically on a map's first run, and cache writes are safe when two processes share the directory.
 
 Route prediction was checked live on 2026-10-10. On compass's production page, the state store is reachable at `#app.__vue_app__.config.globalProperties.$pinia._s.get('compass')`. `?predeck=` loads a deck-builder v4 fleet. `UPDATE_SELECTED_AREA(map)` recalculates `simResult`, an array of `{route: string[], rate: Big}`, within about 1.5 seconds.
 
@@ -14,7 +15,7 @@ Route prediction was checked live on 2026-10-10. On compass's production page, t
 **Goals:**
 - A thin plugin. All battle logic stays in the optimizer, all routing logic stays in compass, and the fleet statistics in the display come from poi's own helpers.
 - Each external dependency (the binary and compass) sits behind its own module with a narrow interface, so it can be replaced or fail without affecting the others.
-- The plugin never sends requests to kcnav itself. Its only kcnav traffic is the optimizer's one-time topology fetch per map, which is cached.
+- The plugin never sends requests to kcnav itself. Its only kcnav-related traffic is the optimizer's first-run fetch per map (topology and enemy data), which is cached.
 - The parts with real logic can be tested without poi or the network: converting the fleet snapshot, interpreting routes, combining results, and parsing the optimizer's output lines.
 
 **Non-Goals:**
@@ -26,7 +27,7 @@ Route prediction was checked live on 2026-10-10. On compass's production page, t
 ## Decisions
 
 ### D1. Process layout: one optimizer process per route, at most 2 running at once
-Each route candidate gets its own `simulate --config - --json`, with the TOML containing `[route] map` and the route's node list plus the inline `[[fleet.ships]]`. The optimizer already uses every CPU core with rayon. Running two at a time hides the startup and data-loading time without oversubscribing the CPU.
+Each route candidate gets its own `simulate --config - --json`, with the TOML containing `[route] map` and the route's node list plus the inline `[[fleet.ships]]`. The optimizer already uses every CPU core with rayon. Running two at a time hides the startup and data-loading time without oversubscribing the CPU. Exception: on a map's first run (no `<kcnav-dir>/<map>/_map.json` yet) the first route runs alone, so its enemy data is fetched once instead of by two processes at the same time. The check is only a hint, since the optimizer fetches whatever is missing; per-node files are not checked because whirlpool nodes never get one.
 - *Alternative*: one batch config with an `[[arms]]` entry per route. Rejected for v1 because batch output is built for comparing arms and its per-arm lines are newer. One process per route keeps cancel and error handling per route simple. We can revisit this once batch `--json` is shipped.
 
 ### D2. Combine results using rates over all trials
@@ -73,7 +74,7 @@ Binaries and data come from the optimizer's CI releases (`momocow/kancolle-fleet
 - *Alternative*: download the binary from GitHub Releases on first use. Rejected because it adds a second network dependency besides compass, and GitHub downloads are slow or blocked for some users.
 
 ### D7. Directory layout
-`cwd = <APPDATA_PATH>/battle-sim/`. Under it: `kcnav/` (passed as `--kcnav-dir`, where the optimizer's one-time topology fetch per map is stored) and `logs/` (passed as `--log-file`). The route cache is kept in memory for the poi session. `--data-dir` points to the bundled `data/`, which is read-only. All paths given to the optimizer are absolute.
+`cwd = <APPDATA_PATH>/battle-sim/`. Under it: `kcnav/` (passed as `--kcnav-dir`, where the optimizer caches each map's topology and enemy data on its first run, so the cache survives plugin updates) and `logs/` (passed as `--log-file`). The route cache is kept in memory for the poi session. `--data-dir` points to the bundled `data/`, which is read-only. All paths given to the optimizer are absolute.
 
 ### D8. Module layout
 - `src/fleet/`: snapshot from the poi store, then conversion to TOML ships and to a deck-builder v4 document. Pure functions.
@@ -88,7 +89,8 @@ The plugin uses TypeScript, built to CommonJS for poi. Tests use Vitest, with fi
 
 - [Compass is redeployed and its store or fields change] → Shape check and a typed error shown in the panel. Prediction stays unavailable until a plugin patch release, and there is no fallback by design. The planned manual route picker will cover this case.
 - [Compass has no license and we automate it] → We only use the public page as a browser would, with nothing redistributed. Contact the author before public release. If they object, route prediction is removed and the manual route picker becomes the only way to enter a route.
-- [The optimizer's `--json` and stdin config are not built yet] → Work against recorded output fixtures until they ship. Check `schema` on every line and fail clearly on an unknown version.
+- [The optimizer's output contract changes] → Tests use output recorded from optimizer 0.2.0, plus hand-written cases for a missing terminal line and an unknown schema. Check `schema` on every line and fail clearly on an unknown version.
+- [A map's first run needs the network and takes 5–15 s while the optimizer fetches enemy data] → The panel says enemy data is being fetched until the first route finishes.
 - [poi's state field names or helper signatures differ between poi versions] → Keep all store reads in the snapshot module and every helper import in the module that builds the view model, with fixtures from a real poi state dump. Declare the minimum poi version in `poiPlugin`.
 - [The CPU is busy during long runs and poi's renderer slows down] → Child processes run outside the renderer, with at most 2 at a time and the default trial count kept at 2000.
 

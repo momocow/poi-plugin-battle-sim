@@ -1,12 +1,12 @@
 ## 1. Project setup
 
 - [x] 1.1 Create the npm package: `package.json` with the `poiPlugin` metadata, TypeScript built to CommonJS, Vitest, `.gitignore` (excluding binaries, `data/`, and `dist/`), and `git init`
-- [ ] 1.2 Add a plugin entry point that exports the panel component and registers it with poi. Confirm it loads in a local poi install
+- [x] 1.2 Add a plugin entry point that exports the panel component and registers it with poi. Confirm it loads in a local poi install
 - [x] 1.3 Add i18n setup with zh-TW, ja, and en string tables, following poi's language setting
 
 ## 2. Optimizer interface (depends on optimizer steps a and c)
 
-- [x] 2.1 Record fixture output: `simulate --json` success, runtime `error`, exit code 2 with only stderr, and an unknown `schema` value. Use real optimizer output once it ships, and hand-written files until then
+- [x] 2.1 Record fixture output: `simulate --json` success, runtime `error`, exit code 2 with only stderr, and an unknown `schema` value. Recorded from optimizer 0.2.0 (`test/fixtures/optimizer/recorded-0.2.0`); missing-terminal and unknown-schema stay hand-written
 - [x] 2.2 `optimizer/resolve.ts`: read the pinned `optimizer.json`, choose the asset for the current platform and architecture, check its SHA-256 once per session, and support the development override from poi config (`plugin.poi_battle_sim.optimizerBin` / `.optimizerData`) with the `BATTLE_SIM_OPTIMIZER_BIN` / `BATTLE_SIM_OPTIMIZER_DATA` environment variables as fallback, plus a poi settings page for the two paths
 - [x] 2.3 `optimizer/run.ts`: start the process with the absolute paths from D7, write the TOML to stdin and close it, split stdout into lines and parse each as JSON, collect stderr, apply the terminal-line and exit-code rules, check `schema`, and support kill-on-cancel
 - [x] 2.4 Unit tests for `run.ts` using the fixtures and a fake child process: success, error line, exit code 2, missing terminal line, stderr warnings alongside success, and an unknown schema
@@ -32,7 +32,7 @@
 
 - [x] 5.1 `optimizer/aggregate.ts`: keep each route's conditional `ranks` as its rate at the boss; derive the overall rate at the boss as the weighted marginal rate divided by the weighted reach-boss rate, undefined when that is 0; and weight `ranks_marginal`, `reach_boss_rate`, and `boss_sunk_rate` by route probability, with routes that miss the boss counted as 0. Weight `player_sunk_any_rate` only over the simulated routes, renormalized
 - [x] 5.2 Aggregation tests, including the spec scenarios: the 0.68 two-route case, the 0.72 retreat case, the 0.5 and ≈0.667 rates at the boss, and the undefined case when the boss is never reached
-- [x] 5.3 Orchestrator: run one process per route that reaches the boss, at most 2 at a time, report progress as finished/total, and on cancel kill every process and discard partial results
+- [x] 5.3 Orchestrator: run one process per route that reaches the boss, at most 2 at a time (the first route alone on a map's first run), report progress as finished/total, and on cancel kill every process and discard partial results
 
 ## 6. Panel
 
