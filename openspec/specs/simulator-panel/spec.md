@@ -148,7 +148,7 @@ A card's results SHALL show that they are pending until that route's simulation 
 - **THEN** that card shows its results, and the other card's results still show pending
 
 ### Requirement: Result header
-Above the summary, once a run has routes, the panel SHALL show a result header naming the following:
+Above the summary, from the start of route prediction and for as long as the run has routes, the panel SHALL show a result header naming the following:
 - the map;
 - the fleet number;
 - the snapshot time;
@@ -171,7 +171,7 @@ Below the fleet display and above the route cards, the panel SHALL show a summar
 1. **S**, **A or better**, and **B or better** as the primary, most prominent values. These are probability-weighted over all trials, so they are the chance per sortie. Each SHALL show its rate when the boss is reached as a smaller secondary value, for example "56.7% (96.0% when reached)".
 2. The chance of reaching the boss and the chance of sinking the boss.
 
-The summary SHALL NOT show a chance of losing a ship. It SHALL be shown only after every simulated route has finished. All percentages in the summary and the route cards SHALL be shown to one decimal place.
+The summary SHALL NOT show a chance of losing a ship. It SHALL be shown whenever the result header is, and every value in it SHALL read 0 until the routes are predicted and every simulated route has finished. All percentages in the summary and the route cards SHALL be shown to one decimal place.
 
 #### Scenario: Summary after completion
 - **WHEN** every simulated route has finished

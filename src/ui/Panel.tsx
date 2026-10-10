@@ -90,8 +90,9 @@ export function Panel() {
 
   const fleetNames = [1, 2, 3, 4].map((id) => live.info?.fleets?.find((f) => f.api_id === id)?.api_name)
   const stale = run.input !== undefined && !running && isStale(run.input, current)
+  // Routes are unknown while predicting; the header and a zeroed summary show already.
   const result =
-    run.routes && run.input && run.snapshot
+    (run.routes || run.phase === 'predicting') && run.input && run.snapshot
       ? { routes: run.routes, input: run.input, capturedAt: run.snapshot.capturedAt }
       : undefined
   return (
@@ -137,7 +138,7 @@ export function Panel() {
       {result && (
         <div className={`battle-sim-section battle-sim-result${stale ? ' battle-sim-stale' : ''}`}>
           <ResultHeader input={result.input} capturedAt={result.capturedAt} stale={stale} />
-          {run.phase === 'done' && <Summary routes={result.routes} />}
+          <Summary routes={result.routes} />
         </div>
       )}
 
@@ -145,7 +146,7 @@ export function Panel() {
         {run.phase === 'error' && run.error && (
           <ErrorView error={run.error} onRetry={run.input ? () => start(run.input!) : undefined} />
         )}
-        {result && <RouteCards routes={result.routes} />}
+        {result?.routes && <RouteCards routes={result.routes} />}
       </div>
     </div>
   )
