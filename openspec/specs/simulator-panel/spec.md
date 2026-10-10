@@ -140,6 +140,19 @@ Opening the panel and the game data loading SHALL NOT start a run. Changes to HP
 - **WHEN** the fleet returns from a sortie with lower HP and morale and no ship or equipment changed
 - **THEN** no run starts
 
+### Requirement: Auto focus
+poi SHALL switch to the plugin's tab when the player enters the remodel screen, and when a ship or its equipment is changed in game: a ship placed in, removed from or moved within a fleet, a fleet preset loaded, a ship remodeled or modernized, equipment equipped, removed, or moved between slots or ships, or an expansion slot opened. This applies to any fleet, not only the selected one.
+
+The plugin SHALL declare these requests to poi's plugin auto switch rather than switch tabs itself, so the on/off checkbox is poi's "Enable auto switch" setting for this plugin, on by default and remembered by poi. poi's global auto-switch setting also applies.
+
+#### Scenario: Equipment swapped
+- **WHEN** auto switch is on, poi shows another tab, and the user swaps a gun on any ship
+- **THEN** poi switches to the plugin's tab
+
+#### Scenario: Auto switch off
+- **WHEN** the user unchecks "Enable auto switch" for this plugin and enters the remodel screen
+- **THEN** poi stays on its current tab
+
 ### Requirement: Progress and cancel
 The panel SHALL show the run's status in a compact area at the right of the footer, without taking a line of its own:
 - While routes are predicted, it shows that routes are being predicted.
