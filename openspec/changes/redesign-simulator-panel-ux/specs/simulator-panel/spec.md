@@ -11,11 +11,11 @@ The panel SHALL let the user set the number of trials per route with these prese
 
 A remembered trial count that matches a preset SHALL select that preset. Any other count SHALL select Custom with that count filled in. The last fleet, map, and trial count chosen SHALL be remembered between poi sessions.
 
-When the selected map has player-selected branches or a phase, the panel SHALL show one control per choice, labeled with the node and its targets (for example "F → G / J") or as "Phase". Each control starts at compass's default choice. The choices SHALL be remembered per map between poi sessions. Maps without such choices SHALL show no extra controls. Choices SHALL NOT be editable while a run is in progress.
+When the selected map has player-selected branches or a phase, the panel SHALL show one control per choice, labeled with the node and an arrow (for example "F →"), its targets listed in the dropdown, or as "Phase". Each control starts at compass's default choice. The choices SHALL be remembered per map between poi sessions. Maps without such choices SHALL show no extra controls. Choices SHALL NOT be editable while a run is in progress.
 
 #### Scenario: Branch controls for 7-5
 - **WHEN** the user selects 7-5
-- **THEN** the panel shows three controls, F → G / J, H → I / K, and O → P / Q, set to G, I, and P unless the user changed them before
+- **THEN** the panel shows three controls, F → (G or J), H → (I or K), and O → (P or Q), set to G, I, and P unless the user changed them before
 
 #### Scenario: No controls for 5-2
 - **WHEN** the user selects 5-2
@@ -120,7 +120,7 @@ The summary SHALL NOT show a chance of losing a ship. It SHALL be shown only aft
 
 ### Requirement: Narrow, top-down layout
 poi's plugin area is narrow and tall, so the panel SHALL use a single column that fills the plugin area exactly, with no scrollbar for the panel as a whole. From top to bottom it SHALL contain:
-1. the controls bar: fleet, map, Simulate/Cancel and the status area on the first row; trials, branch and phase choices on the second;
+1. the controls bar: fleet, map, Simulate/Cancel and the status area on the first row; trials (with the custom count field) on the second; and, for maps that have them, the branch and phase choices on a third;
 2. the fleet display, which SHALL be collapsible;
 3. the result header and the summary;
 4. any error, then the route cards.
@@ -151,11 +151,11 @@ The panel SHALL fit 400px wide without horizontal scrolling.
 
 ### Requirement: Route cards
 Once routes are predicted, the panel SHALL show one card per route candidate. The cards SHALL put the most promising route first. Finished routes SHALL come first, ordered by their weighted S rate (route probability times S over all of the route's trials), highest first; when equal, by weighted A or better; when still equal, by weighted B or better. Then come routes still being simulated, then routes that do not reach the boss. Ties, and the order within the last two groups, SHALL go by probability, highest first. Simulation SHALL start straight away, with no confirmation step. Each card SHALL have three parts, left to right:
-- **Probability** of the route, as a percentage.
+- **Route probability and reach boss**: the route's probability, and its chance of reaching the boss over all of its trials, each as a labeled percentage. Reach boss shows "—" until the route has a result and for routes that do not reach the boss.
 - **Route** as a stepper: one circle per node after the start node, labeled with its letter and joined by a track, with the boss node marked when the route ends at the boss. Hovering over the stepper shows the route text: the node letters joined by `-`, with `[Boss]` appended when the last node is a boss node, for example `A-B-C2-D[Boss]`. Under each node where some trials turned back, its **retreat rate** is shown, for example "−10.7%". Nodes with no retreats show none. Neighboring rates SHALL NOT overlap.
 - **Boss results** among trials that reached the boss: S, A or better, B or better, and boss sunk.
 
-The cards SHALL NOT show rates over all of a route's trials; those appear, probability-weighted, in the summary.
+Apart from reach boss, the cards SHALL NOT show rates over all of a route's trials; those appear, probability-weighted, in the summary.
 
 A card's results SHALL show that they are pending until that route's simulation finishes. They SHALL be filled in as each route completes. Cards for routes that do not reach the boss SHALL say they are not simulated, rather than showing 0%.
 

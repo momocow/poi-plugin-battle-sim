@@ -61,8 +61,8 @@
   "Moderate damage": "中破",
   "Heavy damage": "大破",
   "{count} damaged": "損傷 {count} 隻",
-  "Probability": "確率",
   "When the boss is reached": "ボス到達時",
   "Sunk": "撃沈",
-  "Not simulated": "未シミュレート"
+  "Not simulated": "未シミュレート",
+  "Route": "ルート"
 }

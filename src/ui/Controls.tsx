@@ -120,32 +120,36 @@ export function Controls(p: ControlsProps) {
             onChange={(e) => p.onTrials(Number(e.currentTarget.value))}
           />
         )}
-        {mapChoices.branches.map((b) => (
-          <label key={b.node}>
-            {`${b.node} → ${b.targets.join(' / ')}`}{' '}
-            <HTMLSelect
-              value={p.choices[b.node]}
-              disabled={p.running}
-              onChange={(e: ChangeEvent) => p.onChoice(b.node, e.currentTarget.value)}
-              options={b.targets}
-            />
-          </label>
-        ))}
-        {mapChoices.phases && (
-          <label>
-            {t('Phase')}{' '}
-            <HTMLSelect
-              value={p.choices.phase}
-              disabled={p.running}
-              onChange={(e: ChangeEvent) => p.onChoice('phase', e.currentTarget.value)}
-              options={mapChoices.phases.map((ph) => ({
-                value: ph.value,
-                label: `${ph.value}: ${t(ph.label)}`,
-              }))}
-            />
-          </label>
-        )}
       </div>
+      {(mapChoices.branches.length > 0 || mapChoices.phases) && (
+        <div className="battle-sim-control-row">
+          {mapChoices.branches.map((b) => (
+            <label key={b.node}>
+              {`${b.node} →`}{' '}
+              <HTMLSelect
+                value={p.choices[b.node]}
+                disabled={p.running}
+                onChange={(e: ChangeEvent) => p.onChoice(b.node, e.currentTarget.value)}
+                options={b.targets}
+              />
+            </label>
+          ))}
+          {mapChoices.phases && (
+            <label>
+              {t('Phase')}{' '}
+              <HTMLSelect
+                value={p.choices.phase}
+                disabled={p.running}
+                onChange={(e: ChangeEvent) => p.onChoice('phase', e.currentTarget.value)}
+                options={mapChoices.phases.map((ph) => ({
+                  value: ph.value,
+                  label: `${ph.value}: ${t(ph.label)}`,
+                }))}
+              />
+            </label>
+          )}
+        </div>
+      )}
     </div>
   )
 }

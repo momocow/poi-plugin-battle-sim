@@ -1,8 +1,9 @@
 /**
- * One card per route, most promising first (see `sortForCards`), in three columns: the
- * route's probability; the route as a stepper, one circle per node with the
- * boss marked and, under each node where trials turned back, its retreat
- * rate; and the boss results among trials that reached the boss.
+ * One card per route, most promising first (see `sortForCards`), in three
+ * columns: the route's probability and its reach-boss rate over all its
+ * trials; the route as a stepper, one circle per node with the boss marked
+ * and, under each node where trials turned back, its retreat rate; and the
+ * boss results among trials that reached the boss.
  */
 import React, { useLayoutEffect, useRef, useState } from 'react'
 
@@ -70,7 +71,12 @@ function RouteCard({ route }: { route: RouteRow }) {
   const cells = rowCells(route)
   return (
     <div className={route.reachesBoss ? 'battle-sim-card' : 'battle-sim-card battle-sim-card-off'}>
-      <div className="battle-sim-card-probability">{pct(route.probability)}</div>
+      <div className="battle-sim-card-left">
+        <span>{t('Route')}</span>
+        <strong>{pct(route.probability)}</strong>
+        <span>{t('Reach boss')}</span>
+        <span>{cells.kind === 'done' ? pct(cells.reachBoss) : '—'}</span>
+      </div>
       <Stepper route={route} />
       {cells.kind === 'done' ? (
         <div className="battle-sim-card-results" title={t('When the boss is reached')}>
@@ -101,7 +107,6 @@ export function RouteCards({ routes }: { routes: RouteRow[] }) {
     <div className="battle-sim-cards">
       {routes.length > 0 && (
         <div className="battle-sim-cards-head battle-sim-muted">
-          <span>{t('Probability')}</span>
           <span>{t('When the boss is reached')}</span>
         </div>
       )}

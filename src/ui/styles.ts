@@ -64,10 +64,11 @@ export const PANEL_CSS = `
 .battle-sim-big { font-size: 22px; font-weight: bold; line-height: 1.2; }
 .battle-sim-summary-extra { display: flex; flex-wrap: wrap; justify-content: center; gap: 2px 24px; }
 .battle-sim-cards { display: flex; flex-direction: column; gap: 6px; font-size: 12px; }
-.battle-sim-cards-head { display: flex; justify-content: space-between; gap: 8px; font-size: 11px; }
-/* Probability | route stepper | boss results. */
-.battle-sim-card { display: grid; grid-template-columns: 3.6em minmax(0, 1fr) auto; align-items: center; gap: 8px; padding: 6px 8px; border: 1px solid rgba(128, 128, 128, 0.3); border-radius: 3px; min-width: 0; }
-.battle-sim-card-probability { font-weight: bold; }
+.battle-sim-cards-head { display: flex; justify-content: flex-end; gap: 8px; font-size: 11px; }
+/* Route probability and reach boss | route stepper | boss results. */
+.battle-sim-card { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 8px; padding: 6px 8px; border: 1px solid rgba(128, 128, 128, 0.3); border-radius: 3px; min-width: 0; }
+.battle-sim-card-left { display: grid; grid-template-columns: auto auto; gap: 0 6px; font-size: 11px; line-height: 1.3; text-align: right; white-space: nowrap; }
+.battle-sim-card-left > :nth-child(odd) { text-align: left; opacity: 0.65; }
 .battle-sim-card-results { display: grid; grid-template-columns: auto auto; gap: 0 6px; font-size: 11px; line-height: 1.3; text-align: right; }
 .battle-sim-card-results > :nth-child(odd) { text-align: left; }
 .battle-sim-card-results-note { font-size: 11px; white-space: nowrap; }

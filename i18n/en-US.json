@@ -61,8 +61,8 @@
   "Moderate damage": "Moderate damage",
   "Heavy damage": "Heavy damage",
   "{count} damaged": "{count} damaged",
-  "Probability": "Probability",
   "When the boss is reached": "When the boss is reached",
   "Sunk": "Sunk",
-  "Not simulated": "Not simulated"
+  "Not simulated": "Not simulated",
+  "Route": "Route"
 }

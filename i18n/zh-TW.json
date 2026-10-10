@@ -22,9 +22,9 @@
   "Fighter Power": "制空值",
   "LoS": "索敵",
   "Formula 33": "33 式",
-  "Reach boss": "到達王點",
+  "Reach boss": "進王",
   "S": "S",
-  "Boss sunk": "擊沉王",
+  "Boss sunk": "擊沉旗艦",
   "Not simulated (does not reach the boss)": "未模擬（不到王點）",
   "Details": "詳細",
   "Retry": "重試",
@@ -56,13 +56,13 @@
   "Settings have changed since this result": "設定已在此結果之後變更",
   "A or better": "A 勝利以上",
   "B or better": "勝利（B 以上）",
-  "{rate} when reached": "抵達時 {rate}",
+  "{rate} when reached": "王點 {rate}",
   "Minor damage": "小破",
   "Moderate damage": "中破",
   "Heavy damage": "大破",
   "{count} damaged": "{count} 艘受損",
-  "Probability": "機率",
   "When the boss is reached": "抵達王點時",
   "Sunk": "擊沉",
-  "Not simulated": "未模擬"
+  "Not simulated": "未模擬",
+  "Route": "路線"
 }
