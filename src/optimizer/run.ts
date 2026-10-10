@@ -27,7 +27,16 @@ export interface SimulateDiag {
   ranks_marginal: RankRates
   reach_boss_rate: number
   boss_sunk_rate: number
-  player_sunk_any_rate: number
+  /** Share of all trials reaching each battle node, in route order; battle nodes only. */
+  per_node_reach: number[]
+  /** One entry per route node (start excluded), from `_meta.route`. */
+  route: RouteNodeMeta[]
+}
+
+export interface RouteNodeMeta {
+  node: string
+  /** Index into `per_node_reach`; null for a node without a battle (resource, empty, maelstrom). */
+  battleIndex: number | null
 }
 
 /** Raised when the caller's AbortSignal fires; never shown as an error. */
@@ -224,12 +233,36 @@ function readDiag(diag: unknown): SimulateDiag {
       RANKS.map((r) => [r, typeof v?.[r] === 'number' ? (v[r] as number) : 0]),
     ) as RankRates
   }
+  const perNodeReach: number[] = []
+  if (Array.isArray(d.per_node_reach) && d.per_node_reach.every((v) => typeof v === 'number')) {
+    perNodeReach.push(...(d.per_node_reach as number[]))
+  } else {
+    missing.push('per_node_reach')
+  }
+  const rawRoute = ((d._meta ?? {}) as Record<string, unknown>).route
+  const route: RouteNodeMeta[] = []
+  if (Array.isArray(rawRoute)) {
+    for (const entry of rawRoute as Record<string, unknown>[]) {
+      const i = entry?.battle_index
+      const valid =
+        typeof entry?.node === 'string' &&
+        (i === null || (typeof i === 'number' && Number.isInteger(i) && i >= 0 && i < perNodeReach.length))
+      if (!valid) {
+        missing.push(`a valid _meta.route entry (got ${JSON.stringify(entry)})`)
+        break
+      }
+      route.push({ node: entry.node as string, battleIndex: i as number | null })
+    }
+  } else {
+    missing.push('_meta.route')
+  }
   const result: SimulateDiag = {
     ranks: ranks('ranks'),
     ranks_marginal: ranks('ranks_marginal'),
     reach_boss_rate: num('reach_boss_rate'),
     boss_sunk_rate: num('boss_sunk_rate'),
-    player_sunk_any_rate: num('player_sunk_any_rate'),
+    per_node_reach: perNodeReach,
+    route,
   }
   if (missing.length > 0) {
     throw new SimError('OPTIMIZER_SCHEMA', 'The optimizer version is incompatible with this plugin.', [
@@ -237,4 +270,18 @@ function readDiag(diag: unknown): SimulateDiag {
     ])
   }
   return result
+}
+
+/**
+ * Check that a result describes the route that was asked for (`nodes`, start
+ * excluded); `readDiag` cannot, as it never sees the request.
+ */
+export function checkRoute(diag: SimulateDiag, nodes: string[]): SimulateDiag {
+  const got = diag.route.map((n) => n.node)
+  if (got.length !== nodes.length || got.some((node, i) => node !== nodes[i])) {
+    throw new SimError('OPTIMIZER_SCHEMA', 'The optimizer version is incompatible with this plugin.', [
+      `result route ${got.join('-')} does not match the requested ${nodes.join('-')}`,
+    ])
+  }
+  return diag
 }

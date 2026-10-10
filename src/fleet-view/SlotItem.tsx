@@ -1,7 +1,7 @@
 /**
- * One equipment line: poi's icon, name, ★N and the proficiency image. The name
- * is cut off with "…" in a narrow card; hovering shows the full name. This is
- * the only module that imports poi's icon component.
+ * One equipment icon, as on poi's fleet tab; hovering shows the name, ★N and
+ * the proficiency image. The expansion slot is set apart by a leading "+".
+ * This is the only module that imports poi's icon component.
  */
 import { Tooltip } from '@blueprintjs/core'
 import { join } from 'node:path'
@@ -19,21 +19,19 @@ const proficiencyImage = (alv: number): string | undefined => {
 
 export function SlotItem({ slot, ex = false }: { slot: SlotView; ex?: boolean }) {
   const alv = slot.proficiency >= 1 && slot.proficiency <= 7 ? proficiencyImage(slot.proficiency) : undefined
-  return (
-    <div className={ex ? 'battle-sim-slot battle-sim-slot-ex' : 'battle-sim-slot'}>
-      {ex && <span className="battle-sim-ex-mark">+</span>}
-      <SlotitemIcon className="battle-sim-slot-icon" slotitemId={slot.iconId} />
-      <Tooltip
-        content={slot.name}
-        placement="top"
-        hoverOpenDelay={200}
-        targetTagName="span"
-        targetProps={{ className: 'battle-sim-slot-name-target' }}
-      >
-        <span className="battle-sim-slot-name">{slot.name}</span>
-      </Tooltip>
+  const details = (
+    <div className="battle-sim-slot-tip">
+      <span>{slot.name}</span>
       {slot.improvement > 0 && <strong className="battle-sim-star">★{slot.improvement}</strong>}
       {alv && <img className="battle-sim-alv" alt={`+${slot.proficiency}`} src={alv} />}
     </div>
+  )
+  return (
+    <>
+      {ex && <span className="battle-sim-ex-mark">+</span>}
+      <Tooltip content={details} placement="top" hoverOpenDelay={100} targetTagName="span">
+        <SlotitemIcon className="battle-sim-slot-icon" slotitemId={slot.iconId} alt={slot.name} />
+      </Tooltip>
+    </>
   )
 }

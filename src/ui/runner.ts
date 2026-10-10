@@ -20,7 +20,7 @@ import { simulateToml } from '../optimizer/config'
 import { simulateRoutes } from '../optimizer/orchestrate'
 import { ensureMapFetched, untilAborted } from '../optimizer/prefetch'
 import { resolveOptimizer, type OptimizerManifest } from '../optimizer/resolve'
-import { Cancelled, runSimulate } from '../optimizer/run'
+import { Cancelled, checkRoute, runSimulate } from '../optimizer/run'
 import { findPackageRoot, workDir } from '../paths'
 import { bossLettersFor, loadBossLetters } from '../routes/boss'
 import { runCompass } from '../routes/compass'
@@ -84,15 +84,18 @@ export async function runSimulation(
     await simulateRoutes({
       routes: indexes,
       signal,
-      run: (rowIndex, _i, routeSignal) =>
-        runSimulate({
+      run: async (rowIndex, _i, routeSignal) => {
+        const nodes = rows[rowIndex]!.nodes.slice(1)
+        const diag = await runSimulate({
           binPath: optimizer.binPath,
           dataDir: optimizer.dataDir,
           workDir: cwd,
           logName: `route-${rowIndex}.log`,
-          toml: simulateToml({ snapshot, map: input.map, nodes: rows[rowIndex]!.nodes.slice(1), trials: input.trials }),
+          toml: simulateToml({ snapshot, map: input.map, nodes, trials: input.trials }),
           signal: routeSignal,
-        }),
+        })
+        return checkRoute(diag, nodes)
+      },
       onRouteDone: (i, diag) => dispatch({ type: 'routeDone', index: indexes[i]!, diag }),
     })
     dispatch({ type: 'finished' })

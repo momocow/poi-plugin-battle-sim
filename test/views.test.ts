@@ -2,7 +2,17 @@ import { describe, expect, it } from 'vitest'
 
 import type { RankRates, SimulateDiag } from '../src/optimizer/run'
 import { initialRunState, progress, runReducer, sortRoutes, type RouteRow, type RunState } from '../src/ui/state'
-import { formatRoute, pct, rowCells, summaryCells } from '../src/ui/views'
+import {
+  formatRoute,
+  isStale,
+  marginOfError,
+  pct,
+  retreats,
+  routeReach,
+  rowCells,
+  sortForCards,
+  summaryCells,
+} from '../src/ui/views'
 import { SimError } from '../src/errors'
 import type { FleetSnapshot } from '../src/fleet/types'
 
@@ -12,7 +22,8 @@ const diag = (reach: number, s: number, a = 0, b = 0, extra: Partial<SimulateDia
   ranks_marginal: ranks(reach * s, reach * a, reach * b),
   reach_boss_rate: reach,
   boss_sunk_rate: reach * 0.5,
-  player_sunk_any_rate: 0.02,
+  per_node_reach: [reach],
+  route: [{ node: 'O', battleIndex: 0 }],
   ...extra,
 })
 
@@ -30,7 +41,7 @@ describe('route text', () => {
   })
 })
 
-describe('route table', () => {
+describe('route cards', () => {
   const rows = (): RouteRow[] =>
     sortRoutes<RouteRow>([
       { nodes: ['1', 'C', 'D'], probability: 0.3, reachesBoss: false },
@@ -64,20 +75,110 @@ describe('route table', () => {
   it('makes the summary equal the probability-weighted sum of the table columns', () => {
     const r = sortRoutes([
       { nodes: ['1', 'A', 'O'], probability: 0.5, reachesBoss: true, diag: diag(1, 0.8, 0.1, 0.1) },
-      { nodes: ['1', 'B', 'O'], probability: 0.3, reachesBoss: true, diag: diag(0.5, 0.4, 0.3, 0.3, { player_sunk_any_rate: 0.1 }) },
+      { nodes: ['1', 'B', 'O'], probability: 0.3, reachesBoss: true, diag: diag(0.5, 0.4, 0.3, 0.3) },
       { nodes: ['1', 'B', 'C'], probability: 0.2, reachesBoss: false },
     ])
     const summary = summaryCells(r)!
-    const weighted = (key: 'reachBoss' | 's' | 'a' | 'bOrWorse' | 'bossSunk') =>
+    const weighted = (key: 'reachBoss' | 's' | 'aPlus' | 'bPlus' | 'bossSunk') =>
       r.reduce((sum, row) => {
         const c = rowCells(row)
         return sum + (c.kind === 'done' ? row.probability * c[key] : 0)
       }, 0)
-    for (const key of ['reachBoss', 's', 'a', 'bOrWorse', 'bossSunk'] as const) {
+    for (const key of ['reachBoss', 's', 'aPlus', 'bPlus', 'bossSunk'] as const) {
       expect(summary[key]).toBeCloseTo(weighted(key), 12)
     }
     expect(summary.sAtBoss).toBeCloseTo(summary.s / summary.reachBoss, 12)
-    expect(summary.shipLost).toBeCloseTo((0.5 * 0.02 + 0.3 * 0.1) / 0.8, 12)
+    expect(summary.bPlusAtBoss).toBeCloseTo(summary.bPlus / summary.reachBoss, 12)
+  })
+
+  it('gives cumulative ranks per route, over all trials and when reached', () => {
+    const cells = rowCells({ nodes: ['1', 'O'], probability: 1, reachesBoss: true, diag: diag(0.8, 0.5, 0.25, 0.125) })
+    if (cells.kind !== 'done') throw new Error('expected a result')
+    expect([cells.s, cells.aPlus, cells.bPlus].map(pct)).toEqual(['40.0%', '60.0%', '70.0%'])
+    expect([cells.sAtBoss, cells.aPlusAtBoss, cells.bPlusAtBoss].map(pct)).toEqual(['50.0%', '75.0%', '87.5%'])
+    // diag() sinks the boss in half of the trials that reach it: 0.4 of all trials, over 0.8 reached.
+    expect(pct(cells.bossSunkAtBoss)).toBe('50.0%')
+  })
+})
+
+describe('card order', () => {
+  it('ranks finished routes by weighted S, then A or better, then B or better; then pending, then not simulated', () => {
+    const routes: RouteRow[] = [
+      { nodes: ['1', 'A'], probability: 0.3, reachesBoss: false },
+      // Weighted S 0.2 × 0.5 = 0.1.
+      { nodes: ['1', 'B', 'O'], probability: 0.2, reachesBoss: true, diag: diag(1, 0.5, 0.1) },
+      { nodes: ['1', 'C', 'O'], probability: 0.1, reachesBoss: true },
+      // Weighted S 0.1, tied with B; weighted A or better 0.1 against B's 0.12: after B.
+      { nodes: ['1', 'D', 'O'], probability: 0.1, reachesBoss: true, diag: diag(1, 1) },
+      // Same S and A or better as B, higher B or better: before B.
+      { nodes: ['1', 'E', 'O'], probability: 0.2, reachesBoss: true, diag: diag(1, 0.5, 0.1, 0.2) },
+      { nodes: ['1', 'F', 'O'], probability: 0.1, reachesBoss: false },
+      // Highest weighted S (0.4 × 0.5) despite retreating in half its trials.
+      { nodes: ['1', 'G', 'O'], probability: 0.4, reachesBoss: true, diag: diag(0.5, 1) },
+    ]
+    expect(sortForCards(routes).map((r) => r.nodes[1])).toEqual(['G', 'E', 'B', 'D', 'C', 'A', 'F'])
+    expect(routes[0]!.nodes[1]).toBe('A')
+  })
+})
+
+describe('retreats by node', () => {
+  const line = (d: SimulateDiag) => retreats(routeReach(d)).map((r) => `${r.node} ${pct(r.rate)}`)
+
+  it('reads 5-2 with a battle at every node', () => {
+    const d = diag(0.59, 1, 0, 0, {
+      per_node_reach: [1.0, 0.893, 0.86, 0.713, 0.59],
+      route: ['B', 'C', 'E', 'F', 'O'].map((node, i) => ({ node, battleIndex: i })),
+    })
+    expect(line(d)).toEqual(['B 10.7%', 'C 3.3%', 'E 14.7%', 'F 12.3%'])
+    expect(routeReach(d).at(-1)?.rate).toBe(0.59)
+  })
+
+  it('gives an empty node the next battle’s reach (2-3 B-E-F-J-N)', () => {
+    const d = diag(0.7, 1, 0, 0, {
+      per_node_reach: [1.0, 0.9, 0.8, 0.7],
+      route: [
+        { node: 'B', battleIndex: null },
+        { node: 'E', battleIndex: 0 },
+        { node: 'F', battleIndex: 1 },
+        { node: 'J', battleIndex: 2 },
+        { node: 'N', battleIndex: 3 },
+      ],
+    })
+    expect(routeReach(d).map((r) => `${r.node} ${pct(r.rate)}`)).toEqual([
+      'B 100.0%',
+      'E 100.0%',
+      'F 90.0%',
+      'J 80.0%',
+      'N 70.0%',
+    ])
+    expect(line(d)).toEqual(['E 10.0%', 'F 10.0%', 'J 10.0%'])
+  })
+
+  it('leaves out drops that would show as 0.0%', () => {
+    const d = diag(0.9996, 1, 0, 0, {
+      per_node_reach: [1, 0.9996],
+      route: [
+        { node: 'A', battleIndex: 0 },
+        { node: 'B', battleIndex: 1 },
+      ],
+    })
+    expect(retreats(routeReach(d))).toEqual([])
+  })
+})
+
+describe('result header', () => {
+  const input = { fleetId: 1, map: '7-5', choices: { F: 'J', H: 'I', O: 'P' }, trials: 2000 }
+
+  it('gives ±2.2% for 2000 trials', () => {
+    expect(pct(marginOfError(2000))).toBe('2.2%')
+  })
+
+  it('is stale when the fleet, map, trials or a choice changes', () => {
+    expect(isStale(input, { ...input, choices: { ...input.choices } })).toBe(false)
+    expect(isStale(input, { ...input, fleetId: 2 })).toBe(true)
+    expect(isStale(input, { ...input, map: '1-5', choices: {} })).toBe(true)
+    expect(isStale(input, { ...input, trials: 500 })).toBe(true)
+    expect(isStale(input, { ...input, choices: { ...input.choices, H: 'K' } })).toBe(true)
   })
 })
 

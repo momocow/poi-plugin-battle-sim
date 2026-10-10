@@ -1,0 +1,54 @@
+[fleet]
+[[fleet.ships]]
+ship_id = 969
+level = 108
+modernization = [38, 0, 46, 26, 3, 0, 0]
+equipment = [{ equip_id = 468, stars = 10 }, { equip_id = 276, stars = 9 }, { equip_id = 365, stars = 4 }, { equip_id = 471, proficiency = 7 }]
+ex_slot = { equip_id = 483, stars = 4 }
+
+[[fleet.ships]]
+ship_id = 724
+level = 94
+modernization = [29, 0, 54, 20, 0, 0, 0]
+equipment = [{ equip_id = 468, stars = 4 }, { equip_id = 161, stars = 9 }, { equip_id = 116, stars = 6 }, { equip_id = 471, proficiency = 7 }]
+ex_slot = { equip_id = 483, stars = 4 }
+
+[[fleet.ships]]
+ship_id = 393
+level = 98
+modernization = [51, 0, 46, 42, 0, 0, 0]
+equipment = [{ equip_id = 475, proficiency = 7 }, { equip_id = 244, proficiency = 7 }, { equip_id = 353, proficiency = 7 }, { equip_id = 547, stars = 8, proficiency = 7 }]
+ex_slot = { equip_id = 478, stars = 10 }
+
+[[fleet.ships]]
+ship_id = 496
+level = 108
+modernization = [30, 48, 55, 33, 3, 0, 0]
+equipment = [{ equip_id = 164, proficiency = 7 }, { equip_id = 50, stars = 10 }, { equip_id = 520, stars = 6 }, { equip_id = 515, stars = 3, proficiency = 7 }]
+ex_slot = { equip_id = 317, stars = 1 }
+
+[[fleet.ships]]
+ship_id = 361
+level = 90
+modernization = [36, 44, 52, 32, 0, 0, 0]
+equipment = [{ equip_id = 164, proficiency = 7 }, { equip_id = 50, stars = 9 }, { equip_id = 520, stars = 6 }, { equip_id = 115, proficiency = 7 }]
+
+[[fleet.ships]]
+ship_id = 693
+level = 85
+modernization = [40, 48, 46, 33, 0, 0, 0]
+equipment = [{ equip_id = 50, stars = 9 }, { equip_id = 520, stars = 6 }, { equip_id = 510, stars = 3, proficiency = 7 }, { equip_id = 115, proficiency = 7 }]
+
+
+[route]
+map = "2-3"
+route = ["B","E","F","J","N"]
+
+[tactics.nodes.N]
+do_night_battle = true
+
+[run]
+trials = 300
+
+[output]
+fields = ["ranks"]

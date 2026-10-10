@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { aggregate, bOrWorse } from '../src/optimizer/aggregate'
+import { aggregate, aOrBetter, bOrBetter } from '../src/optimizer/aggregate'
 import type { RankRates, SimulateDiag } from '../src/optimizer/run'
 
 const ranks = (S: number, rest: Partial<RankRates> = {}): RankRates => ({ S, A: 0, B: 0, C: 0, D: 0, E: 0, ...rest })
@@ -11,7 +11,8 @@ const diag = (reach: number, sAtBoss: number, extra: Partial<SimulateDiag> = {})
   ranks_marginal: ranks(reach * sAtBoss),
   reach_boss_rate: reach,
   boss_sunk_rate: 0,
-  player_sunk_any_rate: 0,
+  per_node_reach: [reach],
+  route: [{ node: 'A', battleIndex: 0 }],
   ...extra,
 })
 
@@ -55,19 +56,19 @@ describe('aggregate', () => {
     expect(aggregate([{ probability: 1 }]).ranksAtBoss).toBeUndefined()
   })
 
-  it('weights ship loss only over simulated routes, renormalized', () => {
-    const a = aggregate([
-      { probability: 0.2, diag: diag(1, 1, { player_sunk_any_rate: 0.1 }) },
-      { probability: 0.2, diag: diag(1, 1, { player_sunk_any_rate: 0.3 }) },
-      { probability: 0.6 },
-    ])
-    expect(a.shipLostSimulated).toBeCloseTo(0.2, 10)
-    expect(aggregate([{ probability: 1 }]).shipLostSimulated).toBeUndefined()
-  })
-
-  it('counts boss sinking over all trials and sums B or worse', () => {
+  it('counts boss sinking over all trials', () => {
     const a = aggregate([{ probability: 0.5, diag: diag(1, 0.5, { boss_sunk_rate: 0.6 }) }, { probability: 0.5 }])
     expect(a.bossSunk).toBeCloseTo(0.3, 10)
-    expect(bOrWorse(ranks(0, { B: 0.1, C: 0.2, D: 0.3, E: 0.05 }))).toBeCloseTo(0.65, 10)
+  })
+
+  it('sums cumulative ranks (S 0.5, A or better 0.7, B or better 0.8)', () => {
+    const marginal = ranks(0.5, { A: 0.2, B: 0.1, C: 0.05 })
+    const a = aggregate([
+      { probability: 1, diag: diag(0.85, 0, { ranks_marginal: marginal, ranks: ranks(0.5 / 0.85) }) },
+    ])
+    expect(a.ranks.S).toBeCloseTo(0.5, 10)
+    expect(aOrBetter(a.ranks)).toBeCloseTo(0.7, 10)
+    expect(bOrBetter(a.ranks)).toBeCloseTo(0.8, 10)
+    expect(bOrBetter(a.ranksAtBoss!)).toBeCloseTo(0.8 / 0.85, 10)
   })
 })

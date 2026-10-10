@@ -1,0 +1,113 @@
+/**
+ * One card per route, most promising first (see `sortForCards`), in three columns: the
+ * route's probability; the route as a stepper, one circle per node with the
+ * boss marked and, under each node where trials turned back, its retreat
+ * rate; and the boss results among trials that reached the boss.
+ */
+import React, { useLayoutEffect, useRef, useState } from 'react'
+
+import { t } from '../i18n'
+import type { RouteRow } from './state'
+import { formatRoute, pct, retreats, routeReach, rowCells, sortForCards } from './views'
+
+/** Circle size, and the room a retreat label like "−14.7%" needs between two node centres. */
+const NODE_PX = 21
+const LABEL_PX = 44
+
+/** Distance between neighbouring node centres, following the stepper's width. */
+function useNodeSpacing(nodeCount: number): [React.RefObject<HTMLDivElement>, number] {
+  const ref = useRef<HTMLDivElement>(null)
+  const [spacing, setSpacing] = useState(Infinity)
+  useLayoutEffect(() => {
+    const el = ref.current
+    if (!el || nodeCount < 2) return undefined
+    const measure = () => setSpacing((el.clientWidth - NODE_PX) / (nodeCount - 1))
+    measure()
+    const observer = new ResizeObserver(measure)
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [nodeCount])
+  return [ref, spacing]
+}
+
+function Stepper({ route }: { route: RouteRow }) {
+  const nodes = route.nodes.slice(1)
+  const [ref, spacing] = useNodeSpacing(nodes.length)
+  const turnedBack = new Map(route.diag ? retreats(routeReach(route.diag)).map((r) => [r.node, r.rate]) : [])
+  // Only when nodes sit too close for side-by-side labels: in a run of them, every other one drops a line.
+  const lowered = nodes.map(() => false)
+  if (spacing < LABEL_PX) {
+    nodes.forEach((node, i) => {
+      lowered[i] = i > 0 && turnedBack.has(node) && turnedBack.has(nodes[i - 1]!) && !lowered[i - 1]
+    })
+  }
+  const twoLines = lowered.some(Boolean)
+  return (
+    <div
+      ref={ref}
+      className={twoLines ? 'battle-sim-steps battle-sim-steps-two' : 'battle-sim-steps'}
+      title={formatRoute(route.nodes, route.reachesBoss)}
+    >
+      {nodes.map((node, i) => {
+        const boss = route.reachesBoss && i === nodes.length - 1
+        const retreat = turnedBack.get(node)
+        return (
+          <div key={i} className="battle-sim-step">
+            <div className={boss ? 'battle-sim-step-node battle-sim-step-boss' : 'battle-sim-step-node'}>{node}</div>
+            {retreat !== undefined && (
+              <div className={lowered[i] ? 'battle-sim-step-retreat battle-sim-step-low' : 'battle-sim-step-retreat'}>
+                −{pct(retreat)}
+              </div>
+            )}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+function RouteCard({ route }: { route: RouteRow }) {
+  const cells = rowCells(route)
+  return (
+    <div className={route.reachesBoss ? 'battle-sim-card' : 'battle-sim-card battle-sim-card-off'}>
+      <div className="battle-sim-card-probability">{pct(route.probability)}</div>
+      <Stepper route={route} />
+      {cells.kind === 'done' ? (
+        <div className="battle-sim-card-results" title={t('When the boss is reached')}>
+          <span className="battle-sim-rank-s">S</span>
+          <span className="battle-sim-rank-s">{pct(cells.sAtBoss)}</span>
+          <span className="battle-sim-rank-a">A+</span>
+          <span className="battle-sim-rank-a">{pct(cells.aPlusAtBoss)}</span>
+          <span className="battle-sim-rank-b">B+</span>
+          <span className="battle-sim-rank-b">{pct(cells.bPlusAtBoss)}</span>
+          <span>{t('Sunk')}</span>
+          <span>{pct(cells.bossSunkAtBoss)}</span>
+        </div>
+      ) : (
+        <div className="battle-sim-card-results-note battle-sim-muted">
+          {cells.kind === 'pending' ? (
+            t('Simulating…')
+          ) : (
+            <span title={t('Not simulated (does not reach the boss)')}>{t('Not simulated')}</span>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+export function RouteCards({ routes }: { routes: RouteRow[] }) {
+  return (
+    <div className="battle-sim-cards">
+      {routes.length > 0 && (
+        <div className="battle-sim-cards-head battle-sim-muted">
+          <span>{t('Probability')}</span>
+          <span>{t('When the boss is reached')}</span>
+        </div>
+      )}
+      {sortForCards(routes).map((route) => (
+        <RouteCard key={route.nodes.join('-')} route={route} />
+      ))}
+    </div>
+  )
+}

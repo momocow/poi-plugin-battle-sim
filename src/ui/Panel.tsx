@@ -1,5 +1,8 @@
 /**
- * The plugin panel: controls → status → fleet (collapsible) → summary → route table.
+ * The plugin panel, filling poi's plugin area without an outer scrollbar:
+ * controls bar (with the run status), fleet (collapsible), result header and
+ * summary, all fixed; below them the error and the route cards, the only part
+ * that scrolls. The result is dimmed once the settings no longer match it.
  *
  * Before a run the fleet display follows the live store; from the start of a
  * run it shows the run's snapshot. The fleet for a run is read from the store
@@ -18,12 +21,15 @@ import { t } from '../i18n'
 import { getStoreState } from '../poi'
 import { Controls } from './Controls'
 import { errorSummary, ErrorView } from './ErrorView'
-import { choicesForMap, clampTrials, loadInputs, normalMaps, saveInputs, type SavedInputs } from './inputs'
-import { RouteTable } from './RouteTable'
+import { choicesForMap, clampTrials, groupMapsByArea, loadInputs, normalMaps, saveInputs, type SavedInputs } from './inputs'
+import { ResultHeader } from './ResultHeader'
+import { RouteCards } from './RouteCards'
 import { runSimulation } from './runner'
-import { initialRunState, isRunning, progress, runReducer, type RunInput } from './state'
+import { initialRunState, isRunning, runReducer, type RunInput } from './state'
+import { StatusArea } from './StatusArea'
 import { PANEL_CSS } from './styles'
 import { Summary } from './Summary'
+import { isStale } from './views'
 
 /** The store slices the live fleet display depends on. */
 function useLiveState(): PoiState {
@@ -55,7 +61,10 @@ export function Panel() {
     saveInputs(next)
   }
   const choices = choicesForMap(inputs, inputs.map)
-  const maps = useMemo(() => normalMaps(live.const?.$maps), [live.const?.$maps])
+  const maps = useMemo(
+    () => groupMapsByArea(normalMaps(live.const?.$maps), live.const?.$maps, live.const?.$mapareas),
+    [live.const?.$maps, live.const?.$mapareas],
+  )
 
   const start = (input: RunInput) => {
     abortRef.current?.abort()
@@ -63,24 +72,34 @@ export function Panel() {
     abortRef.current = controller
     void runSimulation(input, getStoreState() as PoiState | undefined, dispatch, controller.signal)
   }
-  const simulate = () => start({ fleetId: inputs.fleetId, map: inputs.map, choices, trials: inputs.trials })
+  const current: RunInput = { fleetId: inputs.fleetId, map: inputs.map, choices, trials: inputs.trials }
+  const simulate = () => start(current)
 
-  // Live before a run; the run's snapshot from its start through its result.
+  // Live before a run; the run's snapshot from its start through its result, at the run's map.
   let fleet: { model?: FleetViewModel; error?: SimError; capturedAt?: number }
   try {
     fleet = run.snapshot
-      ? { model: buildFleetViewModel(run.snapshot, live.const ?? {}), capturedAt: run.snapshot.capturedAt }
-      : { model: buildFleetViewModel(snapshotFleet(live, inputs.fleetId), live.const ?? {}) }
+      ? {
+          model: buildFleetViewModel(run.snapshot, live.const ?? {}, run.input?.map ?? inputs.map),
+          capturedAt: run.snapshot.capturedAt,
+        }
+      : { model: buildFleetViewModel(snapshotFleet(live, inputs.fleetId), live.const ?? {}, inputs.map) }
   } catch (err) {
     fleet = { error: err instanceof SimError ? err : new SimError('INTERNAL', String(err)) }
   }
 
-  const { finished, total } = progress(run)
+  const fleetNames = [1, 2, 3, 4].map((id) => live.info?.fleets?.find((f) => f.api_id === id)?.api_name)
+  const stale = run.input !== undefined && !running && isStale(run.input, current)
+  const result =
+    run.routes && run.input && run.snapshot
+      ? { routes: run.routes, input: run.input, capturedAt: run.snapshot.capturedAt }
+      : undefined
   return (
     <div className="battle-sim">
       <style>{PANEL_CSS}</style>
       <Controls
         fleetId={inputs.fleetId}
+        fleetNames={fleetNames}
         map={inputs.map}
         maps={maps}
         choices={choices}
@@ -92,22 +111,10 @@ export function Panel() {
         onTrials={(trials) => update({ trials: clampTrials(trials) })}
         onSimulate={simulate}
         onCancel={() => abortRef.current?.abort()}
+        status={<StatusArea run={run} />}
       />
 
-      <div className="battle-sim-status">
-        {run.phase === 'predicting' && <span>{t('Predicting routes…')}</span>}
-        {run.phase === 'simulating' && <span>{t('Simulating {finished} / {total}', { finished, total })}</span>}
-        {run.phase === 'simulating' && run.fetchingEnemyData && (
-          <span className="battle-sim-muted">{t('First run of this map — fetching enemy data, this may take a minute or more')}</span>
-        )}
-        {run.phase === 'done' && <span>{t('Done')}</span>}
-        {run.devOptimizer && <Tag intent="warning">{t('Development optimizer')}</Tag>}
-      </div>
-      {run.phase === 'error' && run.error && (
-        <ErrorView error={run.error} onRetry={run.input ? () => start(run.input!) : undefined} />
-      )}
-
-      <div>
+      <div className="battle-sim-section">
         <div className="battle-sim-section-head" onClick={() => setFleetOpen(!fleetOpen)}>
           <span>{fleetOpen ? '▾' : '▸'}</span>
           <span>{t('Fleet {id}', { id: run.snapshot?.fleetId ?? inputs.fleetId })}</span>
@@ -127,12 +134,19 @@ export function Panel() {
           ))}
       </div>
 
-      {run.routes && run.input && run.snapshot && (
-        <>
-          {run.phase === 'done' && <Summary routes={run.routes} input={run.input} capturedAt={run.snapshot.capturedAt} />}
-          <RouteTable routes={run.routes} />
-        </>
+      {result && (
+        <div className={`battle-sim-section battle-sim-result${stale ? ' battle-sim-stale' : ''}`}>
+          <ResultHeader input={result.input} capturedAt={result.capturedAt} stale={stale} />
+          {run.phase === 'done' && <Summary routes={result.routes} />}
+        </div>
       )}
+
+      <div className={`battle-sim-body${stale ? ' battle-sim-stale' : ''}`}>
+        {run.phase === 'error' && run.error && (
+          <ErrorView error={run.error} onRetry={run.input ? () => start(run.input!) : undefined} />
+        )}
+        {result && <RouteCards routes={result.routes} />}
+      </div>
     </div>
   )
 }

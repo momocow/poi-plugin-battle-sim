@@ -61,6 +61,11 @@ export interface MstMap {
   api_name: string
 }
 
+export interface MstMaparea {
+  api_id: number
+  api_name: string
+}
+
 export interface PoiState {
   info?: {
     basic?: { api_level?: number }
@@ -73,6 +78,7 @@ export interface PoiState {
     $equips?: Record<string, MstEquip>
     $shipTypes?: Record<string, MstShipType>
     $maps?: Record<string, MstMap>
+    $mapareas?: Record<string, MstMaparea>
   }
   sortie?: { combinedFlag?: number }
 }

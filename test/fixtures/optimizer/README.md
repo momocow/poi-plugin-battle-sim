@@ -11,3 +11,16 @@ session. Each case is `<case>.stdout.ndjson`, `<case>.stderr.txt` and
 The two hand-written files cover what the real optimizer does not produce on
 demand: `missing-terminal.json` (a `start` line and nothing else) and
 `unknown-schema.json` (a future `schema: 2`). They use `{exitCode, stdout, stderr}`.
+
+`recorded-0.2.1/`: real `simulate --config - --json --seed 1` output from
+optimizer 0.2.1 (tag `v0.2.1`, commit 05c1017e, the darwin-arm64 release
+binary), recorded against a warm kcnav cache. Same file layout as
+`recorded-0.2.0/`.
+
+- `success`: 5-2 `B-C-E-F-O` from `input.toml`. In 0.2.1, B is a pass-through
+  node and C an air raid, so `_meta.route` has a null `battle_index` at B.
+- `pass-through-2-3`: 2-3 `B-E-F-J-N` from `input-2-3.toml`; B is an empty
+  node, which 0.2.0 rejected with "no enemy comp".
+
+The 0.2.0 `success` recording has no `_meta.route`, so it now stands for an
+optimizer that is too old.

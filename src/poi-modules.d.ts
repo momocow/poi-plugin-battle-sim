@@ -46,7 +46,10 @@ declare module '@blueprintjs/core' {
   type Props = { [key: string]: unknown; children?: ReactNode }
   export const Button: ComponentType<Props>
   export const HTMLSelect: ComponentType<Props>
+  export const Icon: ComponentType<Props>
   export const Popover: ComponentType<Props>
+  export const ProgressBar: ComponentType<Props>
+  export const Spinner: ComponentType<Props>
   export const Tooltip: ComponentType<Props>
   export const Tag: ComponentType<Props>
 }

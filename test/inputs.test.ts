@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest'
 
-import { choicesForMap, clampTrials, loadInputs, normalMaps, saveInputs } from '../src/ui/inputs'
+import { choicesForMap, clampTrials, groupMapsByArea, isTrialPreset, loadInputs, normalMaps, saveInputs } from '../src/ui/inputs'
 import { loadStore } from './helpers'
 
 describe('map list', () => {
@@ -11,6 +11,26 @@ describe('map list', () => {
     expect(maps).toContain('7-5')
     expect(maps.every((m) => Number(m.split('-')[0]) <= 7)).toBe(true)
     expect(normalMaps({ 611: { api_id: 611, api_maparea_id: 61, api_no: 1, api_name: 'event' } })).toEqual([])
+  })
+
+  it('groups maps by sea area, named from the master data', () => {
+    const store = loadStore()
+    const groups = groupMapsByArea(normalMaps(store.const!.$maps), store.const!.$maps, store.const!.$mapareas)
+    expect(groups.map((g) => g.area)).toEqual([1, 2, 3, 4, 5, 6, 7])
+    expect(groups[0]!.name).toBe('鎮守府海域')
+    expect(groups[0]!.maps[0]).toEqual({ map: '1-1', name: '鎮守府正面海域' })
+    expect(groups[6]!.maps).toContainEqual({ map: '7-5', name: 'ジャワ島沖' })
+    expect(groupMapsByArea(['1-1', '1-2', '2-1'], undefined, undefined)).toEqual([
+      { area: 1, name: undefined, maps: [{ map: '1-1', name: undefined }, { map: '1-2', name: undefined }] },
+      { area: 2, name: undefined, maps: [{ map: '2-1', name: undefined }] },
+    ])
+  })
+})
+
+describe('trial presets', () => {
+  it('selects a preset for 500, 2000 and 10000, and Custom otherwise', () => {
+    expect([500, 2000, 10000].map(isTrialPreset)).toEqual([true, true, true])
+    expect([3000, 1, 100000].map(isTrialPreset)).toEqual([false, false, false])
   })
 })
 

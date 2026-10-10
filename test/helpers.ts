@@ -13,10 +13,13 @@ export interface ProcessFixture {
   stderr: string
 }
 
-/** A recorded case from `fixtures/optimizer/recorded-0.2.0`, or a hand-written `<name>.json`. */
+/**
+ * A recorded case such as `recorded-0.2.1/success` under `fixtures/optimizer`,
+ * or a hand-written `<name>.json` there.
+ */
 export function loadOptimizerFixture(name: string): ProcessFixture {
   const dir = join(__dirname, 'fixtures', 'optimizer')
-  const recorded = join(dir, 'recorded-0.2.0', name)
+  const recorded = join(dir, name)
   if (existsSync(`${recorded}.exit`)) {
     return {
       exitCode: Number(readFileSync(`${recorded}.exit`, 'utf8').trim()),

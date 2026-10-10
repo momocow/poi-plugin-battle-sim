@@ -9,7 +9,8 @@ const diag = (s: number): SimulateDiag => ({
   ranks_marginal: { S: s, A: 0, B: 0, C: 0, D: 0, E: 0 },
   reach_boss_rate: 1,
   boss_sunk_rate: 0,
-  player_sunk_any_rate: 0,
+  per_node_reach: [1],
+  route: [{ node: 'O', battleIndex: 0 }],
 })
 
 /** A run that finishes when `release(index)` is called, or rejects when aborted. */
