@@ -54,10 +54,10 @@
 
 - [x] 8.1 `Panel.tsx`: fixed sections for controls, fleet (still collapsible), and result header with summary; a `.battle-sim-body` below them holds the error and route cards and is the only scroller; no outer scrollbar
 - [x] 8.2 `styles.ts`: flex-column panel with an inner scroller, or the sticky fallback per 0.4; styles for the status area, route cards, probability bar, stale dimming; remove the unused table styles
-- [ ] 8.3 Check at 400px wide in poi, light and dark themes: no horizontal scroll, controls stay visible while scrolling, long routes wrap
+- [x] 8.3 Check at 400px wide in poi, light and dark themes: no horizontal scroll, controls stay visible while scrolling, long routes wrap
 
 ## 9. Strings and verification
 
 - [x] 9.1 Add new strings and remove unused ones in `i18n/en-US.json`, `ja-JP.json`, `zh-TW.json` (keys avoid ": " and a trailing "."); `test/i18n.test.ts` passes
 - [x] 9.2 `npm run typecheck` and `npm test` pass
-- [ ] 9.3 Do a real run in poi (for example 5-2, 2-3 through B or D, and 7-5): check summary values against the cards, the retreat line, the stale dimming after changing the map, and that "Done" fades
+- [x] 9.3 Do a real run in poi (for example 5-2, 2-3 through B or D, and 7-5): check summary values against the cards, the retreat line, the stale dimming after changing the map, and that "Done" fades

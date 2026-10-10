@@ -7,13 +7,21 @@ The poi plugin panel where the user picks a fleet and a map, checks or edits the
 ## Requirements
 
 ### Requirement: Inputs
-The panel SHALL let the user choose a fleet (1–4) and a normal map (worlds 1–7, including their sub-maps such as 7-2/7-3). It SHALL let the user set the number of trials, which defaults to 2000. Event maps SHALL NOT be offered. The last fleet, map, and trial count chosen SHALL be remembered between poi sessions.
+The panel SHALL let the user choose a fleet (1–4) and a normal map (worlds 1–7, including their sub-maps such as 7-2/7-3). Event maps SHALL NOT be offered. The map options SHALL be grouped by world, each group labeled with the world number and its sea-area name from the game data (for example "1: 鎮守府海域"), or the number only when the game data is not loaded. In the open list, each map option SHALL show the map number and its name from the game data, for example "1-1 鎮守府正面海域"; the closed select SHALL show the map number only. Each fleet option SHALL show the fleet number and its in-game name, for example "1: 第一艦隊". When the game data is not loaded, the option SHALL show the number only.
 
-When the selected map has player-selected branches or a phase, the panel SHALL show one control per choice, labeled with the node and its targets (for example "F → G / J") or as "Phase". Each control starts at compass's default choice. The choices SHALL be remembered per map between poi sessions. Maps without such choices SHALL show no extra controls. Choices SHALL NOT be editable while a run is in progress.
+The panel SHALL let the user set the number of trials per route with these presets:
+- Quick (500)
+- Normal (2000), the default
+- Precise (10000)
+- Custom, which shows a number field accepting 1–100000
+
+A remembered trial count that matches a preset SHALL select that preset. Any other count SHALL select Custom with that count filled in. The last fleet, map, and trial count chosen SHALL be remembered between poi sessions.
+
+When the selected map has player-selected branches or a phase, the panel SHALL show one control per choice, labeled with the node and an arrow (for example "F →"), its targets listed in the dropdown, or as "Phase". Each control starts at compass's default choice. The choices SHALL be remembered per map between poi sessions. Maps without such choices SHALL show no extra controls. Choices SHALL NOT be editable while a run is in progress.
 
 #### Scenario: Branch controls for 7-5
 - **WHEN** the user selects 7-5
-- **THEN** the panel shows three controls, F → G / J, H → I / K, and O → P / Q, set to G, I, and P unless the user changed them before
+- **THEN** the panel shows three controls, F → (G or J), H → (I or K), and O → (P or Q), set to G, I, and P unless the user changed them before
 
 #### Scenario: No controls for 5-2
 - **WHEN** the user selects 5-2
@@ -23,13 +31,35 @@ When the selected map has player-selected branches or a phase, the panel SHALL s
 - **WHEN** the user picked fleet 2 and 5-2, closes poi, and opens it again
 - **THEN** the panel opens with fleet 2 and 5-2 selected
 
+#### Scenario: Fleet names
+- **WHEN** fleet 3 is named "輸送部隊" in game
+- **THEN** the fleet select lists "3: 輸送部隊"
+
+#### Scenario: Custom trial count restored
+- **WHEN** the user set a custom count of 3000, closes poi, and opens it again
+- **THEN** the trials control shows Custom with 3000
+
 ### Requirement: Fleet display
 The panel SHALL show the fleet being simulated. Before a run, it SHALL show the selected fleet from live game state and update when that state changes. Once a run starts, it SHALL show the captured snapshot instead, labeled with the time it was taken, and it SHALL keep showing that snapshot through the results, even if the game state changes.
 
 The display SHALL have:
-- a summary row: fleet speed, fighter power, and line of sight (LoS) by Formula 33 at multiplier ×1. Hovering over the LoS value SHALL show the ×3 and ×4 values.
-- one row per ship: ship name, level, and ship type.
-- per ship, its equipment in slot order. Each item shows its icon and name, the improvement level as ★N when above 0, and an aircraft proficiency marker when proficiency is between 1 and 7. The expansion-slot item is shown after the main slots and visibly set apart. Empty slots are not shown.
+- **A summary row** with the following:
+  - fleet speed;
+  - fighter power;
+  - line of sight (LoS) by Formula 33, at the multiplier that applies to the selected map: ×3 for 6-2 and 6-3, ×4 for 3-5 and 6-1, and ×1 otherwise. The multiplier is shown next to the value, and hovering over the value shows ×1, ×3 and ×4.
+  - When any ship is below full HP, a warning with the number of damaged ships.
+- **One row per ship**, laid out after poi's fleet tab: level and ship type above the ship name, then current and maximum HP with morale, then the equipment.
+  - HP SHALL be shown as `now / max` above a bar whose length is the HP ratio, colored by damage state as poi colors it:
+    - no damage above 75% of maximum;
+    - 小破 above 50% and at most 75%;
+    - 中破 above 25% and at most 50%;
+    - 大破 at most 25%.
+  - Hovering over a damaged ship's HP SHALL name its damage state.
+  - Morale SHALL be shown as its number with poi's colored square, in poi's bands (0–19, 20–29, 30–39, 40–48, 49, 50–52, 53 and above), so a sparkled ship shows a yellow square and an unchanged ship a white one.
+- **Per ship, its equipment in slot order, as icons.**
+  - Hovering over an icon shows the item's name, the improvement level as ★N when above 0, and an aircraft proficiency marker when proficiency is between 1 and 7.
+  - The expansion-slot item is shown after the main slots and visibly set apart.
+  - Empty slots are not shown.
 
 Names SHALL follow poi's language setting.
 
@@ -43,54 +73,113 @@ Names SHALL follow poi's language setting.
 
 #### Scenario: Improved and skilled equipment
 - **WHEN** a ship carries a ★10 gun and a fighter with proficiency 7
-- **THEN** the gun shows ★10, and the fighter shows the proficiency-7 marker
+- **THEN** both show as icons; hovering over the gun shows its name with ★10, and hovering over the fighter shows the proficiency-7 marker
+
+#### Scenario: Damaged ship
+- **WHEN** a ship has 20 of 45 HP and another has 44 of 45
+- **THEN** the first shows 20 / 45 with an orange (中破) bar, the second shows 44 / 45 with a green bar, and the summary row warns of 2 damaged ships
+
+#### Scenario: Morale
+- **WHEN** a ship has morale 53 and another has morale 49
+- **THEN** the first shows 53 with a yellow square, and the second shows 49 with a white square
+
+#### Scenario: LoS for 6-1
+- **WHEN** the selected map is 6-1
+- **THEN** the summary row shows the ×4 LoS value labeled ×4
 
 ### Requirement: Progress and cancel
-While routes are being predicted or simulated, the panel SHALL show which stage is running, and how many routes are finished out of the total. It SHALL offer a Cancel action. The Simulate action SHALL be disabled while a run is in progress. While the run waits for the map's enemy-data fetch, the panel SHALL say that enemy data is being fetched, until that fetch ends.
+The panel SHALL show the run's status in a compact area at the end of the controls bar, without taking a line of its own:
+- While routes are predicted, it shows that routes are being predicted.
+- While routes are simulated, it shows how many routes are finished out of the total, with a progress bar.
+- While the run waits for the map's enemy-data fetch, it shows a short "fetching enemy data" note until that fetch ends. Hovering over the note shows the full explanation, including that this may take 15 seconds or more.
+- When the run finishes, it shows "Done", and hides that after about 3 seconds.
+- When a development optimizer is in use, it shows a small warning marker. Hovering over the marker says a development optimizer is in use.
+
+A single action button SHALL read Simulate when no run is in progress and Cancel while a run is in progress.
 
 #### Scenario: Running
 - **WHEN** 1 of 3 routes has finished
-- **THEN** the panel shows "1 / 3" and an enabled Cancel button
+- **THEN** the status area shows "1 / 3" with a progress bar a third full, and the action button reads Cancel
 
 #### Scenario: First run of a map
 - **WHEN** a map is simulated for the first time
-- **THEN** the status says enemy data is being fetched, and the message clears once the fetch ends
+- **THEN** the status area shows the short fetching note, and the note clears once the fetch ends
 
-### Requirement: Route table
-Once routes are predicted, the panel SHALL show them in a table, one row per candidate, ordered by probability with the highest first. Simulation SHALL start straight away, with no confirmation step. Each row SHALL contain:
-- **Route**: the node letters after the start node, joined by `-`. When the last node is a boss node, `[Boss]` is appended to it, for example `A-B-C2-D[Boss]`.
-- **Probability** of the route.
-- **Simulation results** for the route: chance of reaching the boss, S rank, A rank, B rank or worse at the boss, chance of sinking the boss, and chance of losing at least one ship. These rates SHALL count all of the route's trials, including trials that retreated before the boss, so that each column weighted by Probability adds up to the summary.
-- **Rank rates when the boss is reached**: for each of S, A, and B or worse, the rate among only the trials that reached the boss, shown next to the rate over all trials. The column headers SHALL say which is which, for example "S (all trials)" and "S (at boss)".
+#### Scenario: Done fades
+- **WHEN** a run finishes
+- **THEN** the status area shows "Done", hides it about 3 seconds later, and the action button reads Simulate
 
-Result cells SHALL show that they are pending until that route's simulation finishes, and SHALL be filled in as each route completes. Rows for routes that do not reach the boss SHALL show their result cells as not simulated rather than as 0%.
+### Requirement: Route cards
+Once routes are predicted, the panel SHALL show one card per route candidate. The cards SHALL put the most promising route first. Finished routes SHALL come first, ordered by their weighted S rate (route probability times S over all of the route's trials), highest first; when equal, by weighted A or better; when still equal, by weighted B or better. Then come routes still being simulated, then routes that do not reach the boss. Ties, and the order within the last two groups, SHALL go by probability, highest first. Simulation SHALL start straight away, with no confirmation step. Each card SHALL have three parts, left to right:
+- **Route probability and reach boss**: the route's probability, and its chance of reaching the boss over all of its trials, each as a labeled percentage. Reach boss shows "—" until the route has a result and for routes that do not reach the boss.
+- **Route** as a stepper: one circle per node after the start node, labeled with its letter and joined by a track, with the boss node marked when the route ends at the boss. Hovering over the stepper shows the route text: the node letters joined by `-`, with `[Boss]` appended when the last node is a boss node, for example `A-B-C2-D[Boss]`. Under each node where some trials turned back, its **retreat rate** is shown, for example "−10.7%". Nodes with no retreats show none. Neighboring rates SHALL NOT overlap.
+- **Boss results** among trials that reached the boss: S, A or better, B or better, and boss sunk.
 
-#### Scenario: Table for 2-5
+Apart from reach boss, the cards SHALL NOT show rates over all of a route's trials; those appear, probability-weighted, in the summary.
+
+A card's results SHALL show that they are pending until that route's simulation finishes. They SHALL be filled in as each route completes. Cards for routes that do not reach the boss SHALL say they are not simulated, rather than showing 0%.
+
+#### Scenario: Cards for 2-5
 - **WHEN** compass predicts `1-C-D` at 0.3, `1-C-E-G-L-N` at 0.42, and `1-C-E-G-L-O` at 0.28, and the boss is O
-- **THEN** the table lists `C-E-G-L-N` 42.0%, `C-D` 30.0%, and `C-E-G-L-O[Boss]` 28.0%; only the `[Boss]` row is simulated, and the other two show "not simulated"
+- **THEN** once the boss route finishes, the cards list C-E-G-L-O at 28.0% with O marked as the boss, then C-E-G-L-N at 42.0% and C-D at 30.0%; only the boss card is simulated, and the other two say "not simulated"
+
+#### Scenario: Most promising first
+- **WHEN** route X (probability 0.6) finishes with S in 50% of its trials, and route Y (probability 0.2) with S in 90%
+- **THEN** X's card (weighted S 30.0%) comes before Y's (18.0%)
+
+#### Scenario: Tie on S
+- **WHEN** two finished routes have the same weighted S, and route X has the higher weighted A or better
+- **THEN** X's card comes first
 
 #### Scenario: No confirmation
 - **WHEN** route prediction succeeds
-- **THEN** the table appears and simulation of the boss routes starts without any further user action
+- **THEN** the cards appear and simulation of the boss routes starts without any further user action
 
-#### Scenario: Both rank rates per route
-- **WHEN** a `[Boss]` route reaches the boss in 90% of trials and gets S rank in 80% of the trials that reach it
-- **THEN** that row shows S (all trials) 72.0% and S (at boss) 80.0%
+#### Scenario: Retreat rates under the nodes
+- **WHEN** the route `B-C-E-F-O[Boss]` finishes with per-node reach rates 1.0, 0.893, 0.86, 0.713, 0.59
+- **THEN** its stepper shows −10.7% under B, −3.3% under C, −14.7% under E and −12.3% under F, none under O, and no two of these labels overlap
+
+#### Scenario: Results when the boss is reached
+- **WHEN** a route reaches the boss in 80% of its trials, gets S in 40% of all its trials, and sinks the boss in 40% of all its trials
+- **THEN** its card shows S 50.0% and boss sunk 50.0%
 
 #### Scenario: Results arrive per route
 - **WHEN** 1 of 2 simulated routes has finished
-- **THEN** that row shows its results, and the other row's result cells still show pending
+- **THEN** that card shows its results, and the other card's results still show pending
+
+### Requirement: Result header
+Above the summary, once a run has routes, the panel SHALL show a result header naming the following:
+- the map;
+- the fleet number;
+- the snapshot time;
+- the trials per route;
+- the run's margin of error: ±(98 / √trials)%, to one decimal place, which is the worst-case 95% interval for a single route's rate;
+- any branch and phase choices used, for example "F→J, H→I, O→P".
+
+When the selected fleet, map, choices, or trial count no longer match the run's, the header, summary, and route cards SHALL be dimmed. The header SHALL then note that the settings have changed since this result.
+
+#### Scenario: Header after a run
+- **WHEN** fleet 1 finished a run on 7-5 with 2000 trials and choices F→J, H→I, O→P
+- **THEN** the header shows 7-5, fleet 1, the snapshot time, 2000 trials, ±2.2%, and "F→J, H→I, O→P"
+
+#### Scenario: Stale result
+- **WHEN** a run on 1-4 has finished and the user selects 1-5
+- **THEN** the 1-4 results stay visible but dimmed, with a note that the settings have changed
 
 ### Requirement: Summary result
-Above the route table, the panel SHALL show a summary combining all routes as defined by the battle-simulation weighted aggregate: chance of reaching the boss, S rank, A rank, B rank or worse at the boss, chance of sinking the boss, and chance of losing at least one ship. For S, A, and B or worse, the summary SHALL show both the probability-weighted rate and the rate when the boss is reached, as defined in battle-simulation. The chance of losing at least one ship SHALL be labeled as covering only the simulated routes. The summary SHALL be shown only after every simulated route has finished. The summary SHALL also show the fleet snapshot time and the trial count per route. All percentages in the summary and the table SHALL be shown to one decimal place.
+Below the fleet display and above the route cards, the panel SHALL show a summary combining all routes, as defined by the battle-simulation weighted aggregate. It SHALL contain, in this order:
+1. **S**, **A or better**, and **B or better** as the primary, most prominent values. These are probability-weighted over all trials, so they are the chance per sortie. Each SHALL show its rate when the boss is reached as a smaller secondary value, for example "56.7% (96.0% when reached)".
+2. The chance of reaching the boss and the chance of sinking the boss.
+
+The summary SHALL NOT show a chance of losing a ship. It SHALL be shown only after every simulated route has finished. All percentages in the summary and the route cards SHALL be shown to one decimal place.
 
 #### Scenario: Summary after completion
 - **WHEN** every simulated route has finished
-- **THEN** the summary shows the overall rates, the snapshot time, the trial count, and any branch and phase choices used (for example "F→J, H→I, O→P")
+- **THEN** the summary shows S, A or better, and B or better, each with its rate when reached, followed by the reach-boss and boss-sunk rates
 
 #### Scenario: Summary matches the table
-- **WHEN** the table has a single `[Boss]` route at 28.0% with an S rate of 50.0%, and the other routes do not reach the boss
-- **THEN** the summary shows S (all trials) 14.0% and S (at boss) 50.0%
+- **WHEN** there is a single `[Boss]` route at 28.0% with an S rate of 50.0% over its trials, and the other routes do not reach the boss
+- **THEN** the summary shows S 14.0% with 50.0% when reached
 
 ### Requirement: Errors are actionable
 Every failure SHALL be shown in the panel with a short summary and expandable details. This covers an unusable fleet, a missing or corrupt binary, an incompatible optimizer schema, an optimizer error, and each cause of route prediction failure. After a route prediction failure, the panel SHALL offer a retry. A failure SHALL NOT leave the panel stuck in a running state.
@@ -104,15 +193,27 @@ Every failure SHALL be shown in the panel with a short summary and expandable de
 - **THEN** the panel shows its message with the error chain under details, and Simulate is enabled again
 
 ### Requirement: Narrow, top-down layout
-poi's plugin area is narrow and tall, so the panel SHALL use a single top-down column in this order: controls (fleet, map, branch and phase choices, trials, Simulate and Cancel), status, fleet display, summary, route table. The panel SHALL fit 400px wide without horizontal scrolling. The route table SHALL fit by putting each route's text on its own full-width line above that route's numbers, and by stacking each rank's rate at the boss under its all-trials rate in the same cell. The fleet display SHALL be collapsible so the results can be brought into view.
+poi's plugin area is narrow and tall, so the panel SHALL use a single column that fills the plugin area exactly, with no scrollbar for the panel as a whole. From top to bottom it SHALL contain:
+1. the controls bar: fleet, map, Simulate/Cancel and the status area on the first row; trials (with the custom count field) on the second; and, for maps that have them, the branch and phase choices on a third;
+2. the fleet display, which SHALL be collapsible;
+3. the result header and the summary;
+4. any error, then the route cards.
+
+The first three SHALL stay in place. Only the last area SHALL scroll, vertically and on its own, when its content is taller than the room left.
+
+The panel SHALL fit 400px wide without horizontal scrolling.
 
 #### Scenario: Panel 400px wide
 - **WHEN** the panel is 400px wide and shows a finished 4-2 run with 8 routes
-- **THEN** every column of the route table is visible without scrolling sideways, and long routes wrap onto more lines rather than overflowing
+- **THEN** every route card fits without scrolling sideways, and long routes wrap onto more lines rather than overflowing
+
+#### Scenario: Only the routes scroll
+- **WHEN** a finished run has more route cards than fit below the summary
+- **THEN** the route cards scroll, while the controls bar, the fleet display and the summary stay in place, and the panel shows no outer scrollbar
 
 #### Scenario: Fleet collapsed
 - **WHEN** the user collapses the fleet display
-- **THEN** only its header with the Live or Snapshot tag stays visible, and the summary moves up
+- **THEN** only its header with the Live or Snapshot tag stays visible, and the route cards get the freed space
 
 ### Requirement: Localized text
 All panel and settings-page text SHALL be available in Traditional Chinese, Japanese, and English, following poi's language setting.
