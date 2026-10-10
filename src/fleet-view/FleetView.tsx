@@ -62,8 +62,8 @@ export function FleetView({ model }: { model: FleetViewModel }) {
     <div className="battle-sim-popover">
       <div>{t('Formula 33')}</div>
       <div>× 1: {model.los.x1.toFixed(2)}</div>
-      <div>× 3 (6-2, 6-3): {model.los.x3.toFixed(2)}</div>
-      <div>× 4 (3-5, 6-1): {model.los.x4.toFixed(2)}</div>
+      <div>× 3: {model.los.x3.toFixed(2)}</div>
+      <div>× 4: {model.los.x4.toFixed(2)}</div>
     </div>
   )
   return (
