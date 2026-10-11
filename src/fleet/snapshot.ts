@@ -47,6 +47,7 @@ export function snapshotFleet(state: PoiState | undefined, fleetId: number, now 
   const shipSnapshots = rosterIds.map((rosterId): ShipSnapshot => {
     const ship = ships[String(rosterId)]
     if (!ship) throw missing(`ship ${rosterId} is not in the store`)
+    const mst = state.const!.$ships![String(ship.api_ship_id)]
     const slots = ship.api_slot.flatMap((equipId, i) =>
       equipId > 0 ? [equipSnapshot(equipId, ship.api_onslot[i] ?? 0)] : [],
     )
@@ -57,6 +58,12 @@ export function snapshotFleet(state: PoiState | undefined, fleetId: number, now 
       hp: ship.api_nowhp,
       maxHp: ship.api_maxhp,
       morale: ship.api_cond,
+      fuel: ship.api_fuel,
+      ammo: ship.api_bull,
+      planes: ship.api_onslot.slice(0, ship.api_slotnum),
+      fuelMax: mst?.api_fuel_max,
+      ammoMax: mst?.api_bull_max,
+      planesMax: mst?.api_maxeq?.slice(0, ship.api_slotnum),
       los: ship.api_sakuteki[0] ?? 0,
       speed: ship.api_soku,
       luck: ship.api_lucky[0] ?? 0,
@@ -69,7 +76,7 @@ export function snapshotFleet(state: PoiState | undefined, fleetId: number, now 
 }
 
 export interface Loadout {
-  /** Equal for two states exactly when the same ships, at the same HP, carry the same equipment. */
+  /** Equal for two states exactly when the same ships, at the same HP, supply and planes, carry the same equipment. */
   key: string
   /** At least one ship, and every ship's main slots all filled; the expansion slot is not counted. */
   complete: boolean
@@ -78,9 +85,10 @@ export interface Loadout {
 }
 
 /**
- * The ships, their HP and equipment of the given fleets, enough to tell
- * whether they changed; undefined while the game data is not loaded. Levels,
- * morale and proficiency are left out, so those alone do not change it.
+ * The ships, their HP, supply, planes and equipment of the given fleets,
+ * enough to tell whether they changed; undefined while the game data is not
+ * loaded. Levels, morale and proficiency are left out, so those alone do not
+ * change it.
  */
 export function fleetLoadout(state: PoiState | undefined, fleetIds: number[]): Loadout | undefined {
   const info = state?.info
@@ -89,7 +97,8 @@ export function fleetLoadout(state: PoiState | undefined, fleetIds: number[]): L
     rosterId > 0 ? `${rosterId}★${info.equips![String(rosterId)]?.api_level ?? 0}` : ''
   let count = 0
   let complete = true
-  const hp: Record<number, number> = {}
+  // HP, fuel, ammo and planes by roster id: in the key, not in `setup`.
+  const condition: Record<number, number[]> = {}
   const parts = fleetIds.map((fleetId) => {
     const rosterIds = (info.fleets!.find((f) => f.api_id === fleetId)?.api_ship ?? []).filter((id) => id > 0)
     return rosterIds
@@ -100,7 +109,7 @@ export function fleetLoadout(state: PoiState | undefined, fleetIds: number[]): L
           complete = false
           return `${rosterId}?`
         }
-        hp[rosterId] = ship.api_nowhp
+        condition[rosterId] = [ship.api_nowhp, ship.api_fuel, ship.api_bull, ...ship.api_onslot.slice(0, ship.api_slotnum)]
         const slots = ship.api_slot.slice(0, ship.api_slotnum)
         if (slots.length < ship.api_slotnum || slots.some((id) => id <= 0)) complete = false
         return `${rosterId}:${ship.api_ship_id}[${slots.map(equipKey).join(',')}+${equipKey(ship.api_slot_ex)}]`
@@ -108,5 +117,5 @@ export function fleetLoadout(state: PoiState | undefined, fleetIds: number[]): L
       .join(' ')
   })
   const setup = parts.join(' | ')
-  return { key: `${setup} ♥${JSON.stringify(hp)}`, complete: complete && count > 0, setup }
+  return { key: `${setup} ♥${JSON.stringify(condition)}`, complete: complete && count > 0, setup }
 }

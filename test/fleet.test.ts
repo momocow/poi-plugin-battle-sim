@@ -122,6 +122,30 @@ describe('fleet outputs', () => {
     expect(Object.keys(toDeckbuilder(snap).f1.s1!.items)).toEqual(['i1', 'i2', 'ix'])
   })
 
+  it('captures fuel, ammo and planes per main slot with their maximums', () => {
+    const state = loadStore()
+    const ship = state.info!.ships!['545']!
+    ship.api_fuel = 20
+    ship.api_bull = 12
+    ship.api_onslot = [17, 9, 13, 1, 0]
+    const flagship = snapshotFleet(state, 1).ships[0]!
+    expect(flagship).toMatchObject({ fuel: 20, ammo: 12, planes: [17, 9, 13, 1], fuelMax: 35, ammoMax: 40 })
+    expect(flagship.planesMax).toEqual([17, 18, 13, 1])
+  })
+
+  it('writes fuel_now, ammo_now and slots_now only when below full, capped at the maximum', () => {
+    const full = fleetShipsToml(snapshotFleet(loadStore(), 1)).split('[[fleet.ships]]')[1]!
+    expect(full).not.toMatch(/fuel_now|ammo_now|slots_now/)
+    const snap = snapshotFleet(loadStore(), 1)
+    Object.assign(snap.ships[0]!, { fuel: 20, ammo: 0, planes: [17, 9, 99, 1] })
+    const low = fleetShipsToml(snap).split('[[fleet.ships]]')[1]!
+    expect(low).toContain('fuel_now = 20')
+    expect(low).toContain('ammo_now = 0')
+    expect(low).toContain('slots_now = [17, 9, 13, 1]')
+    Object.assign(snap.ships[0]!, { fuelMax: undefined, ammoMax: undefined, planesMax: undefined })
+    expect(fleetShipsToml(snap).split('[[fleet.ships]]')[1]).not.toMatch(/fuel_now|ammo_now|slots_now/)
+  })
+
   it('writes level, modernization, morale and proficiency, and hp_now only when damaged', () => {
     const state = loadStore()
     const snap = snapshotFleet(state, 1)
@@ -184,6 +208,18 @@ describe('fleetLoadout', () => {
     expect(fleetLoadout(state, [1])!.setup).toBe(before.setup)
     flagship.api_slot = [flagship.api_slot[1]!, flagship.api_slot[0]!, ...flagship.api_slot.slice(2)]
     expect(fleetLoadout(state, [1])!.setup).not.toBe(before.setup)
+  })
+
+  it('changes the key, not the setup, with fuel, ammo or planes', () => {
+    const state = loadStore()
+    const before = fleetLoadout(state, [1])!
+    const flagship = state.info!.ships!['545']!
+    for (const change of [() => (flagship.api_fuel -= 1), () => (flagship.api_bull -= 1), () => (flagship.api_onslot[1]! -= 1)]) {
+      change()
+      const after = fleetLoadout(state, [1])!
+      expect(after.key).not.toBe(before.key)
+      expect(after.setup).toBe(before.setup)
+    }
   })
 
   it('is undefined before the game data loads', () => {

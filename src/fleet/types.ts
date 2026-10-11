@@ -10,6 +10,8 @@ export interface ApiShip {
   api_nowhp: number
   api_maxhp: number
   api_cond: number
+  api_fuel: number
+  api_bull: number
   api_soku: number
   api_slot: number[]
   api_onslot: number[]
@@ -40,6 +42,10 @@ export interface MstShip {
   api_id: number
   api_name: string
   api_stype: number
+  api_fuel_max?: number
+  api_bull_max?: number
+  /** Plane capacity per slot, padded to 5. */
+  api_maxeq?: number[]
   [key: string]: unknown
 }
 
@@ -105,6 +111,14 @@ export interface ShipSnapshot {
   hp: number
   maxHp: number
   morale: number
+  fuel: number
+  ammo: number
+  /** Planes in each main slot the ship has, empty slots included; the expansion slot is not counted. */
+  planes: number[]
+  /** From the ship master data; undefined when it is missing there. */
+  fuelMax?: number
+  ammoMax?: number
+  planesMax?: number[]
   /** Current LoS including equipment, as poi's Formula 33 helper expects. */
   los: number
   speed: number
