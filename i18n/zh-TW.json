@@ -69,6 +69,15 @@
   "Simulate when the fleet or these settings change": "艦隊或設定變更時自動模擬",
   "Automatic run delay (ms)": "自動模擬延遲（毫秒）",
   "How long the fleet and inputs must stay unchanged before a run starts by itself; 0–60000, default {ms}": "艦隊與設定停止變動後，自動開始模擬前等待的時間；0–60000，預設 {ms}",
+  "The sortie path could not be read from the map data": "無法從海域資料讀出這次出擊的航線",
+  "No predicted route matches the sortie path — check the branch choices": "沒有預測航線符合這次出擊走過的航線 — 請檢查分歧選擇",
+  "{map} at {node}": "{map} 位於 {node}",
+  "Special attacks fired earlier in this sortie are not known": "無法得知這次出擊稍早已發動的特殊攻擊",
   "Developer log": "開發者紀錄",
-  "Writes a detailed log of sorties and runs, for checking behavior afterwards, to {path}": "將出擊與模擬的詳細紀錄寫入 {path}，供事後檢查行為"
+  "Writes a detailed log of sorties and runs, for checking behavior afterwards, to {path}": "將出擊與模擬的詳細紀錄寫入 {path}，供事後檢查行為",
+  "Taken in this sortie": "這次出擊已經走過",
+  "The fleet is on a sortie; runs follow it": "艦隊正在出擊中，模擬會跟著出擊進度",
+  "Sortie mode": "出擊模式",
+  "Plan mode": "規劃模式",
+  "Runs use the fleet and map selected here": "模擬使用這裡選擇的艦隊與海域"
 }

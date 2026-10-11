@@ -69,6 +69,15 @@
   "Simulate when the fleet or these settings change": "艦隊や設定が変わったら自動でシミュレート",
   "Automatic run delay (ms)": "自動実行の待ち時間（ms）",
   "How long the fleet and inputs must stay unchanged before a run starts by itself; 0–60000, default {ms}": "艦隊や設定の変更が止まってから自動でシミュレーションを始めるまでの時間。0〜60000、既定値 {ms}",
+  "The sortie path could not be read from the map data": "海域データから今回の出撃経路を読み取れませんでした",
+  "No predicted route matches the sortie path — check the branch choices": "今回の出撃経路に合う予測ルートがありません — 分岐の選択を確認してください",
+  "{map} at {node}": "{map} {node}マス",
+  "Special attacks fired earlier in this sortie are not known": "この出撃で先に発動した特殊攻撃は不明です",
   "Developer log": "開発者ログ",
-  "Writes a detailed log of sorties and runs, for checking behavior afterwards, to {path}": "出撃とシミュレーションの詳細なログを {path} に書き出し、後から動作を確認できるようにします"
+  "Writes a detailed log of sorties and runs, for checking behavior afterwards, to {path}": "出撃とシミュレーションの詳細なログを {path} に書き出し、後から動作を確認できるようにします",
+  "Taken in this sortie": "今回の出撃で通過済み",
+  "The fleet is on a sortie; runs follow it": "艦隊は出撃中です。シミュレーションは出撃の進行に合わせます",
+  "Sortie mode": "出撃モード",
+  "Plan mode": "計画モード",
+  "Runs use the fleet and map selected here": "ここで選んだ艦隊と海域でシミュレーションします"
 }

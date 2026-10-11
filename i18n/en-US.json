@@ -69,6 +69,15 @@
   "Simulate when the fleet or these settings change": "Simulate when the fleet or these settings change",
   "Automatic run delay (ms)": "Automatic run delay (ms)",
   "How long the fleet and inputs must stay unchanged before a run starts by itself; 0–60000, default {ms}": "How long the fleet and inputs must stay unchanged before a run starts by itself; 0–60000, default {ms}",
+  "The sortie path could not be read from the map data": "The sortie path could not be read from the map data",
+  "No predicted route matches the sortie path — check the branch choices": "No predicted route matches the sortie path — check the branch choices",
+  "{map} at {node}": "{map} at {node}",
+  "Special attacks fired earlier in this sortie are not known": "Special attacks fired earlier in this sortie are not known",
   "Developer log": "Developer log",
-  "Writes a detailed log of sorties and runs, for checking behavior afterwards, to {path}": "Writes a detailed log of sorties and runs, for checking behavior afterwards, to {path}"
+  "Writes a detailed log of sorties and runs, for checking behavior afterwards, to {path}": "Writes a detailed log of sorties and runs, for checking behavior afterwards, to {path}",
+  "Taken in this sortie": "Taken in this sortie",
+  "The fleet is on a sortie; runs follow it": "The fleet is on a sortie; runs follow it",
+  "Sortie mode": "Sortie mode",
+  "Plan mode": "Plan mode",
+  "Runs use the fleet and map selected here": "Runs use the fleet and map selected here"
 }

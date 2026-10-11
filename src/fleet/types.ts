@@ -88,7 +88,15 @@ export interface PoiState {
     $maps?: Record<string, MstMap>
     $mapareas?: Record<string, MstMaparea>
   }
-  sortie?: { combinedFlag?: number }
+  sortie?: {
+    combinedFlag?: number
+    /** Per fleet, whether it is out; fleets 1 and 2 both for a combined fleet. */
+    sortieStatus?: boolean[]
+    /** Area and map number run together, for example "25" for 2-5. */
+    sortieMapId?: number | string
+    /** The start cell, then each cell entered, the current one last. */
+    spotHistory?: number[]
+  }
   /** The tab poi shows in its main area, and the plugin shown in the plugin pane. */
   ui?: { activeMainTab?: string; activePluginName?: string }
   /** `tabarea.double`: poi's double-tabbed layout, with plugins in a pane of their own. */

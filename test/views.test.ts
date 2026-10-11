@@ -180,6 +180,13 @@ describe('result footer', () => {
     expect(isStale(input, { ...input, trials: 500 })).toBe(true)
     expect(isStale(input, { ...input, choices: { ...input.choices, H: 'K' } })).toBe(true)
   })
+
+  it('treats a sortie moving on or ending as stale', () => {
+    const atC = { ...input, sortie: { cells: [0, 3] } }
+    expect(isStale(atC, { ...atC, sortie: { cells: [0, 3] } })).toBe(false)
+    expect(isStale(atC, { ...atC, sortie: { cells: [0, 3, 5] } })).toBe(true)
+    expect(isStale(atC, input)).toBe(true)
+  })
 })
 
 describe('run state machine', () => {

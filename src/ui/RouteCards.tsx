@@ -1,8 +1,9 @@
 /**
  * One card per route, most promising first (see `sortForCards`), in three
  * columns: the route's probability and its reach-boss rate over all its
- * trials; the route as a stepper, one circle per node with the boss marked
- * and, under each node where trials turned back, its retreat rate; and the
+ * trials; the route as a stepper, one circle per node with the boss marked,
+ * the nodes already passed mid-sortie dimmed, and, under each node ahead where
+ * trials turned back, its retreat rate; and the
  * boss results among trials that reached the boss.
  */
 import React, { useLayoutEffect, useRef, useState } from 'react'
@@ -51,9 +52,11 @@ function Stepper({ route }: { route: RouteRow }) {
     >
       {nodes.map((node, i) => {
         const boss = route.reachesBoss && i === nodes.length - 1
-        const retreat = turnedBack.get(node)
+        // Passed mid-sortie: not simulated, so no retreat rate.
+        const passed = i + 1 < (route.from ?? 1)
+        const retreat = passed ? undefined : turnedBack.get(node)
         return (
-          <div key={i} className="battle-sim-step">
+          <div key={i} className={passed ? 'battle-sim-step battle-sim-step-passed' : 'battle-sim-step'}>
             <div className={boss ? 'battle-sim-step-node battle-sim-step-boss' : 'battle-sim-step-node'}>{node}</div>
             {retreat !== undefined && (
               <div className={lowered[i] ? 'battle-sim-step-retreat battle-sim-step-low' : 'battle-sim-step-retreat'}>

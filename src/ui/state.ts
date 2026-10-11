@@ -19,9 +19,13 @@ export interface RunInput {
   map: string
   choices: ChoiceValues
   trials: number
+  /** Set while the fleet is on a sortie of `map`: the cells visited, the current one last. */
+  sortie?: { cells: number[] }
 }
 
 export interface RouteRow extends RouteCandidate {
+  /** Index in `nodes` of the first node simulated: the node the fleet is at mid-sortie, else 1 (after the start). */
+  from?: number
   /** Set once this route's simulation finished; never set for non-boss routes. */
   diag?: SimulateDiag
 }
@@ -35,13 +39,21 @@ export interface RunState {
   devOptimizer?: boolean
   /** Waiting for this map's shared enemy-data fetch (first run); cleared when it ends. */
   fetchingEnemyData?: boolean
+  /** Mid-sortie, when the sortie wasn't seen from its start: earlier special attacks are unknown. */
+  sortieUnobserved?: boolean
   error?: SimError
 }
 
 export type RunAction =
   | { type: 'start'; input: RunInput; snapshot: FleetSnapshot }
   /** `routes` already sorted with `sortRoutes`; `routeDone` indexes refer to this order. */
-  | { type: 'predicted'; routes: RouteCandidate[]; devOptimizer: boolean; fetchingEnemyData?: boolean }
+  | {
+      type: 'predicted'
+      routes: RouteRow[]
+      devOptimizer: boolean
+      fetchingEnemyData?: boolean
+      sortieUnobserved?: boolean
+    }
   | { type: 'enemyDataReady' }
   | { type: 'routeDone'; index: number; diag: SimulateDiag }
   | { type: 'finished' }
@@ -67,6 +79,7 @@ export function runReducer(state: RunState, action: RunAction): RunState {
         phase: 'simulating',
         devOptimizer: action.devOptimizer,
         fetchingEnemyData: action.fetchingEnemyData ?? false,
+        sortieUnobserved: action.sortieUnobserved,
         routes: action.routes,
       }
     case 'enemyDataReady':

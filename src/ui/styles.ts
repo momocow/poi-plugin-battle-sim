@@ -18,6 +18,11 @@ export const PANEL_CSS = `
 .battle-sim-controls { flex: none; flex-direction: column; align-items: stretch; padding: 8px 8px 6px; border-bottom: 1px solid rgba(128, 128, 128, 0.3); }
 .battle-sim-trials { width: 7em; }
 .battle-sim-auto { margin: 0; }
+/* A branch already taken in a sortie: its tooltip's target carries the not-allowed cursor. */
+.battle-sim-decided { cursor: not-allowed; }
+.battle-sim-decided select { pointer-events: none; }
+/* The mode tag (plan or sortie): pushed to the right end of the first control row. */
+.battle-sim-mode { margin-left: auto; font-weight: bold; }
 /* Fixed, so the long map names in the list do not widen the closed select. */
 .battle-sim-map-select { width: 5.5em; }
 .battle-sim-map-select select { min-width: 0; }
@@ -33,6 +38,7 @@ export const PANEL_CSS = `
 .battle-sim-stale { opacity: 0.5; }
 .battle-sim-footer { flex: none; display: flex; gap: 8px; align-items: center; min-height: 26px; padding: 4px 8px; font-size: 12px; border-top: 1px solid rgba(128, 128, 128, 0.3); }
 .battle-sim-footer-result { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
+.battle-sim-footer-marker { margin-left: 6px; vertical-align: -1px; }
 .battle-sim-section-head { display: flex; gap: 6px; align-items: center; cursor: pointer; user-select: none; }
 .battle-sim-fleet-summary { display: flex; flex-wrap: wrap; gap: 2px 12px; margin: 2px 0; }
 .battle-sim-hover { text-decoration: underline dotted; cursor: help; }
@@ -87,6 +93,8 @@ export const PANEL_CSS = `
 .battle-sim-step-node { width: 21px; height: 21px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; color: #fff; background: #2d72d2; position: relative; }
 .battle-sim-step-boss { background: #cd4246; }
 .battle-sim-card-off .battle-sim-step-node { background: #8f99a8; }
+/* Nodes the fleet has already passed mid-sortie: hollow, so the nodes still ahead stand out. */
+.battle-sim-step-passed .battle-sim-step-node { background: transparent; color: #8f99a8; box-shadow: inset 0 0 0 2px #8f99a8; }
 .battle-sim-step-retreat { position: absolute; top: 23px; left: 50%; transform: translateX(-50%); font-size: 10px; white-space: nowrap; color: #cd4246; }
 .bp6-dark .battle-sim-step-retreat { color: #fa999c; }
 .battle-sim-steps-two { padding: 28px 0; }

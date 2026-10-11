@@ -21,6 +21,8 @@ const SUMMARY: Record<ErrorCode, string> = {
   COMPASS_SHAPE: 'Route prediction failed — the compass page has an unexpected structure',
   COMPASS_UNSUPPORTED_MAP: 'Route prediction failed — compass does not support this map or fleet',
   COMPASS_TIMEOUT: 'Route prediction failed — compass timed out',
+  SORTIE_MAP_UNREADABLE: 'The sortie path could not be read from the map data',
+  SORTIE_PATH_UNMATCHED: 'No predicted route matches the sortie path — check the branch choices',
   INTERNAL: 'Something unexpected went wrong',
 }
 

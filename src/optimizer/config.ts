@@ -5,6 +5,8 @@
  * route's last node, and the optimizer requires `do_night_battle` there; the
  * plugin always pursues night battle at the boss. `[output] fields = ["ranks"]`
  * selects the diag channel that carries every rate the panel shows.
+ * `special_attacks_fired` lists the once-per-sortie specials already fired,
+ * so the optimizer won't fire them again in the rest of a sortie.
  */
 import { fleetShipsToml } from '../fleet/toToml'
 import type { FleetSnapshot } from '../fleet/types'
@@ -17,10 +19,13 @@ export function simulateToml(input: {
   /** Nodes after the start node, ending at the boss. */
   nodes: string[]
   trials: number
+  /** Special-attack ids fired earlier in the sortie, one per firing. */
+  specialAttacksFired?: number[]
 }): string {
   const boss = input.nodes[input.nodes.length - 1]
   return [
     '[fleet]',
+    ...(input.specialAttacksFired?.length ? [`special_attacks_fired = [${input.specialAttacksFired.join(', ')}]`] : []),
     '',
     fleetShipsToml(input.snapshot),
     '',

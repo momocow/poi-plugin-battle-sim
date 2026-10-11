@@ -15,6 +15,12 @@ export function formatRoute(nodes: string[], reachesBoss: boolean): string {
   return reachesBoss ? `${text}[Boss]` : text
 }
 
+/** Mid-sortie, the node the fleet was at: the first node simulated. */
+export function atNode(routes: RouteRow[] | undefined): string | undefined {
+  const row = routes?.find((r) => r.from !== undefined)
+  return row ? row.nodes[row.from!] : undefined
+}
+
 /** One decimal place; undefined (no trial reached the boss) shows as "—". */
 export const pct = (x: number | undefined): string => (x === undefined ? '—' : `${(x * 100).toFixed(1)}%`)
 
@@ -107,9 +113,13 @@ export const retreats = (reach: NodeRate[]): NodeRate[] =>
 /** The worst-case (p = 0.5) 95% interval of one route's rate, as a fraction: 0.98 / √trials. */
 export const marginOfError = (trials: number): number => 0.98 / Math.sqrt(trials)
 
-/** Whether `current` would run something other than `run`: another fleet, map, trial count or choice. */
+/**
+ * Whether `current` would run something other than `run`: another fleet, map, trial count or choice, or the
+ * sortie moved on or ended.
+ */
 export function isStale(run: RunInput, current: RunInput): boolean {
   if (run.fleetId !== current.fleetId || run.map !== current.map || run.trials !== current.trials) return true
+  if (String(run.sortie?.cells) !== String(current.sortie?.cells)) return true
   const keys = new Set([...Object.keys(run.choices), ...Object.keys(current.choices)])
   return [...keys].some((k) => run.choices[k] !== current.choices[k])
 }

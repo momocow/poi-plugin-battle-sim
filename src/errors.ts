@@ -17,6 +17,10 @@ export type ErrorCode =
   | 'COMPASS_SHAPE'
   | 'COMPASS_UNSUPPORTED_MAP'
   | 'COMPASS_TIMEOUT'
+  /** Mid-sortie: the cells visited cannot be read as node letters from the map's kcnav topology. */
+  | 'SORTIE_MAP_UNREADABLE'
+  /** Mid-sortie: no predicted route starts with the nodes visited. */
+  | 'SORTIE_PATH_UNMATCHED'
   /** A bug or an environment poi should have provided; details carry the cause. */
   | 'INTERNAL'
 
