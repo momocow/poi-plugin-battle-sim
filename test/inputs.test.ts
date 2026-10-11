@@ -8,7 +8,9 @@ import {
   isTrialPreset,
   loadInputs,
   normalMaps,
+  parseRankDisplay,
   PLUGIN_ID,
+  RANK_DISPLAY_KEY,
   saveInputs,
   TRIALS_KEY,
 } from '../src/ui/inputs'
@@ -75,6 +77,14 @@ describe('saved inputs', () => {
     expect(clampTrials(undefined)).toBe(2000)
     expect(clampTrials('fast')).toBe(2000)
     expect(clampTrials(3000)).toBe(3000)
+  })
+})
+
+describe('rank display', () => {
+  it('is individual unless the config holds "cumulative"', () => {
+    expect(RANK_DISPLAY_KEY).toBe('plugin.poi_battle_sim.rankDisplay')
+    expect(parseRankDisplay('cumulative')).toBe('cumulative')
+    for (const v of [undefined, 'individual', 'both', true, null]) expect(parseRankDisplay(v)).toBe('individual')
   })
 })
 

@@ -4,11 +4,13 @@
  * trials; the route as a stepper, one circle per node with the boss marked,
  * the nodes already passed mid-sortie dimmed, and, under each node ahead where
  * trials turned back, its retreat rate; and the
- * boss results among trials that reached the boss.
+ * boss results among trials that reached the boss, A and B on their own or
+ * as A+ and B+ by the rank display.
  */
 import React, { useLayoutEffect, useRef, useState } from 'react'
 
 import { t } from '../i18n'
+import type { RankDisplay } from './inputs'
 import type { RouteRow } from './state'
 import { formatRoute, pct, retreats, routeReach, rowCells, sortForCards, type RateCells } from './views'
 
@@ -71,7 +73,8 @@ function Stepper({ route }: { route: RouteRow }) {
 }
 
 /** The boss results; without cells, an invisible stand-in of the same size. */
-function Results({ cells }: { cells: RateCells | undefined }) {
+function Results({ cells, mode }: { cells: RateCells | undefined; mode: RankDisplay }) {
+  const plus = mode === 'cumulative' ? '+' : ''
   return (
     <div
       className={cells ? 'battle-sim-card-results' : 'battle-sim-card-results battle-sim-hidden'}
@@ -79,10 +82,10 @@ function Results({ cells }: { cells: RateCells | undefined }) {
     >
       <span className="battle-sim-rank-s">S</span>
       <span className="battle-sim-rank-s">{pct(cells?.sAtBoss)}</span>
-      <span className="battle-sim-rank-a">A+</span>
-      <span className="battle-sim-rank-a">{pct(cells?.aPlusAtBoss)}</span>
-      <span className="battle-sim-rank-b">B+</span>
-      <span className="battle-sim-rank-b">{pct(cells?.bPlusAtBoss)}</span>
+      <span className="battle-sim-rank-a">A{plus}</span>
+      <span className="battle-sim-rank-a">{pct(cells?.aAtBoss)}</span>
+      <span className="battle-sim-rank-b">B{plus}</span>
+      <span className="battle-sim-rank-b">{pct(cells?.bAtBoss)}</span>
       <span>{t('Sunk')}</span>
       <span>{pct(cells?.bossSunkAtBoss)}</span>
       {/* Holds the value column at its widest, 100.0%, so cards line up whatever their rates. */}
@@ -91,8 +94,8 @@ function Results({ cells }: { cells: RateCells | undefined }) {
   )
 }
 
-function RouteCard({ route }: { route: RouteRow }) {
-  const cells = rowCells(route)
+function RouteCard({ route, mode }: { route: RouteRow; mode: RankDisplay }) {
+  const cells = rowCells(route, mode)
   return (
     <div className={route.reachesBoss ? 'battle-sim-card' : 'battle-sim-card battle-sim-card-off'}>
       <div className="battle-sim-card-left">
@@ -109,7 +112,7 @@ function RouteCard({ route }: { route: RouteRow }) {
       ) : (
         // A pending card keeps the results' room, hidden under its note, so finishing does not move anything.
         <div className="battle-sim-card-results-area">
-          <Results cells={cells.kind === 'done' ? cells : undefined} />
+          <Results cells={cells.kind === 'done' ? cells : undefined} mode={mode} />
           {cells.kind === 'pending' && (
             <div className="battle-sim-card-results-note battle-sim-muted">{t('Simulating…')}</div>
           )}
@@ -119,7 +122,7 @@ function RouteCard({ route }: { route: RouteRow }) {
   )
 }
 
-export function RouteCards({ routes }: { routes: RouteRow[] }) {
+export function RouteCards({ routes, mode }: { routes: RouteRow[]; mode: RankDisplay }) {
   return (
     <div className="battle-sim-cards">
       {routes.length > 0 && (
@@ -128,7 +131,7 @@ export function RouteCards({ routes }: { routes: RouteRow[] }) {
         </div>
       )}
       {sortForCards(routes).map((route) => (
-        <RouteCard key={route.nodes.join('-')} route={route} />
+        <RouteCard key={route.nodes.join('-')} route={route} mode={mode} />
       ))}
     </div>
   )

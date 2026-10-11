@@ -3,10 +3,12 @@
  *
  * Per-route cells count all of that route's trials, so each value weighted
  * by the route's probability adds up to the summary's value; the "when
- * reached" values sit next to them and are not weighted.
+ * reached" values sit next to them and are not weighted. A and B are each
+ * rank on its own or cumulative, as the rank display setting says.
  */
 import { aggregate, aOrBetter, bOrBetter, type Aggregate } from '../optimizer/aggregate'
-import type { SimulateDiag } from '../optimizer/run'
+import type { RankRates, SimulateDiag } from '../optimizer/run'
+import type { RankDisplay } from './inputs'
 import type { RouteRow, RunInput } from './state'
 
 /** `['1','A','B','C2','D']` → `A-B-C2-D`, plus `[Boss]` when the last node is the boss. */
@@ -27,13 +29,15 @@ export const pct = (x: number | undefined): string => (x === undefined ? '—' :
 export interface RateCells {
   reachBoss: number
   s: number
-  aPlus: number
-  bPlus: number
+  /** A, or A or better when the rank display is cumulative. */
+  a: number
+  /** B, or B or better when the rank display is cumulative. */
+  b: number
   bossSunk: number
   /** Among trials that reached the boss; undefined when none did. */
   sAtBoss: number | undefined
-  aPlusAtBoss: number | undefined
-  bPlusAtBoss: number | undefined
+  aAtBoss: number | undefined
+  bAtBoss: number | undefined
   bossSunkAtBoss: number | undefined
 }
 
@@ -42,39 +46,47 @@ export type RowCells =
   | { kind: 'pending' }
   | ({ kind: 'done' } & RateCells)
 
-export function rowCells(row: RouteRow): RowCells {
+/** A and B from one set of rank rates, on their own or cumulative. */
+const rankPair = (r: RankRates, mode: RankDisplay): [number, number] =>
+  mode === 'cumulative' ? [aOrBetter(r), bOrBetter(r)] : [r.A, r.B]
+
+export function rowCells(row: RouteRow, mode: RankDisplay): RowCells {
   if (!row.reachesBoss) return { kind: 'not-simulated' }
   if (!row.diag) return { kind: 'pending' }
   const d = row.diag
   const reached = d.reach_boss_rate > 0
+  const [a, b] = rankPair(d.ranks_marginal, mode)
+  const [aAtBoss, bAtBoss] = reached ? rankPair(d.ranks, mode) : []
   return {
     kind: 'done',
     reachBoss: d.reach_boss_rate,
     s: d.ranks_marginal.S,
-    aPlus: aOrBetter(d.ranks_marginal),
-    bPlus: bOrBetter(d.ranks_marginal),
+    a,
+    b,
     bossSunk: d.boss_sunk_rate,
     sAtBoss: reached ? d.ranks.S : undefined,
-    aPlusAtBoss: reached ? aOrBetter(d.ranks) : undefined,
-    bPlusAtBoss: reached ? bOrBetter(d.ranks) : undefined,
+    aAtBoss,
+    bAtBoss,
     bossSunkAtBoss: reached ? d.boss_sunk_rate / d.reach_boss_rate : undefined,
   }
 }
 
 /** The summary, once every boss route has a result; undefined before that. */
-export function summaryCells(routes: RouteRow[]): RateCells | undefined {
+export function summaryCells(routes: RouteRow[], mode: RankDisplay): RateCells | undefined {
   if (routes.some((r) => r.reachesBoss && !r.diag)) return undefined
-  const a: Aggregate = aggregate(routes.map((r) => ({ probability: r.probability, diag: r.diag })))
+  const all: Aggregate = aggregate(routes.map((r) => ({ probability: r.probability, diag: r.diag })))
+  const [a, b] = rankPair(all.ranks, mode)
+  const [aAtBoss, bAtBoss] = all.ranksAtBoss ? rankPair(all.ranksAtBoss, mode) : []
   return {
-    reachBoss: a.reachBoss,
-    s: a.ranks.S,
-    aPlus: aOrBetter(a.ranks),
-    bPlus: bOrBetter(a.ranks),
-    bossSunk: a.bossSunk,
-    sAtBoss: a.ranksAtBoss?.S,
-    aPlusAtBoss: a.ranksAtBoss ? aOrBetter(a.ranksAtBoss) : undefined,
-    bPlusAtBoss: a.ranksAtBoss ? bOrBetter(a.ranksAtBoss) : undefined,
-    bossSunkAtBoss: a.reachBoss > 0 ? a.bossSunk / a.reachBoss : undefined,
+    reachBoss: all.reachBoss,
+    s: all.ranks.S,
+    a,
+    b,
+    bossSunk: all.bossSunk,
+    sAtBoss: all.ranksAtBoss?.S,
+    aAtBoss,
+    bAtBoss,
+    bossSunkAtBoss: all.reachBoss > 0 ? all.bossSunk / all.reachBoss : undefined,
   }
 }
 
@@ -124,7 +136,10 @@ export function isStale(run: RunInput, current: RunInput): boolean {
   return [...keys].some((k) => run.choices[k] !== current.choices[k])
 }
 
-/** A finished route's S, A-or-better and B-or-better rates weighted by its probability: its share of the summary. */
+/**
+ * A finished route's S, A-or-better and B-or-better rates weighted by its probability: its share of the summary.
+ * Whatever the rank display, since comparing these in turn orders routes the same as comparing S, A and B.
+ */
 function weightedRanks(row: RouteRow): [number, number, number] {
   const d = row.diag
   if (!d) return [0, 0, 0]

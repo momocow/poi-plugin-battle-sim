@@ -50,6 +50,7 @@ import {
   loadAutoRunDelay,
   loadInputs,
   normalMaps,
+  parseRankDisplay,
   saveInputs,
   type SavedInputs,
 } from './inputs'
@@ -97,6 +98,8 @@ export function Panel() {
   const [inputs, setInputs] = useState<SavedInputs>(loadInputs)
   // From the store, so a count set on the settings page reaches the open panel at once.
   const trials = useSelector((s: PoiState) => clampTrials(s.config?.plugin?.poi_battle_sim?.trials))
+  // Likewise live: switching it relabels the results on screen, without a run.
+  const rankDisplay = useSelector((s: PoiState) => parseRankDisplay(s.config?.plugin?.poi_battle_sim?.rankDisplay))
   const [run, dispatch] = useReducer(runReducer, initialRunState)
   const [fleetOpen, setFleetOpen] = useState(true)
   const abortRef = useRef<AbortController | undefined>(undefined)
@@ -252,7 +255,7 @@ export function Panel() {
 
       {result && (
         <div className={`battle-sim-section battle-sim-result${stale ? ' battle-sim-stale' : ''}`}>
-          <Summary routes={result.routes} />
+          <Summary routes={result.routes} mode={rankDisplay} />
         </div>
       )}
 
@@ -260,7 +263,7 @@ export function Panel() {
         {run.phase === 'error' && run.error && (
           <ErrorView error={run.error} onRetry={run.input ? () => start(run.input!) : undefined} />
         )}
-        {result?.routes && <RouteCards routes={result.routes} />}
+        {result?.routes && <RouteCards routes={result.routes} mode={rankDisplay} />}
       </div>
 
       <ResultFooter result={result} stale={stale} status={<StatusArea run={run} />} />

@@ -1,10 +1,11 @@
 /**
- * poi's settings page for this plugin: the trial count, the automatic-run
- * delay, the developer log switch and the development optimizer override. poi derives
+ * poi's settings page for this plugin: the trial count, the rank display,
+ * the automatic-run delay, the developer log switch and the development
+ * optimizer override. poi derives
  * no UI from config keys, so without this they could only be set by editing
  * config.cson.
  */
-import { HTMLSelect, Switch } from '@blueprintjs/core'
+import { HTMLSelect, RadioGroup, Switch } from '@blueprintjs/core'
 import React, { useState } from 'react'
 
 import { devLogPath } from '../devlog'
@@ -23,6 +24,8 @@ import {
   MAX_TRIALS,
   OPTIMIZER_BIN_KEY,
   OPTIMIZER_DATA_KEY,
+  parseRankDisplay,
+  RANK_DISPLAY_KEY,
   TRIAL_PRESETS,
   TRIALS_KEY,
 } from './inputs'
@@ -103,6 +106,31 @@ function PathSetting({ configKey, label, hint }: { configKey: string; label: str
   )
 }
 
+function RankDisplaySetting() {
+  const [mode, setMode] = useState(() => parseRankDisplay(readConfig<unknown>(RANK_DISPLAY_KEY, undefined)))
+  return (
+    <div className="battle-sim-setting">
+      <RadioGroup
+        label={t('Rank display')}
+        inline
+        selectedValue={mode}
+        options={[
+          { value: 'individual', label: t('Individual (S / A / B)') },
+          { value: 'cumulative', label: t('Cumulative (S / A+ / B+)') },
+        ]}
+        onChange={(e: { currentTarget: { value: string } }) => {
+          const next = parseRankDisplay(e.currentTarget.value)
+          setMode(next)
+          writeConfig(RANK_DISPLAY_KEY, next)
+        }}
+      />
+      <div className="bp6-text-muted">
+        {t('Individual shows how often each rank happens; cumulative shows A or better and B or better')}
+      </div>
+    </div>
+  )
+}
+
 /** Saves only a whole number in range, so a half-typed or cleared field never stores garbage. */
 function AutoRunDelaySetting() {
   const [value, setValue] = useState(() => String(loadAutoRunDelay()))
@@ -165,6 +193,7 @@ export function Settings() {
   return (
     <div className="battle-sim-settings" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       <TrialsSetting />
+      <RankDisplaySetting />
       <AutoRunDelaySetting />
       <DevLogSetting />
       <div>{t('Development optimizer')}</div>

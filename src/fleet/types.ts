@@ -101,9 +101,12 @@ export interface PoiState {
   ui?: { activeMainTab?: string; activePluginName?: string }
   /**
    * poi's config, mirrored into the store: `tabarea.double` is poi's double-tabbed layout, with plugins in
-   * a pane of their own; `trials` is this plugin's trial count, unvalidated.
+   * a pane of their own; `trials` and `rankDisplay` are this plugin's settings, unvalidated.
    */
-  config?: { poi?: { tabarea?: { double?: boolean } }; plugin?: { poi_battle_sim?: { trials?: unknown } } }
+  config?: {
+    poi?: { tabarea?: { double?: boolean } }
+    plugin?: { poi_battle_sim?: { trials?: unknown; rankDisplay?: unknown } }
+  }
 }
 
 export interface EquipSnapshot {

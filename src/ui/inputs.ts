@@ -1,9 +1,9 @@
 /**
  * The panel's inputs: which maps are offered, and the choices remembered
  * between poi sessions in poi's config under `plugin.poi_battle_sim.*`;
- * plus the settings set on poi's settings page: the trial count, the
- * automatic-run delay, the developer log and the development optimizer
- * override.
+ * plus the settings set on poi's settings page: the trial count, the rank
+ * display, the automatic-run delay, the developer log and the development
+ * optimizer override.
  */
 import type { MstMap, MstMaparea, PoiState } from '../fleet/types'
 import { readConfig, writeConfig } from '../poi'
@@ -64,6 +64,14 @@ export const TRIALS_KEY = `${PREFIX}.trials`
 /** Anything but a whole number of at least 1 is the default; above the maximum is the maximum. */
 export const clampTrials = (n: unknown): number =>
   typeof n === 'number' && Number.isInteger(n) && n >= 1 ? Math.min(n, MAX_TRIALS) : DEFAULT_TRIALS
+
+export const RANK_DISPLAY_KEY = `${PREFIX}.rankDisplay`
+
+/** How A and B show: each rank on its own, or A or better (S + A) and B or better (S + A + B). */
+export type RankDisplay = 'individual' | 'cumulative'
+
+/** Individual unless the config holds `'cumulative'`. */
+export const parseRankDisplay = (value: unknown): RankDisplay => (value === 'cumulative' ? 'cumulative' : 'individual')
 
 export interface SavedInputs {
   fleetId: number

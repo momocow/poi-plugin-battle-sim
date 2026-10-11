@@ -56,48 +56,67 @@ describe('route cards', () => {
       ['C-D', '30.0%'],
       ['C-E-G-L-O[Boss]', '28.0%'],
     ])
-    expect(r.map((x) => rowCells(x).kind)).toEqual(['not-simulated', 'not-simulated', 'pending'])
+    expect(r.map((x) => rowCells(x, 'individual').kind)).toEqual(['not-simulated', 'not-simulated', 'pending'])
   })
 
   it('shows both the all-trials and the at-boss rate per route', () => {
-    const cells = rowCells({ nodes: ['1', 'O'], probability: 1, reachesBoss: true, diag: diag(0.9, 0.8) })
+    const cells = rowCells({ nodes: ['1', 'O'], probability: 1, reachesBoss: true, diag: diag(0.9, 0.8) }, 'individual')
     expect(cells.kind === 'done' && [pct(cells.s), pct(cells.sAtBoss)]).toEqual(['72.0%', '80.0%'])
   })
 
   it('keeps the summary hidden until every boss route has finished', () => {
     const r = rows()
-    expect(summaryCells(r)).toBeUndefined()
+    expect(summaryCells(r, 'individual')).toBeUndefined()
     r[2] = { ...r[2]!, diag: diag(1, 0.5) }
-    const summary = summaryCells(r)!
+    const summary = summaryCells(r, 'individual')!
     expect([pct(summary.s), pct(summary.sAtBoss)]).toEqual(['14.0%', '50.0%'])
   })
 
-  it('makes the summary equal the probability-weighted sum of the table columns', () => {
+  it.each(['individual', 'cumulative'] as const)('makes the summary equal the probability-weighted sum of the table columns (%s)', (mode) => {
     const r = sortRoutes([
       { nodes: ['1', 'A', 'O'], probability: 0.5, reachesBoss: true, diag: diag(1, 0.8, 0.1, 0.1) },
       { nodes: ['1', 'B', 'O'], probability: 0.3, reachesBoss: true, diag: diag(0.5, 0.4, 0.3, 0.3) },
       { nodes: ['1', 'B', 'C'], probability: 0.2, reachesBoss: false },
     ])
-    const summary = summaryCells(r)!
-    const weighted = (key: 'reachBoss' | 's' | 'aPlus' | 'bPlus' | 'bossSunk') =>
+    const summary = summaryCells(r, mode)!
+    const weighted = (key: 'reachBoss' | 's' | 'a' | 'b' | 'bossSunk') =>
       r.reduce((sum, row) => {
-        const c = rowCells(row)
+        const c = rowCells(row, mode)
         return sum + (c.kind === 'done' ? row.probability * c[key] : 0)
       }, 0)
-    for (const key of ['reachBoss', 's', 'aPlus', 'bPlus', 'bossSunk'] as const) {
+    for (const key of ['reachBoss', 's', 'a', 'b', 'bossSunk'] as const) {
       expect(summary[key]).toBeCloseTo(weighted(key), 12)
     }
     expect(summary.sAtBoss).toBeCloseTo(summary.s / summary.reachBoss, 12)
-    expect(summary.bPlusAtBoss).toBeCloseTo(summary.bPlus / summary.reachBoss, 12)
+    expect(summary.bAtBoss).toBeCloseTo(summary.b / summary.reachBoss, 12)
   })
 
-  it('gives cumulative ranks per route, over all trials and when reached', () => {
-    const cells = rowCells({ nodes: ['1', 'O'], probability: 1, reachesBoss: true, diag: diag(0.8, 0.5, 0.25, 0.125) })
+  // Over all trials S 0.4, A 0.2, B 0.1; when reached (0.8) S 0.5, A 0.25, B 0.125.
+  const done = { nodes: ['1', 'O'], probability: 1, reachesBoss: true, diag: diag(0.8, 0.5, 0.25, 0.125) }
+
+  it('gives individual ranks per route by default, over all trials and when reached', () => {
+    const cells = rowCells(done, 'individual')
     if (cells.kind !== 'done') throw new Error('expected a result')
-    expect([cells.s, cells.aPlus, cells.bPlus].map(pct)).toEqual(['40.0%', '60.0%', '70.0%'])
-    expect([cells.sAtBoss, cells.aPlusAtBoss, cells.bPlusAtBoss].map(pct)).toEqual(['50.0%', '75.0%', '87.5%'])
+    expect([cells.s, cells.a, cells.b].map(pct)).toEqual(['40.0%', '20.0%', '10.0%'])
+    expect([cells.sAtBoss, cells.aAtBoss, cells.bAtBoss].map(pct)).toEqual(['50.0%', '25.0%', '12.5%'])
     // diag() sinks the boss in half of the trials that reach it: 0.4 of all trials, over 0.8 reached.
     expect(pct(cells.bossSunkAtBoss)).toBe('50.0%')
+  })
+
+  it('gives cumulative ranks per route when set to', () => {
+    const cells = rowCells(done, 'cumulative')
+    if (cells.kind !== 'done') throw new Error('expected a result')
+    expect([cells.s, cells.a, cells.b].map(pct)).toEqual(['40.0%', '60.0%', '70.0%'])
+    expect([cells.sAtBoss, cells.aAtBoss, cells.bAtBoss].map(pct)).toEqual(['50.0%', '75.0%', '87.5%'])
+  })
+
+  it('shows the summary in either mode', () => {
+    const cells = (mode: 'individual' | 'cumulative') => {
+      const c = summaryCells([done], mode)!
+      return [c.s, c.a, c.b, c.sAtBoss, c.aAtBoss, c.bAtBoss].map(pct)
+    }
+    expect(cells('individual')).toEqual(['40.0%', '20.0%', '10.0%', '50.0%', '25.0%', '12.5%'])
+    expect(cells('cumulative')).toEqual(['40.0%', '60.0%', '70.0%', '50.0%', '75.0%', '87.5%'])
   })
 })
 
@@ -118,6 +137,14 @@ describe('card order', () => {
     ]
     expect(sortForCards(routes).map((r) => r.nodes[1])).toEqual(['G', 'E', 'B', 'D', 'C', 'A', 'F'])
     expect(routes[0]!.nodes[1]).toBe('A')
+    // The order does not depend on the rank display: ordering the finished routes by weighted S, then A, then B
+    // on their own gives the same order as the cumulative values.
+    const individual = routes
+      .filter((r) => r.diag)
+      .map((r) => ({ node: r.nodes[1], w: [r.diag!.ranks_marginal.S, r.diag!.ranks_marginal.A, r.diag!.ranks_marginal.B].map((x) => r.probability * x) }))
+      .sort((x, y) => y.w[0]! - x.w[0]! || y.w[1]! - x.w[1]! || y.w[2]! - x.w[2]!)
+      .map((x) => x.node)
+    expect(individual).toEqual(['G', 'E', 'B', 'D'])
   })
 })
 
