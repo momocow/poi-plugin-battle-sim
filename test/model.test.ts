@@ -1,7 +1,14 @@
 import { describe, expect, it } from 'vitest'
 
 import { snapshotFleet } from '../src/fleet/snapshot'
-import { buildFleetViewModel, damageOf, liveFleetViewModel, losMultiplier, moraleBand } from '../src/fleet-view/model'
+import {
+  buildFleetViewModel,
+  damageOf,
+  liveFleetViewModel,
+  losMultiplier,
+  moraleBand,
+  resupplyCost,
+} from '../src/fleet-view/model'
 import { loadStore } from './helpers'
 
 describe('fleet view model', () => {
@@ -43,6 +50,38 @@ describe('fleet view model', () => {
     expect([damageOf(30, 40), damageOf(21, 40)]).toEqual(['minor', 'minor'])
     expect([damageOf(20, 40), damageOf(20, 45), damageOf(11, 40)]).toEqual(['moderate', 'moderate', 'moderate'])
     expect([damageOf(10, 40), damageOf(1, 40)]).toEqual(['heavy', 'heavy'])
+  })
+
+  it('colours fuel and ammo as poi does, by percent full', () => {
+    const state = loadStore()
+    const snapshot = snapshotFleet(state, 1)
+    const at = (now: number, max: number) => {
+      snapshot.ships[0] = { ...snapshot.ships[0]!, fuel: now, fuelMax: max }
+      return buildFleetViewModel(snapshot, state.const!, '1-1').ships[0]!.fuel?.intent
+    }
+    expect([at(100, 100), at(99, 100), at(76, 100)]).toEqual(['green', 'yellow', 'yellow'])
+    expect([at(75, 100), at(51, 100), at(10, 15)]).toEqual(['orange', 'orange', 'orange'])
+    expect([at(50, 100), at(0, 100)]).toEqual(['red', 'red'])
+  })
+
+  it('gives the resupply cost as poi works it out', () => {
+    expect(resupplyCost(10, 15, 50)).toBe(5)
+    expect(resupplyCost(0, 15, 175)).toBe(12)
+    expect(resupplyCost(14, 15, 175)).toBe(1)
+    expect(resupplyCost(15, 15, 50)).toBe(0)
+  })
+
+  it('shows fuel and ammo from the snapshot, leaving out a bar whose maximum is unknown', () => {
+    const state = loadStore()
+    const snapshot = snapshotFleet(state, 1)
+    snapshot.ships[0] = { ...snapshot.ships[0]!, level: 50, fuel: 10, fuelMax: 15, ammo: 20, ammoMax: 20 }
+    snapshot.ships[1] = { ...snapshot.ships[1]!, fuelMax: undefined }
+    const [first, second] = buildFleetViewModel(snapshot, state.const!, '1-1').ships
+    expect(first!.fuel).toEqual({ now: 10, max: 15, intent: 'orange', cost: 5 })
+    expect(first!.ammo).toEqual({ now: 20, max: 20, intent: 'green', cost: 0 })
+    expect(second!.fuel).toBeUndefined()
+    expect(second).not.toHaveProperty('fuel')
+    expect(second!.ammo).toBeDefined()
   })
 
   it('counts every ship below full HP as damaged, marked or not', () => {

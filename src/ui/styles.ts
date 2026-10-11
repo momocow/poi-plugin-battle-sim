@@ -43,13 +43,17 @@ export const PANEL_CSS = `
 .battle-sim-hover { text-decoration: underline dotted; cursor: help; }
 .battle-sim-popover { padding: 8px 10px; }
 /* One grid for all ships, so name, HP and equipment line up from row to row. */
-.battle-sim-ships { display: grid; grid-template-columns: minmax(90px, 1fr) minmax(90px, 1fr) auto; align-items: end; gap: 4px 12px; margin-top: 4px; }
+.battle-sim-ships { display: grid; grid-template-columns: minmax(80px, 1fr) minmax(80px, 1fr) 30px auto; align-items: end; gap: 4px 10px; margin-top: 4px; }
 .battle-sim-ship { display: contents; }
 .battle-sim-ship-info { min-width: 0; }
 .battle-sim-ship-sub { font-size: 11px; line-height: 1.2; opacity: 0.75; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .battle-sim-ship-name { font-size: 1.15em; font-weight: bold; line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .battle-sim-ship-hp-target { min-width: 0; padding-right: 0.9em; }
 .battle-sim-ship-hp-line { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 1px; line-height: 1.2; }
+/* Fuel over ammo, as poi's fleet tab: 7px bars 4px apart, level with the HP bar. */
+.battle-sim-supply { display: flex; flex-direction: column; gap: 4px; padding-bottom: 1px; }
+.battle-sim-supply .bp6-progress-bar { height: 7px; }
+.battle-sim-supply-tip { display: flex; gap: 4px; align-items: center; }
 .battle-sim-slots { display: flex; align-items: center; gap: 2px; min-width: 0; padding-bottom: 1px; }
 .battle-sim-ex-mark { flex: none; opacity: 0.65; }
 .battle-sim-slot-icon { width: 24px; height: 24px; flex: none; display: block; }

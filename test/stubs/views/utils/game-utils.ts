@@ -26,3 +26,11 @@ export const getFleetSpeed = (shipsData: ShipData[]) => ({
 })
 
 export const getSpeedLabel = (speed: number): string => ({ 5: 'Slow', 10: 'Fast', 15: 'Fast+', 20: 'Fastest' })[speed] ?? 'Unknown'
+
+// Copied from poi: small enough that a test can check the plugin passes it a percentage, not a ratio.
+export function getMaterialStyle(percent: number): 'red' | 'orange' | 'yellow' | 'green' {
+  if (percent <= 50) return 'red'
+  if (percent <= 75) return 'orange'
+  if (percent < 100) return 'yellow'
+  return 'green'
+}

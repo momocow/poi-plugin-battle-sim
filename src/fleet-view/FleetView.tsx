@@ -3,7 +3,8 @@
  * multiplier with ×1/×3/×4 on hover, a damaged-ships warning), then one row
  * per ship after poi's fleet tab — level and type over the name, HP as
  * `now / max` over a bar coloured by damage, morale with poi's coloured
- * square, and the equipment as icons, with name, ★ and proficiency on hover.
+ * square, fuel and ammo as two thin bars, and the equipment as icons, with
+ * name, ★ and proficiency on hover.
  */
 import { Popover, ProgressBar, Tooltip } from '@blueprintjs/core'
 import React from 'react'
@@ -11,6 +12,7 @@ import React from 'react'
 import { t } from '../i18n'
 import type { Damage, FleetViewModel, ShipView } from './model'
 import { SlotItem } from './SlotItem'
+import { SupplyBars } from './SupplyBars'
 
 /** poi's HP palette: its global CSS colours these intents on a progress bar. */
 const HP_INTENT: Record<Damage, string> = { none: 'green', minor: 'yellow', moderate: 'orange', heavy: 'red' }
@@ -47,6 +49,7 @@ function ShipRow({ ship }: { ship: ShipView }) {
       ) : (
         <div className="battle-sim-ship-hp-target">{hp}</div>
       )}
+      <SupplyBars fuel={ship.fuel} ammo={ship.ammo} />
       <div className="battle-sim-slots">
         {ship.slots.map((slot, i) => (
           <SlotItem key={i} slot={slot} />

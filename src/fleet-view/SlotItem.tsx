@@ -1,7 +1,6 @@
 /**
  * One equipment icon, as on poi's fleet tab; hovering shows the name, ★N and
  * the proficiency image. The expansion slot is set apart by a leading "+".
- * This is the only module that imports poi's icon component.
  */
 import { Tooltip } from '@blueprintjs/core'
 import { join } from 'node:path'

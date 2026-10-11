@@ -3,11 +3,20 @@
  *
  * The live view snapshots the store and then goes through the same builder as
  * a frozen run snapshot, so the two can only differ by what was in the store.
- * Fleet speed, fighter power and LoS (Formula 33) come from poi's own helpers,
- * fed the same `[_ship, $ship]` / `[_equip, $equip, onslot]` tuples poi's
- * selectors produce; this is the only module that imports them.
+ * Fleet speed, fighter power, LoS (Formula 33) and the supply bars' colours
+ * come from poi's own helpers, the first three fed the same `[_ship, $ship]` /
+ * `[_equip, $equip, onslot]` tuples poi's selectors produce; this is the only
+ * module that imports them.
  */
-import { getFleetSpeed, getSaku33, getSpeedLabel, getTyku, type EquipData, type ShipData } from 'views/utils/game-utils'
+import {
+  getFleetSpeed,
+  getMaterialStyle,
+  getSaku33,
+  getSpeedLabel,
+  getTyku,
+  type EquipData,
+  type ShipData,
+} from 'views/utils/game-utils'
 
 import { gameName } from '../i18n'
 import { translateIn } from '../poi'
@@ -30,6 +39,16 @@ export interface SlotView {
   proficiency: number
 }
 
+/** Fuel or ammo, as poi's fleet tab shows it. */
+export interface SupplyView {
+  now: number
+  max: number
+  /** poi's supply colour, which its global CSS applies to a progress bar's intent. */
+  intent: 'red' | 'orange' | 'yellow' | 'green'
+  /** What resupplying costs; 0 when full. */
+  cost: number
+}
+
 /** 小破 above 50% up to 75% of max HP, 中破 above 25% up to 50%, 大破 up to 25%. */
 export type Damage = 'none' | 'minor' | 'moderate' | 'heavy'
 
@@ -42,6 +61,9 @@ export interface ShipView {
   damage: Damage
   morale: number
   moraleBand: MoraleBand
+  /** Left out when the ship's maximum is not in the master data. */
+  fuel?: SupplyView
+  ammo?: SupplyView
   slots: SlotView[]
   exSlot?: SlotView
 }
@@ -82,6 +104,20 @@ export function moraleBand(morale: number): MoraleBand {
   if (morale > 19) return 20
   return 0
 }
+
+/**
+ * poi's resupply cost (worked out inline in its fleet tab, not exported): the amount missing, 15% less and
+ * rounded down above level 99, at least 1; 0 when full.
+ */
+export function resupplyCost(now: number, max: number, level: number): number {
+  if (now >= max) return 0
+  return Math.max(1, Math.floor((max - now) * (level > 99 ? 0.85 : 1)))
+}
+
+const supplyView = (now: number, max: number | undefined, level: number): SupplyView | undefined =>
+  max === undefined || max <= 0
+    ? undefined
+    : { now, max, intent: getMaterialStyle((now / max) * 100), cost: resupplyCost(now, max, level) }
 
 /** Formula 33's node-branching multiplier for a map: ×3 on 6-2/6-3, ×4 on 3-5/6-1, ×1 elsewhere. */
 export function losMultiplier(map: string): LosMultiplier {
@@ -129,6 +165,8 @@ export function buildFleetViewModel(snapshot: FleetSnapshot, master: MasterData,
     ships: snapshot.ships.map((s) => {
       const $ship = $ships[String(s.shipId)]
       const type = $ship ? master.$shipTypes?.[String($ship.api_stype)] : undefined
+      const fuel = supplyView(s.fuel, s.fuelMax, s.level)
+      const ammo = supplyView(s.ammo, s.ammoMax, s.level)
       return {
         name: $ship ? gameName($ship.api_name) : `#${s.shipId}`,
         level: s.level,
@@ -138,6 +176,8 @@ export function buildFleetViewModel(snapshot: FleetSnapshot, master: MasterData,
         damage: damageOf(s.hp, s.maxHp),
         morale: s.morale,
         moraleBand: moraleBand(s.morale),
+        ...(fuel ? { fuel } : {}),
+        ...(ammo ? { ammo } : {}),
         slots: s.slots.map(slotView),
         ...(s.exSlot ? { exSlot: slotView(s.exSlot) } : {}),
       }

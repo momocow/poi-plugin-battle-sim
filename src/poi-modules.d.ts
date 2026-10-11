@@ -29,11 +29,15 @@ declare module 'views/utils/game-utils' {
   ): { ship: number; item: number; teitoku: number; total: number }
   export function getFleetSpeed(shipsData: ShipData[]): { speed: number }
   export function getSpeedLabel(speed: number): string
+  /** Supply colour by percent full: red ≤ 50, orange ≤ 75, yellow below 100, green when full. */
+  export function getMaterialStyle(percent: number): 'red' | 'orange' | 'yellow' | 'green'
 }
 
 declare module 'views/components/etc/icon' {
   import type { ComponentType } from 'react'
   export const SlotitemIcon: ComponentType<{ slotitemId?: number; className?: string; alt?: string }>
+  /** 1 fuel, 2 ammo, 3 steel, 4 bauxite; in poi's chosen resource icon set. */
+  export const MaterialIcon: ComponentType<{ materialId?: number; className?: string; alt?: string }>
 }
 
 declare module 'react-redux' {
