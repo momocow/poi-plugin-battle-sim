@@ -95,6 +95,7 @@ The panel SHALL start a run by itself, as if Simulate were clicked, when any of 
 - the selected map;
 - a branch or phase choice of the selected map;
 - the trial count;
+- the current fuel, ammo or planes of a ship in the selected fleet: for example resupplying, supplies used in a sortie, or planes lost;
 - the current HP of a ship in the selected fleet, up or down: for example damage in a sortie, between nodes or on returning, a docking that finishes, an instant repair, a repair ship's repair, or a modernization or marriage.
 
 The panel SHALL also start a run by itself when the plugin comes into view while the panel has no run: none has started since the panel opened, or the last one was cancelled. The plugin comes into view when its tab becomes the one poi shows, whether the user selected it or poi's plugin auto switch brought it forward, and when the panel opens while its tab is already the one shown. In poi's double-tabbed layout, the plugin is in view when it is the plugin shown in the plugin pane. A panel with a run in progress, finished or failed SHALL NOT start a run on coming into view, even when that result is stale. Coming into view while the selected fleet does not qualify (see below) or while the Auto switch is off SHALL NOT start a run, then or later.
@@ -148,6 +149,10 @@ Apart from coming into view as above, opening the panel and the game data loadin
 #### Scenario: Between nodes
 - **WHEN** a run is in progress and the selected fleet advances to the next node of a sortie with lower HP
 - **THEN** that run is cancelled, and a new one starts after the delay with the HP after the battle
+
+#### Scenario: Resupply
+- **WHEN** the user resupplies the selected fleet after a sortie, with every main slot filled
+- **THEN** a run starts with full fuel, ammo and planes
 
 #### Scenario: Morale only
 - **WHEN** only the morale of ships in the selected fleet changes, as when fatigue recovers in port

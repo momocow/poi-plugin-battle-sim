@@ -24,6 +24,17 @@ The optimizer SHALL be started as a child process. Its configuration SHALL be pa
 - **WHEN** the optimizer writes warnings to stderr and then emits a `result` line and exits 0
 - **THEN** the run succeeds
 
+### Requirement: Start from current supply and planes
+Each simulation SHALL start every ship with its captured current HP, fuel, ammo, and planes in each main slot, in every trial. A value at its maximum SHALL be treated as full. The plane counts SHALL cover the main slots the ship has, in slot order, and not the expansion slot.
+
+#### Scenario: Unresupplied fleet
+- **WHEN** the flagship has 12 of 40 ammo and lost 9 planes in its second slot
+- **THEN** every trial starts the flagship at 12 ammo with 9 planes in that slot
+
+#### Scenario: Resupplied fleet
+- **WHEN** every ship has full fuel, ammo and planes
+- **THEN** the simulation runs as with a fully supplied fleet
+
 ### Requirement: Weighted aggregate result
 The overall result SHALL combine the results of the simulated routes, each weighted by its route probability. Every per-route rate used for weighting SHALL count all of that route's trials, including trials that retreated before the boss. The boss rank rates conditional on reaching the boss SHALL NOT be weighted directly. Routes that miss the boss count as 0 for every boss-related rate.
 
