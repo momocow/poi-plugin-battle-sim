@@ -19,6 +19,58 @@ The trial count SHALL be a poi config setting. A count that matches a preset SHA
 
 When the selected map has player-selected branches or a phase, the panel SHALL show one control per choice, labeled with the node and an arrow (for example "F →"), its targets listed in the dropdown, or as "Phase". Each control starts at compass's default choice. The choices SHALL be remembered per map between poi sessions. Maps without such choices SHALL show no extra controls. Choices SHALL NOT be editable while a run is in progress.
 
+The panel SHALL have a **Target** dropdown that sets the node the sortie being planned ends at (see route-prediction, Target reach). Its first option is **Boss**, the default. Once compass has predicted the map in this poi session, the Boss option SHALL name the boss node, for example "Q (Boss)": the boss letters that the predicted candidates end at (narrowed to the sortie's path in sortie mode), or, when none ends at a boss, all of the map's boss letters, joined by "/". After it come the node letters on the candidates that compass last predicted for the map in this poi session, before any narrowing or cut, each once and in alphabetical order. The start node, the map's boss letters, and nodes without a battle are not listed. Whether a node has a battle SHALL be read from the map's topology data in the kcnav cache, as the optimizer reads it: a maelstrom, or a node that every route into it marks as a resource, empty or other pass-through node, has no battle; any other node, air raids included, has one. Before compass has predicted the map in this poi session, Boss is the only option. A remembered target that is not among the options SHALL still be shown and selected. There SHALL be one target, not one per map, and it SHALL be remembered between poi sessions. Selecting another map SHALL set it back to Boss and turn the Night battle switch back on. Entering or leaving sortie mode, which changes the map shown but not the map selected, SHALL NOT change the selected map's target or switch.
+
+The Target dropdown and the Night battle switch SHALL be shown only once the shown map's topology data is in the kcnav cache, which the map's shared enemy-data fetch writes (see battle-simulation). Until then, runs SHALL use the Boss target with night battle on, whatever target and switch are remembered, as when the panel had no target. The row SHALL appear without a new run or reopening the panel once the fetch has written the data. On a map's first run that happens during the run, while the row is not editable, so the first run of a map simulates the boss, and the user can change the target once its result is shown.
+
+Next to the Target dropdown, the panel SHALL have a **Night battle** switch that sets whether the fleet pursues night battle at the target. It SHALL be on by default and SHALL be remembered between poi sessions. It applies to every map. When the target is a night-battle node, where the battle is a night battle only (read from the map's topology data as the optimizer reads it: most edges into the node have color 11), the fleet fights a night battle there whatever the switch says. The switch SHALL then show on and SHALL NOT be editable, with a tooltip saying that the node is always a night battle, and runs SHALL count as pursuing night battle. The remembered switch SHALL stay as it was, and apply again once the target is another node.
+
+The Target dropdown and the Night battle switch SHALL NOT be editable while a run is in progress. In sortie mode they SHALL stay editable, and they show and set the sortie's target and switch (see Mid-sortie runs). In sortie mode the Target dropdown SHALL list only the nodes the fleet can still reach: those on the candidates narrowed to the sortie's path so far, from the node the fleet is at on. Nodes already passed, and nodes on routes the fleet can no longer take, are not listed.
+
+#### Scenario: Target options after a prediction
+- **WHEN** the selected map is 2-5, whose boss is O, and the last prediction this session gave `1-C-D`, `1-C-E-G-L-N` and `1-C-E-G-L-O`
+- **THEN** the Target dropdown offers Boss, C, E and L, leaving out D (no battle), G (a maelstrom), N (a resource node), and the boss O
+
+#### Scenario: Boss option names the boss node
+- **WHEN** the selected map is 5-3, and the last prediction this session ends at its boss Q
+- **THEN** the Target dropdown's first option reads "Q (Boss)"
+
+#### Scenario: Target before any prediction
+- **WHEN** poi has just started, the selected map's topology data is in the kcnav cache, the map has not been predicted yet, and no target is remembered for it
+- **THEN** the Target dropdown offers Boss only, and Boss is selected
+
+#### Scenario: First time on a map
+- **WHEN** the user selects a map whose topology data is not in the kcnav cache yet, and a run starts
+- **THEN** no Target dropdown or Night battle switch is shown at first, and the run uses the Boss target with night battle on; once its result is shown, the user can pick a target and switch night battle
+
+#### Scenario: Remembered target restored
+- **WHEN** the user set the target to E on 2-5, closes poi, and opens it again
+- **THEN** with 2-5 selected the Target dropdown shows E, even before the map is predicted, as the map's topology data is still in the kcnav cache
+
+#### Scenario: Map change resets the target
+- **WHEN** the user sets the target to E and turns Night battle off on 2-5, and then selects 1-1
+- **THEN** the target is Boss and Night battle is on, and selecting 2-5 again keeps them so
+
+#### Scenario: Target kept into a sortie
+- **WHEN** the selected map is 2-5 with the target E and Night battle off, and the selected fleet sorties to 2-5
+- **THEN** the target stays E and Night battle off in sortie mode, and after the fleet returns to port
+
+#### Scenario: Target in a sortie on another map
+- **WHEN** the selected map is 1-5 with the target E and Night battle off, and the selected fleet sorties to 2-5
+- **THEN** sortie mode starts at Boss with Night battle on, and after the fleet returns to port 1-5's target is E and Night battle off again
+
+#### Scenario: Night-battle node target
+- **WHEN** the target on 5-3 is P, a night-battle node
+- **THEN** the Night battle switch shows on and can't be changed, hovering over it says that P is always a night battle, and the footer does not say "No night battle"; with the switch remembered off, picking a target that is not a night-battle node shows it off again
+
+#### Scenario: Target options mid-sortie
+- **WHEN** the fleet is at E on 2-5 after passing C, and the last prediction gave `1-C-D`, `1-C-E-G-L-N` and `1-C-E-G-L-O`
+- **THEN** the Target dropdown offers Boss, E and L: C has been passed, D can no longer be reached, and G and N have no battle
+
+#### Scenario: Night battle switch restored
+- **WHEN** the user turned Night battle off, closes poi, and opens it again
+- **THEN** the switch is off
+
 #### Scenario: Branch controls for 7-5
 - **WHEN** the user selects 7-5
 - **THEN** the panel shows three controls, F → (G or J), H → (I or K), and O → (P or Q), set to G, I, and P unless the user changed them before
@@ -125,6 +177,8 @@ The panel SHALL start a run by itself, as if Simulate were clicked, when any of 
 - equipment on a ship in the selected fleet: equipped, removed, moved between slots, or improved;
 - the selected map;
 - a branch or phase choice of the selected map;
+- the target;
+- the Night battle switch;
 - the trial count;
 - the node the selected fleet is at during a sortie, when it advances to another one, with or without a battle there;
 - the current fuel, ammo or planes of a ship in the selected fleet: for example resupplying, supplies used in a sortie, or planes lost;
@@ -157,6 +211,14 @@ Apart from coming into view as above, opening the panel and the game data loadin
 #### Scenario: Branch choice
 - **WHEN** the selected fleet has every main slot filled and the user changes the F → choice on 7-5
 - **THEN** a run starts with the new choice
+
+#### Scenario: Target changed
+- **WHEN** the selected fleet has every main slot filled and the user changes the 2-5 target from Boss to E
+- **THEN** a run starts with target E, and compass is not loaded again for it
+
+#### Scenario: Night battle switched
+- **WHEN** the selected fleet has every main slot filled and the user turns Night battle off
+- **THEN** a run starts without night battle at the target
 
 #### Scenario: Fleet switched
 - **WHEN** the user switches from fleet 1 to fleet 2, and every ship in fleet 2 has all main slots filled
@@ -275,7 +337,9 @@ Apart from coming into view as above, opening the panel and the game data loadin
 - **THEN** no run starts
 
 ### Requirement: Mid-sortie runs
-While the selected fleet is on a sortie, a run SHALL simulate the sortie's map, with the branch and phase choices remembered for that map, whatever map is selected in the panel. This is sortie mode; otherwise the panel is in plan mode. A round tag with an icon at the right end of the control bar's first row SHALL name the mode: a grey Plan mode (規劃模式) tag with a map icon in plan mode, a red Sortie mode (出擊模式) tag with a flag icon in sortie mode. In sortie mode, the fleet and map selects SHALL be disabled, and the map select SHALL show the sortie's map, with that map's branch and phase controls. The selected map SHALL stay remembered unchanged. Once the fleet is back in port, the tag SHALL show Plan mode again, the selects SHALL be enabled and show the selected map again, and runs SHALL use it. The run SHALL narrow the routes to the sortie's path so far (see route-prediction) and simulate them from the node the fleet is at (see battle-simulation). When the fleets are combined and the combined fleet is selected, the sortie is the combined fleet's.
+While the selected fleet is on a sortie, a run SHALL simulate the sortie's map, with the branch and phase choices remembered for that map, whatever map is selected in the panel. This is sortie mode; otherwise the panel is in plan mode. A round tag with an icon at the right end of the control bar's first row SHALL name the mode: a grey Plan mode (規劃模式) tag with a map icon in plan mode, a red Sortie mode (出擊模式) tag with a flag icon in sortie mode. In sortie mode, the fleet and map selects SHALL be disabled, and the map select SHALL show the sortie's map, with that map's branch and phase controls. The selected map SHALL stay remembered unchanged.
+
+The sortie's target and Night battle switch SHALL be the panel's own when the sortie's map is the selected map: sortie mode uses them, and a change in sortie mode changes them. When the sortie's map is another map, the sortie SHALL have its own target and switch, starting at Boss and on, and changes in sortie mode SHALL apply to that sortie only. They SHALL NOT be remembered after the sortie ends, nor between poi sessions, and the selected map's target and switch SHALL be unchanged when the fleet is back in port. Once the fleet is back in port, the tag SHALL show Plan mode again, the selects SHALL be enabled and show the selected map again, and runs SHALL use it. The run SHALL narrow the routes to the sortie's path so far (see route-prediction) and simulate them from the node the fleet is at (see battle-simulation). When the fleets are combined and the combined fleet is selected, the sortie is the combined fleet's.
 
 While the selected map is the sortie's map, each branch control whose node the fleet has passed SHALL show the branch taken and SHALL NOT be changeable until the fleet is back in port. The choice remembered for the map SHALL NOT change. Branches not passed yet stay changeable, and runs use them.
 
@@ -298,6 +362,18 @@ The footer SHALL name the sortie's map and the node the fleet is at, for example
 #### Scenario: Branch passed in game
 - **WHEN** O → K is remembered for 5-3, and the selected fleet passes O to P on a 5-3 sortie
 - **THEN** the O → control shows P and can't be changed, runs use O→P, and after the fleet returns to port the control shows K and is changeable again
+
+#### Scenario: Target in sortie mode
+- **WHEN** the selected map is 2-5, the target is E, and the selected fleet is at C on a 2-5 sortie
+- **THEN** the Target dropdown shows E and can be changed, and a run simulates 2-5 from C up to E
+
+#### Scenario: Target changed in sortie mode
+- **WHEN** the selected map is 2-5, the selected fleet is at C on a 2-5 sortie, and the user sets the target to L
+- **THEN** a run starts up to L, and the target stays L after the fleet returns to port
+
+#### Scenario: Target changed in a sortie on another map
+- **WHEN** the selected map is 1-5 with the Boss target, the selected fleet is at C on a 2-5 sortie, and the user sets the target to L
+- **THEN** a run starts up to L, and after the fleet returns to port 1-5's target is still Boss
 
 #### Scenario: Passed nodes on a card
 - **WHEN** a run is made with the fleet at L on route `1-C-E-G-L-O`
@@ -377,18 +453,30 @@ A single action button SHALL read Simulate when no run is in progress and Cancel
 - **THEN** the status area shows "Done", hides it about 3 seconds later, and the action button reads Simulate
 
 ### Requirement: Route cards
-Once routes are predicted, the panel SHALL show one card per route candidate. The cards SHALL put the most promising route first. Finished routes SHALL come first, ordered by their weighted S rate (route probability times S over all of the route's trials), highest first; when equal, by weighted A or better; when still equal, by weighted B or better. Then come routes still being simulated, then routes that do not reach the boss. Ties, and the order within the last two groups, SHALL go by probability, highest first. Simulation SHALL start straight away, with no confirmation step. Each card SHALL have three parts, left to right:
-- **Route probability and reach boss**: the route's probability, and its chance of reaching the boss over all of its trials, each as a labeled percentage. Reach boss shows "—" until the route has a result and for routes that do not reach the boss.
-- **Route** as a stepper: one circle per node after the start node, labeled with its letter and joined by a track, with the boss node marked when the route ends at the boss. Hovering over the stepper shows the route text: the node letters joined by `-`, with `[Boss]` appended when the last node is a boss node, for example `A-B-C2-D[Boss]`. Under each node where some trials turned back, its **retreat rate** is shown, for example "−10.7%". Nodes with no retreats show none. Neighboring rates SHALL NOT overlap.
-- **Boss results** among trials that reached the boss: S, then A and B as set by the rank display (see Rank display setting) — individually, labeled `A` and `B`, or cumulatively, labeled `A+` and `B+` for A or better and B or better — and boss sunk.
+Once routes are predicted, the panel SHALL show one card per route candidate, after any cut and merge for a node target (see route-prediction, Target reach). The cards SHALL put the most promising route first. Finished routes SHALL come first, ordered by their weighted S rate (route probability times S over all of the route's trials), highest first; when equal, by weighted A or better; when still equal, by weighted B or better. Then come routes still being simulated, then routes that do not reach the target. Ties, and the order within the last two groups, SHALL go by probability, highest first. Simulation SHALL start straight away, with no confirmation step. Each card SHALL have three parts, left to right:
+- **Route probability and reach target**: the route's probability, and its chance of reaching the target over all of its trials, each as a labeled percentage. Reach target shows "—" until the route has a result and for routes that do not reach the target.
+- **Route** as a stepper: one circle per node after the start node, labeled with its letter and joined by a track, with the last node marked as the target when the route reaches the target, as the boss for the Boss target. Hovering over the stepper shows the route text: the node letters joined by `-`, with `[Boss]` appended when the last node is a boss node, for example `A-B-C2-D[Boss]`. Under each node where some trials turned back, its **retreat rate** is shown, for example "−10.7%". Nodes with no retreats show none. Neighboring rates SHALL NOT overlap.
+- **Target results** among trials that reached the target: S, then A and B as set by the rank display (see Rank display setting) — individually, labeled `A` and `B`, or cumulatively, labeled `A+` and `B+` for A or better and B or better — and flagship sunk.
 
-Apart from reach boss, the cards SHALL NOT show rates over all of a route's trials; those appear, probability-weighted, in the summary.
+Apart from reach target, the cards SHALL NOT show rates over all of a route's trials; those appear, probability-weighted, in the summary.
 
-A card's results SHALL show that they are pending until that route's simulation finishes. They SHALL be filled in as each route completes. Cards for routes that do not reach the boss SHALL say they are not simulated, rather than showing 0%.
+Labels that name the target SHALL say "boss" for the Boss target, for example "Reach boss" and "Boss sunk", and SHALL name the node for a node target, for example "Reach E" and "E flagship sunk". They SHALL follow the run's target, not the target selected since.
+
+A card's results SHALL show that they are pending until that route's simulation finishes. They SHALL be filled in as each route completes. Cards for routes that do not reach the target SHALL say they are not simulated, rather than showing 0%; for a node target they SHALL say that the route does not reach that node.
+
+Mid-sortie, a route that has passed the target (see route-prediction) SHALL show its nodes up to the target, all as passed, with the target marked; its reach target SHALL read 100%, and in place of the results it SHALL say that the target has been reached. The summary SHALL then show the reach-target rate as 100% and its rank and flagship-sunk values as "—".
 
 #### Scenario: Cards for 2-5
-- **WHEN** compass predicts `1-C-D` at 0.3, `1-C-E-G-L-N` at 0.42, and `1-C-E-G-L-O` at 0.28, and the boss is O
+- **WHEN** the target is Boss, compass predicts `1-C-D` at 0.3, `1-C-E-G-L-N` at 0.42, and `1-C-E-G-L-O` at 0.28, and the boss is O
 - **THEN** once the boss route finishes, the cards list C-E-G-L-O at 28.0% with O marked as the boss, then C-E-G-L-N at 42.0% and C-D at 30.0%; only the boss card is simulated, and the other two say "not simulated"
+
+#### Scenario: Cards for a node target on 2-5
+- **WHEN** the target is E and compass predicts the same three routes
+- **THEN** there are two cards: C-E at 70.0% with E marked as the target and labels such as "Reach E", and C-D at 30.0%, which says it does not reach E and is not simulated
+
+#### Scenario: Card for a target already passed
+- **WHEN** the target on 2-5 is E and a run is made with the fleet at G after passing C and E
+- **THEN** there is one card, C-E at 100.0% with both nodes passed and E marked as the target, Reach E 100.0%, and a note that the target has been reached; the summary shows Reach E 100.0% and "—" for S, A, B and flagship sunk
 
 #### Scenario: Most promising first
 - **WHEN** route X (probability 0.6) finishes with S in 50% of its trials, and route Y (probability 0.2) with S in 90%
@@ -400,22 +488,22 @@ A card's results SHALL show that they are pending until that route's simulation 
 
 #### Scenario: No confirmation
 - **WHEN** route prediction succeeds
-- **THEN** the cards appear and simulation of the boss routes starts without any further user action
+- **THEN** the cards appear and simulation of the routes that reach the target starts without any further user action
 
 #### Scenario: Retreat rates under the nodes
 - **WHEN** the route `B-C-E-F-O[Boss]` finishes with per-node reach rates 1.0, 0.893, 0.86, 0.713, 0.59
 - **THEN** its stepper shows −10.7% under B, −3.3% under C, −14.7% under E and −12.3% under F, none under O, and no two of these labels overlap
 
 #### Scenario: Results when the boss is reached
-- **WHEN** a route reaches the boss in 80% of its trials, gets S in 40% of all its trials, and sinks the boss in 40% of all its trials
-- **THEN** its card shows S 50.0% and boss sunk 50.0%
+- **WHEN** a route reaches the target in 80% of its trials, gets S in 40% of all its trials, and sinks the enemy flagship there in 40% of all its trials
+- **THEN** its card shows S 50.0% and flagship sunk 50.0%
 
 #### Scenario: Individual ranks on a card
-- **WHEN** the rank display is individual, and among trials that reached the boss a route gets S 50%, A 25% and B 12.5%
+- **WHEN** the rank display is individual, and among trials that reached the target a route gets S 50%, A 25% and B 12.5%
 - **THEN** its card shows S 50.0%, A 25.0% and B 12.5%
 
 #### Scenario: Cumulative ranks on a card
-- **WHEN** the rank display is cumulative, and among trials that reached the boss a route gets S 50%, A 25% and B 12.5%
+- **WHEN** the rank display is cumulative, and among trials that reached the target a route gets S 50%, A 25% and B 12.5%
 - **THEN** its card shows S 50.0%, A+ 75.0% and B+ 87.5%
 
 #### Scenario: Order does not depend on the rank display
@@ -433,40 +521,56 @@ The panel SHALL have a footer, fixed at the bottom of the plugin area, with the 
 - the snapshot time;
 - the trials per route;
 - the run's margin of error: ±(98 / √trials)%, to one decimal place, which is the worst-case 95% interval for a single route's rate;
-- any branch and phase choices used, for example "F→J, H→I, O→P".
+- any branch and phase choices used, for example "F→J, H→I, O→P";
+- the target, when it is a node, for example "Target E";
+- "No night battle", when the Night battle switch was off.
 
-When the selected fleet, map, choices, or trial count no longer match the run's, the footer's result line, summary, and route cards SHALL be dimmed. The footer SHALL then note that the settings have changed since this result.
+When the selected fleet, map, choices, target, Night battle switch, or trial count no longer match the run's, the footer's result line, summary, and route cards SHALL be dimmed. The footer SHALL then note that the settings have changed since this result.
 
 #### Scenario: Footer after a run
-- **WHEN** fleet 1 finished a run on 7-5 with 2000 trials and choices F→J, H→I, O→P
-- **THEN** the footer shows 7-5, fleet 1, the snapshot time, 2000 trials, ±2.2%, and "F→J, H→I, O→P"
+- **WHEN** fleet 1 finished a run on 7-5 with 2000 trials and choices F→J, H→I, O→P, target Boss, and Night battle on
+- **THEN** the footer shows 7-5, fleet 1, the snapshot time, 2000 trials, ±2.2%, and "F→J, H→I, O→P", and names neither a target nor night battle
+
+#### Scenario: Footer with a node target
+- **WHEN** fleet 1 finished a run on 2-5 with target E and Night battle off
+- **THEN** the footer also shows "Target E" and "No night battle"
 
 #### Scenario: Stale result
 - **WHEN** a run on 1-4 has finished and the user selects 1-5
 - **THEN** the 1-4 results stay visible but dimmed, with a note that the settings have changed
 
+#### Scenario: Stale after a target change
+- **WHEN** a run on 2-5 with the Boss target has finished and the user sets the target to E while Auto is off
+- **THEN** the results stay visible but dimmed, with a note that the settings have changed
+
 ### Requirement: Summary result
 Below the fleet display and above the route cards, the panel SHALL show a summary combining all routes, as defined by the battle-simulation weighted aggregate. It SHALL contain, in this order:
-1. **S**, then A and B as set by the rank display (see Rank display setting) — **A** and **B** individually, or **A or better** and **B or better** cumulatively — as the primary, most prominent values. These are probability-weighted over all trials, so they are the chance per sortie. Each SHALL show its rate when the boss is reached as a smaller secondary value, for example "56.7% (96.0% when reached)".
-2. The chance of reaching the boss and the chance of sinking the boss.
+1. **S**, then A and B as set by the rank display (see Rank display setting) — **A** and **B** individually, or **A or better** and **B or better** cumulatively — at the target as the primary, most prominent values. These are probability-weighted over all trials, so they are the chance per sortie. Each SHALL show its rate when the target is reached as a smaller secondary value, for example "56.7% (96.0% when reached)".
+2. The chance of reaching the target and the chance of sinking the enemy flagship there.
+
+Its labels SHALL name the target as the route cards do: "Reach boss" and "Boss sunk" for the Boss target, "Reach E" and "E flagship sunk" for target E.
 
 The summary SHALL NOT show a chance of losing a ship. It SHALL be shown whenever the result footer is, and every value in it SHALL read 0 until the routes are predicted and every simulated route has finished. All percentages in the summary and the route cards SHALL be shown to one decimal place.
 
 #### Scenario: Summary after completion
 - **WHEN** every simulated route has finished
-- **THEN** the summary shows S and the two other rank values for the rank display, each with its rate when reached, followed by the reach-boss and boss-sunk rates
+- **THEN** the summary shows S and the two other rank values for the rank display, each with its rate when reached, followed by the reach-target and flagship-sunk rates
 
 #### Scenario: Summary matches the table
-- **WHEN** there is a single `[Boss]` route at 28.0% with an S rate of 50.0% over its trials, and the other routes do not reach the boss
+- **WHEN** the target is Boss, there is a single `[Boss]` route at 28.0% with an S rate of 50.0% over its trials, and the other routes do not reach the boss
 - **THEN** the summary shows S 14.0% with 50.0% when reached
 
 #### Scenario: Summary in individual ranks
-- **WHEN** the rank display is individual, the overall probabilities are S 0.4, A 0.2 and B 0.1, and the boss is reached with probability 0.8
+- **WHEN** the rank display is individual, the overall probabilities are S 0.4, A 0.2 and B 0.1, and the target is reached with probability 0.8
 - **THEN** the summary shows S 40.0% (50.0% when reached), A 20.0% (25.0% when reached), and B 10.0% (12.5% when reached)
 
 #### Scenario: Summary in cumulative ranks
 - **WHEN** the rank display is cumulative, with the same probabilities
 - **THEN** the summary shows S 40.0% (50.0% when reached), A or better 60.0% (75.0% when reached), and B or better 70.0% (87.5% when reached)
+
+#### Scenario: Summary for a node target
+- **WHEN** the target is E and the run has finished
+- **THEN** the summary's labels read "Reach E" and "E flagship sunk", and its values are the rates at E
 
 ### Requirement: Errors are actionable
 Every failure SHALL be shown in the panel with a short summary and expandable details. This covers an unusable fleet, a missing or corrupt binary, an incompatible optimizer schema, an optimizer error, and each cause of route prediction failure. After a route prediction failure, the panel SHALL offer a retry. A failure SHALL NOT leave the panel stuck in a running state.
@@ -481,7 +585,7 @@ Every failure SHALL be shown in the panel with a short summary and expandable de
 
 ### Requirement: Narrow, top-down layout
 poi's plugin area is narrow and tall, so the panel SHALL use a single column that fills the plugin area exactly, with no scrollbar for the panel as a whole. From top to bottom it SHALL contain:
-1. the controls bar: fleet, map, Simulate/Cancel and the Auto switch on the first row; and, for maps that have them, the branch and phase choices on a second;
+1. the controls bar: fleet, map, Simulate/Cancel and the Auto switch on the first row; the Target dropdown and the Night battle switch on the second; and, for maps that have them, the branch and phase choices on a third;
 2. the fleet display, which SHALL be collapsible;
 3. the summary;
 4. any error, then the route cards;
@@ -526,16 +630,16 @@ The plugin SHALL have a poi config setting for how the summary and route cards s
 - **THEN** the panel shows ranks individually
 
 ### Requirement: Selection reset
-The control bar SHALL have a Reset button that clears the fleet and map selection, so the panel has no target until the user picks one. After a reset, the fleet and map selects SHALL each show an empty choice. Picking a fleet or a map fills in that select again. The empty choice SHALL only come from Reset; the user cannot pick it from the select's list.
+The control bar SHALL have a Reset button that clears the fleet and map selection, so the panel has nothing to simulate until the user picks both again. After a reset, the fleet and map selects SHALL each show an empty choice. Picking a fleet or a map fills in that select again. The empty choice SHALL only come from Reset; the user cannot pick it from the select's list.
 
 Reset SHALL stop the panel's work: a run in progress is cancelled, a pending automatic run is dropped, and any result, error, or status on screen is cleared, as after Cancel. Reset SHALL stay usable while a run is in progress. It SHALL be disabled when neither a fleet nor a map is selected, and in sortie mode, where the fleet and map are locked to the sortie (see Sortie mode).
 
-Reset SHALL NOT change the trial count, the Auto switch, or the remembered branch and phase choices of any map.
+Reset SHALL set the target back to Boss and turn the Night battle switch back on. It SHALL NOT change the trial count, the Auto switch, or the remembered branch and phase choices of any map.
 
 While the fleet or the map is not selected, unless the selected fleet is on a sortie:
 - Simulate SHALL be disabled.
 - No run SHALL start by itself: not on a change in game, not on a trial-count change, and not when the plugin comes into view.
-- With no map selected, no branch or phase controls are shown.
+- With no map selected, no branch or phase controls and no Target dropdown are shown.
 - With no fleet selected, the fleet display SHALL show a hint to pick a fleet instead of a fleet. With a fleet but no map, it SHALL show the live fleet, with LoS at ×1.
 
 A selected fleet on a sortie SHALL run in sortie mode as usual even with no map selected, since sortie mode uses the sortie's map whatever map is selected. Once the fleet is back in port, the map select SHALL be empty again and the rules above apply.
@@ -579,6 +683,10 @@ A cleared selection SHALL be remembered between poi sessions like any other sele
 #### Scenario: Other settings kept
 - **WHEN** the trial count is a custom 3000, the Auto switch is off, 7-5's F → choice is J, and the user clicks Reset and then picks 7-5
 - **THEN** the settings page still shows Custom with 3000, the Auto switch is still off, and F → shows J
+
+#### Scenario: Target and night battle cleared
+- **WHEN** the target is H, the Night battle switch is off, and the user clicks Reset and then picks a fleet and 7-5
+- **THEN** the Target dropdown shows Boss and the Night battle switch is on
 
 #### Scenario: Cleared selection restored
 - **WHEN** the user clicks Reset, closes poi, and opens it again
