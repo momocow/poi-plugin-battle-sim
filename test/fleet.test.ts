@@ -175,6 +175,17 @@ describe('fleetLoadout', () => {
     expect(fleetLoadout(state, [1])!.key).not.toBe(fleetLoadout(loadStore(), [1])!.key)
   })
 
+  it('reports the setup without HP or morale', () => {
+    const state = loadStore()
+    const before = fleetLoadout(state, [1])!
+    const flagship = state.info!.ships!['545']!
+    flagship.api_nowhp -= 1
+    flagship.api_cond = 10
+    expect(fleetLoadout(state, [1])!.setup).toBe(before.setup)
+    flagship.api_slot = [flagship.api_slot[1]!, flagship.api_slot[0]!, ...flagship.api_slot.slice(2)]
+    expect(fleetLoadout(state, [1])!.setup).not.toBe(before.setup)
+  })
+
   it('is undefined before the game data loads', () => {
     expect(fleetLoadout(undefined, [1])).toBeUndefined()
   })

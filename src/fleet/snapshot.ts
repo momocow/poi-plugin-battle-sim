@@ -73,6 +73,8 @@ export interface Loadout {
   key: string
   /** At least one ship, and every ship's main slots all filled; the expansion slot is not counted. */
   complete: boolean
+  /** Like `key` without HP: equal exactly when the same ships carry the same equipment. */
+  setup: string
 }
 
 /**
@@ -87,6 +89,7 @@ export function fleetLoadout(state: PoiState | undefined, fleetIds: number[]): L
     rosterId > 0 ? `${rosterId}★${info.equips![String(rosterId)]?.api_level ?? 0}` : ''
   let count = 0
   let complete = true
+  const hp: Record<number, number> = {}
   const parts = fleetIds.map((fleetId) => {
     const rosterIds = (info.fleets!.find((f) => f.api_id === fleetId)?.api_ship ?? []).filter((id) => id > 0)
     return rosterIds
@@ -97,11 +100,13 @@ export function fleetLoadout(state: PoiState | undefined, fleetIds: number[]): L
           complete = false
           return `${rosterId}?`
         }
+        hp[rosterId] = ship.api_nowhp
         const slots = ship.api_slot.slice(0, ship.api_slotnum)
         if (slots.length < ship.api_slotnum || slots.some((id) => id <= 0)) complete = false
-        return `${rosterId}:${ship.api_ship_id}♥${ship.api_nowhp}[${slots.map(equipKey).join(',')}+${equipKey(ship.api_slot_ex)}]`
+        return `${rosterId}:${ship.api_ship_id}[${slots.map(equipKey).join(',')}+${equipKey(ship.api_slot_ex)}]`
       })
       .join(' ')
   })
-  return { key: parts.join(' | '), complete: complete && count > 0 }
+  const setup = parts.join(' | ')
+  return { key: `${setup} ♥${JSON.stringify(hp)}`, complete: complete && count > 0, setup }
 }

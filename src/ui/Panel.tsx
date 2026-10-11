@@ -29,6 +29,7 @@ import { t } from '../i18n'
 import { getStoreState } from '../poi'
 import { Controls } from './Controls'
 import { errorSummary, ErrorView } from './ErrorView'
+import { setShownFleet } from './focus'
 import {
   choicesForMap,
   clampTrials,
@@ -113,6 +114,12 @@ export function Panel() {
     lastAutoKey.current = autoKey
     if (changed && inputs.auto && loadout?.complete) scheduleAuto()
   }, [autoKey, inputs.auto])
+
+  // What poi's auto switch compares a game response with (see focus.ts).
+  useEffect(() => {
+    setShownFleet(loadout && { fleetIds: [inputs.fleetId], setup: loadout.setup })
+  }, [inputs.fleetId, loadout?.setup])
+  useEffect(() => () => setShownFleet(undefined), [])
 
   // Coming into view (or opening already in view) with no run starts one. A focus that does not
   // qualify is dropped, and leaving the view keeps a pending run.
