@@ -9,13 +9,13 @@ The poi plugin panel where the user picks a fleet and a map, checks or edits the
 ### Requirement: Inputs
 The panel SHALL let the user choose a fleet (1–4) and a normal map (worlds 1–7, including their sub-maps such as 7-2/7-3). Event maps SHALL NOT be offered. The map options SHALL be grouped by world, each group labeled with the world number and its sea-area name from the game data (for example "1: 鎮守府海域"), or the number only when the game data is not loaded. In the open list, each map option SHALL show the map number and its name from the game data, for example "1-1 鎮守府正面海域"; the closed select SHALL show the map number only. Each fleet option SHALL show the fleet number and its in-game name, for example "1: 第一艦隊". When the game data is not loaded, the option SHALL show the number only.
 
-The panel SHALL let the user set the number of trials per route with these presets:
+The plugin's poi settings page, not the panel, SHALL let the user set the number of trials per route with these presets:
 - Quick (500)
 - Normal (2000), the default
 - Precise (10000)
 - Custom, which shows a number field accepting 1–100000
 
-A remembered trial count that matches a preset SHALL select that preset. Any other count SHALL select Custom with that count filled in. The last fleet, map, and trial count chosen SHALL be remembered between poi sessions.
+The trial count SHALL be a poi config setting. A count that matches a preset SHALL select that preset. Any other count SHALL select Custom with that count filled in. A value that is not a whole number of at least 1 SHALL be treated as 2000, and one above 100000 as 100000. A changed count SHALL apply to the open panel at once, as a change of the trial count (see Automatic runs and Result footer), without restarting poi or reopening the panel. The panel SHALL NOT show a trials control. The last fleet and map chosen SHALL be remembered between poi sessions.
 
 When the selected map has player-selected branches or a phase, the panel SHALL show one control per choice, labeled with the node and an arrow (for example "F →"), its targets listed in the dropdown, or as "Phase". Each control starts at compass's default choice. The choices SHALL be remembered per map between poi sessions. Maps without such choices SHALL show no extra controls. Choices SHALL NOT be editable while a run is in progress.
 
@@ -37,7 +37,19 @@ When the selected map has player-selected branches or a phase, the panel SHALL s
 
 #### Scenario: Custom trial count restored
 - **WHEN** the user set a custom count of 3000, closes poi, and opens it again
-- **THEN** the trials control shows Custom with 3000
+- **THEN** the settings page's trials control shows Custom with 3000, and runs use 3000 trials
+
+#### Scenario: Count changed on the settings page
+- **WHEN** a 2000-trial run has finished, Auto is on, and the user selects Precise (10000) on the settings page
+- **THEN** the panel's result is dimmed as stale, and after the auto-run delay a run starts with 10000 trials
+
+#### Scenario: Count carried over
+- **WHEN** a user who had chosen Quick (500) in the panel's controls bar updates to this version
+- **THEN** the settings page shows Quick (500) and runs use 500 trials
+
+#### Scenario: No trials control in the panel
+- **WHEN** the panel is open
+- **THEN** its controls bar shows no trials select or count field
 
 ### Requirement: Fleet display
 The panel SHALL show the fleet being simulated. Before a run, it SHALL show the selected fleet from live game state and update when that state changes, marked Live next to the fleet label. Once a run starts, it SHALL show the captured snapshot instead, and it SHALL keep showing that snapshot through the results, even if the game state changes.
@@ -430,7 +442,7 @@ Every failure SHALL be shown in the panel with a short summary and expandable de
 
 ### Requirement: Narrow, top-down layout
 poi's plugin area is narrow and tall, so the panel SHALL use a single column that fills the plugin area exactly, with no scrollbar for the panel as a whole. From top to bottom it SHALL contain:
-1. the controls bar: fleet, map, Simulate/Cancel and the Auto switch on the first row; trials (with the custom count field) on the second; and, for maps that have them, the branch and phase choices on a third;
+1. the controls bar: fleet, map, Simulate/Cancel and the Auto switch on the first row; and, for maps that have them, the branch and phase choices on a second;
 2. the fleet display, which SHALL be collapsible;
 3. the summary;
 4. any error, then the route cards;
