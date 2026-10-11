@@ -96,7 +96,9 @@ The panel SHALL start a run by itself, as if Simulate were clicked, when any of 
 - a branch or phase choice of the selected map;
 - the trial count.
 
-The run SHALL start once the inputs have stayed unchanged for a moment (under one second), so typing a custom trial count or a change made in several steps in game starts one run, with the final values.
+The run SHALL start once the inputs have stayed unchanged for the auto-run delay, so typing a custom trial count or a change made in several steps in game starts one run, with the final values. Each further change within the delay SHALL restart the wait.
+
+The auto-run delay SHALL be a poi config setting in milliseconds, defaulting to 1000. A value that is not a whole number from 0 to 60000 SHALL be treated as the default. The plugin's poi settings page SHALL have a field for the delay. A changed delay SHALL apply from the next qualifying change, without restarting poi or reopening the panel.
 
 It SHALL do so only when every ship present in the selected fleet has all its main slots filled, counting only the slots that ship has. The expansion slot SHALL NOT count, and the fleet need not be full: a fleet of three ships with every main slot filled qualifies. A fleet with no ships SHALL NOT start a run.
 
@@ -139,6 +141,22 @@ Opening the panel and the game data loading SHALL NOT start a run. Changes to HP
 #### Scenario: Sortie return
 - **WHEN** the fleet returns from a sortie with lower HP and morale and no ship or equipment changed
 - **THEN** no run starts
+
+#### Scenario: Default delay
+- **WHEN** the delay has never been set and the user swaps equipment, leaving every main slot filled
+- **THEN** a run starts about 1000 ms after the swap, unless something else changes first
+
+#### Scenario: Changes within the delay
+- **WHEN** the delay is 1000 ms and the user makes a second qualifying change 600 ms after the first
+- **THEN** one run starts, about 1000 ms after the second change, with the final values
+
+#### Scenario: Custom delay
+- **WHEN** the user sets the delay to 3000 on the settings page and then changes the map
+- **THEN** a run starts about 3000 ms after the map change
+
+#### Scenario: Invalid delay
+- **WHEN** the config holds -5 or "fast" for the delay
+- **THEN** automatic runs wait 1000 ms
 
 ### Requirement: Auto focus
 poi SHALL switch to the plugin's tab when the player enters the remodel screen, and when a ship or its equipment is changed in game: a ship placed in, removed from or moved within a fleet, a fleet preset loaded, a ship remodeled or modernized, equipment equipped, removed, or moved between slots or ships, or an expansion slot opened. This applies to any fleet, not only the selected one.

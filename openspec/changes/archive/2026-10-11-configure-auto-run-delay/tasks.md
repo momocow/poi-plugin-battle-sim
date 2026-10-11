@@ -15,4 +15,4 @@
 ## 4. Verify
 
 - [x] 4.1 Run the type check and the vitest suite
-- [ ] 4.2 In poi, check that automatic runs wait about 1000 ms by default and that a delay changed on the settings page applies from the next change
+- [x] 4.2 In poi, check that automatic runs wait about 1000 ms by default and that a delay changed on the settings page applies from the next change
