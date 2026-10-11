@@ -95,6 +95,18 @@ export function saveInputs(inputs: SavedInputs): void {
 export const choicesForMap = (inputs: SavedInputs, map: string): ChoiceValues =>
   normalizeChoices(map, inputs.choices[map])
 
+export const AUTO_RUN_DELAY_KEY = `${PREFIX}.autoRunDelay`
+export const DEFAULT_AUTO_RUN_DELAY_MS = 1000
+export const MAX_AUTO_RUN_DELAY_MS = 60_000
+
+/** How long the inputs must stay unchanged before an automatic run starts; the default unless a whole 0–60000 ms. */
+export function loadAutoRunDelay(): number {
+  const ms = readConfig<unknown>(AUTO_RUN_DELAY_KEY, DEFAULT_AUTO_RUN_DELAY_MS)
+  return typeof ms === 'number' && Number.isInteger(ms) && ms >= 0 && ms <= MAX_AUTO_RUN_DELAY_MS
+    ? ms
+    : DEFAULT_AUTO_RUN_DELAY_MS
+}
+
 export const OPTIMIZER_BIN_KEY = `${PREFIX}.optimizerBin`
 export const OPTIMIZER_DATA_KEY = `${PREFIX}.optimizerData`
 

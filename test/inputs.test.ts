@@ -56,6 +56,26 @@ describe('saved inputs', () => {
   })
 })
 
+describe('auto-run delay', () => {
+  const g = globalThis as { window?: unknown }
+  afterEach(() => delete g.window)
+
+  it('reads a whole 0–60000 ms from poi config, else 1000', async () => {
+    const { loadAutoRunDelay, AUTO_RUN_DELAY_KEY } = await import('../src/ui/inputs')
+    const withDelay = (v: unknown) => (g.window = { config: { get: (k: string, f: unknown) => (k === AUTO_RUN_DELAY_KEY ? v : f) } })
+    g.window = { config: { get: (_k: string, f: unknown) => f } }
+    expect(loadAutoRunDelay()).toBe(1000)
+    for (const v of [0, 3000, 60000]) {
+      withDelay(v)
+      expect(loadAutoRunDelay()).toBe(v)
+    }
+    for (const v of [-5, 1.5, 60001, 'fast', null]) {
+      withDelay(v)
+      expect(loadAutoRunDelay()).toBe(1000)
+    }
+  })
+})
+
 describe('optimizer override', () => {
   const g = globalThis as { window?: unknown }
   afterEach(() => delete g.window)

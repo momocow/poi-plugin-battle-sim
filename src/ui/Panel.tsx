@@ -11,7 +11,8 @@
  *
  * A run also starts by itself when the selected fleet, its ships or equipment,
  * the map, the route choices or the trial count change, once every ship has
- * all its main slots filled, unless the automatic-run switch is off.
+ * all its main slots filled and the inputs have settled for the delay set on
+ * poi's settings page, unless the automatic-run switch is off.
  */
 import { Tag } from '@blueprintjs/core'
 import React, { useEffect, useMemo, useReducer, useRef, useState } from 'react'
@@ -26,7 +27,16 @@ import { t } from '../i18n'
 import { getStoreState } from '../poi'
 import { Controls } from './Controls'
 import { errorSummary, ErrorView } from './ErrorView'
-import { choicesForMap, clampTrials, groupMapsByArea, loadInputs, normalMaps, saveInputs, type SavedInputs } from './inputs'
+import {
+  choicesForMap,
+  clampTrials,
+  groupMapsByArea,
+  loadAutoRunDelay,
+  loadInputs,
+  normalMaps,
+  saveInputs,
+  type SavedInputs,
+} from './inputs'
 import { ResultFooter } from './ResultFooter'
 import { RouteCards } from './RouteCards'
 import { runSimulation } from './runner'
@@ -35,9 +45,6 @@ import { StatusArea } from './StatusArea'
 import { PANEL_CSS } from './styles'
 import { Summary } from './Summary'
 import { isStale } from './views'
-
-/** How long the inputs must stay unchanged before an automatic run starts. */
-const AUTO_RUN_DELAY_MS = 800
 
 /** The store slices the live fleet display depends on. */
 function useLiveState(): PoiState {
@@ -84,7 +91,8 @@ export function Panel() {
   const simulate = () => start(current)
 
   // Auto-run on a change, not on opening the panel; a change mid-run restarts it. Changes are
-  // settled first, so typing a custom trial count or a two-step equipment swap starts one run.
+  // settled first, for the configured delay (read per change, so a new setting applies at once),
+  // so typing a custom trial count or a two-step equipment swap starts one run.
   const loadout = useMemo(() => fleetLoadout(live, [inputs.fleetId]), [live, inputs.fleetId])
   const autoKey = loadout && JSON.stringify([inputs.fleetId, loadout.key, inputs.map, choices, inputs.trials])
   const lastAutoKey = useRef<string | undefined>(undefined)
@@ -93,7 +101,7 @@ export function Panel() {
     const changed = lastAutoKey.current !== undefined && lastAutoKey.current !== autoKey
     lastAutoKey.current = autoKey
     if (!changed || !inputs.auto || !loadout?.complete) return
-    const timer = setTimeout(simulate, AUTO_RUN_DELAY_MS)
+    const timer = setTimeout(simulate, loadAutoRunDelay())
     return () => clearTimeout(timer)
   }, [autoKey, inputs.auto])
 
