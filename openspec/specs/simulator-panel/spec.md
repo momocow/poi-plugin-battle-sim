@@ -60,7 +60,7 @@ The display SHALL have:
   - fighter power;
   - line of sight (LoS) by Formula 33, at the multiplier that applies to the selected map: ×3 for 6-2 and 6-3, ×4 for 3-5 and 6-1, and ×1 otherwise. The multiplier is shown next to the value, and hovering over the value shows ×1, ×3 and ×4.
   - When any ship is below full HP, a warning with the number of damaged ships.
-- **One row per ship**, laid out after poi's fleet tab: level and ship type above the ship name, then current and maximum HP with morale, then the equipment.
+- **One row per ship**, laid out after poi's fleet tab: level and ship type above the ship name, then current and maximum HP with morale, then fuel and ammo, then the equipment.
   - HP SHALL be shown as `now / max` above a bar whose length is the HP ratio, colored by damage state as poi colors it:
     - no damage above 75% of maximum;
     - 小破 above 50% and at most 75%;
@@ -68,6 +68,13 @@ The display SHALL have:
     - 大破 at most 25%.
   - Hovering over a damaged ship's HP SHALL name its damage state.
   - Morale SHALL be shown as its number with poi's colored square, in poi's bands (0–19, 20–29, 30–39, 40–48, 49, 50–52, 53 and above), so a sparkled ship shows a yellow square and an unchanged ship a white one.
+  - Fuel and ammo SHALL be shown as two thin bars stacked fuel above ammo, as on poi's fleet tab, each as long as the current/maximum ratio and colored as poi colors supply:
+    - green when full;
+    - yellow below full and above 75%;
+    - orange above 50% and at most 75%;
+    - red at most 50%.
+  - Hovering over a fuel or ammo bar SHALL show that resource's icon and `now / max`, followed, when below full, by the resupply cost as poi computes it: the missing amount, reduced by 15% and rounded down for a ship above level 99, and at least 1 — for example `10 / 15 (-5)`.
+  - When a ship's maximum fuel or ammo is not known, that bar SHALL NOT be shown.
 - **Per ship, its equipment in slot order, as icons.**
   - Hovering over an icon shows the item's name, the improvement level as ★N when above 0, and an aircraft proficiency marker when proficiency is between 1 and 7.
   - The expansion-slot item is shown after the main slots and visibly set apart.
@@ -98,6 +105,18 @@ Names SHALL follow poi's language setting.
 #### Scenario: LoS for 6-1
 - **WHEN** the selected map is 6-1
 - **THEN** the summary row shows the ×4 LoS value labeled ×4
+
+#### Scenario: Under-supplied ship
+- **WHEN** a level-50 ship has 10 of 15 fuel and 20 of 20 ammo
+- **THEN** its fuel bar is two thirds long and orange, and hovering over it shows the fuel icon with `10 / 15 (-5)`; its ammo bar is full and green, and hovering over it shows `20 / 20` with no cost
+
+#### Scenario: Resupply cost for a married ship
+- **WHEN** a level-175 ship has 0 of 15 fuel
+- **THEN** its fuel bar is empty and red, and hovering over it shows `0 / 15 (-12)`
+
+#### Scenario: Supply in the snapshot
+- **WHEN** a run has started and the ship is then resupplied in game
+- **THEN** the fuel and ammo bars keep showing the levels captured when the run started
 
 ### Requirement: Automatic runs
 The panel SHALL start a run by itself, as if Simulate were clicked, when any of these changes while the panel is open:
