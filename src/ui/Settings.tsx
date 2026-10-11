@@ -1,10 +1,10 @@
 /**
- * poi's settings page for this plugin: the automatic-run delay, the
- * developer log switch and the development optimizer override. poi derives
+ * poi's settings page for this plugin: the trial count, the automatic-run
+ * delay, the developer log switch and the development optimizer override. poi derives
  * no UI from config keys, so without this they could only be set by editing
  * config.cson.
  */
-import { Switch } from '@blueprintjs/core'
+import { HTMLSelect, Switch } from '@blueprintjs/core'
 import React, { useState } from 'react'
 
 import { devLogPath } from '../devlog'
@@ -12,14 +12,76 @@ import { t } from '../i18n'
 import { readConfig, writeConfig } from '../poi'
 import {
   AUTO_RUN_DELAY_KEY,
+  clampTrials,
   DEFAULT_AUTO_RUN_DELAY_MS,
+  DEFAULT_TRIALS,
   DEV_LOG_KEY,
+  isTrialPreset,
   loadAutoRunDelay,
   loadDevLog,
   MAX_AUTO_RUN_DELAY_MS,
+  MAX_TRIALS,
   OPTIMIZER_BIN_KEY,
   OPTIMIZER_DATA_KEY,
+  TRIAL_PRESETS,
+  TRIALS_KEY,
 } from './inputs'
+
+const CUSTOM = 'custom'
+
+/** A preset, or Custom with a count field; the field saves only a whole number in range. */
+function TrialsSetting() {
+  const [count, setCount] = useState(() => String(clampTrials(readConfig<unknown>(TRIALS_KEY, DEFAULT_TRIALS))))
+  // Custom stays chosen even when its count happens to equal a preset.
+  const [custom, setCustom] = useState(() => !isTrialPreset(Number(count)))
+  const presetLabels = [t('Quick'), t('Normal'), t('Precise')]
+  const options = [
+    ...TRIAL_PRESETS.map((n, i) => ({ value: String(n), label: `${presetLabels[i]} (${n})` })),
+    { value: CUSTOM, label: t('Custom') },
+  ]
+  return (
+    <div className="battle-sim-setting">
+      <div>{t('Trials')}</div>
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+        <HTMLSelect
+          value={custom ? CUSTOM : count}
+          options={options}
+          onChange={(e: { currentTarget: { value: string } }) => {
+            const value = e.currentTarget.value
+            setCustom(value === CUSTOM)
+            if (value !== CUSTOM) {
+              setCount(value)
+              writeConfig(TRIALS_KEY, Number(value))
+            }
+          }}
+        />
+        {custom && (
+          <input
+            className="bp6-input"
+            style={{ width: '7em' }}
+            type="number"
+            min={1}
+            max={MAX_TRIALS}
+            step={100}
+            value={count}
+            aria-label={t('Trials')}
+            onChange={(e) => {
+              const text = e.currentTarget.value
+              setCount(text)
+              const n = Number(text)
+              if (text.trim() !== '' && Number.isInteger(n) && n >= 1 && n <= MAX_TRIALS) writeConfig(TRIALS_KEY, n)
+            }}
+          />
+        )}
+      </div>
+      <div className="bp6-text-muted">
+        {t('Trials per route, more being more precise but slower; Custom accepts 1–100000, default {n}', {
+          n: DEFAULT_TRIALS,
+        })}
+      </div>
+    </div>
+  )
+}
 
 function PathSetting({ configKey, label, hint }: { configKey: string; label: string; hint: string }) {
   const [value, setValue] = useState(() => String(readConfig<unknown>(configKey, '') ?? ''))
@@ -102,6 +164,7 @@ function DevLogSetting() {
 export function Settings() {
   return (
     <div className="battle-sim-settings" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <TrialsSetting />
       <AutoRunDelaySetting />
       <DevLogSetting />
       <div>{t('Development optimizer')}</div>

@@ -10,7 +10,8 @@
  * at the moment Simulate is clicked.
  *
  * A run also starts by itself when the selected fleet, its ships, their HP or
- * equipment, the map, the route choices or the trial count change, once every
+ * equipment, the map, the route choices or the trial count (set on poi's
+ * settings page, and followed live) change, once every
  * ship has all its main slots filled and the inputs have settled for the delay
  * set on poi's settings page, unless the automatic-run switch is off. It also starts,
  * after the same delay, when poi brings the plugin into view while the panel
@@ -94,6 +95,8 @@ function sortieLetters(sortie: Sortie): string[] | undefined {
 export function Panel() {
   const live = useLiveState()
   const [inputs, setInputs] = useState<SavedInputs>(loadInputs)
+  // From the store, so a count set on the settings page reaches the open panel at once.
+  const trials = useSelector((s: PoiState) => clampTrials(s.config?.plugin?.poi_battle_sim?.trials))
   const [run, dispatch] = useReducer(runReducer, initialRunState)
   const [fleetOpen, setFleetOpen] = useState(true)
   const abortRef = useRef<AbortController | undefined>(undefined)
@@ -128,10 +131,10 @@ export function Panel() {
         fleetId: inputs.fleetId,
         map: sortie.map,
         choices: { ...choicesForMap(inputs, sortie.map), ...taken },
-        trials: inputs.trials,
+        trials,
         sortie: { cells: sortie.cells },
       }
-    : { fleetId: inputs.fleetId, map: inputs.map, choices, trials: inputs.trials }
+    : { fleetId: inputs.fleetId, map: inputs.map, choices, trials }
   const simulate = () => start(current)
   // Sortie mode shows the sortie's map and its choices; the remembered selection stays as it is.
   const shownMap = sortie?.map ?? inputs.map
@@ -210,13 +213,11 @@ export function Panel() {
         choices={shownChoices}
         decided={taken}
         sortieMode={sortie !== undefined}
-        trials={inputs.trials}
         auto={inputs.auto}
         running={running}
         onFleet={(fleetId) => update({ fleetId })}
         onMap={(map) => update({ map })}
         onChoice={(key, value) => update({ choices: { ...inputs.choices, [shownMap]: { ...shownChoices, [key]: value } } })}
-        onTrials={(trials) => update({ trials: clampTrials(trials) })}
         onAuto={(auto) => {
           update({ auto })
           // Turned back on while the result is dimmed: catch up at once, not after the next change. Started here,

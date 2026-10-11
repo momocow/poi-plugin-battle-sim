@@ -1,5 +1,5 @@
 /**
- * Fleet, map, branch and phase choices, trials, the automatic-run switch, and
+ * Fleet, map, branch and phase choices, the automatic-run switch, and
  * the Simulate / Cancel button, with the panel's mode as a tag at the right of
  * the first row: plan mode in port, sortie mode while the selected fleet is on
  * a sortie. In sortie mode the fleet and map can't be changed (the map shown
@@ -7,11 +7,11 @@
  * taken and can't be changed either.
  */
 import { Button, HTMLSelect, Switch, Tag, Tooltip } from '@blueprintjs/core'
-import React, { useState } from 'react'
+import React from 'react'
 
 import { gameName, t } from '../i18n'
 import { choicesFor, type ChoiceValues } from '../routes/choices'
-import { isTrialPreset, MAX_TRIALS, TRIAL_PRESETS, type MapGroup } from './inputs'
+import type { MapGroup } from './inputs'
 
 export interface ControlsProps {
   fleetId: number
@@ -25,13 +25,11 @@ export interface ControlsProps {
   decided: ChoiceValues
   /** The selected fleet is on a sortie: runs follow it, and the fleet and map are locked. */
   sortieMode: boolean
-  trials: number
   auto: boolean
   running: boolean
   onFleet: (fleetId: number) => void
   onMap: (map: string) => void
   onChoice: (key: string, value: string) => void
-  onTrials: (trials: number) => void
   onAuto: (auto: boolean) => void
   onSimulate: () => void
   onCancel: () => void
@@ -39,30 +37,10 @@ export interface ControlsProps {
 
 type ChangeEvent = { currentTarget: { value: string } }
 
-const CUSTOM = 'custom'
-
 export function Controls(p: ControlsProps) {
   const mapChoices = choicesFor(p.map)
   // A remembered map that is not offered (e.g. before the game data loads) still shows, ungrouped.
   const mapOffered = p.maps.some((g) => g.maps.some((m) => m.map === p.map))
-  // Custom stays chosen even when its count happens to equal a preset.
-  const [custom, setCustom] = useState(() => !isTrialPreset(p.trials))
-  const presetLabels = [t('Quick'), t('Normal'), t('Precise')]
-  const trialOptions = [
-    ...TRIAL_PRESETS.map((n, i) => ({
-      value: String(n),
-      label: `${presetLabels[i]} (${n})`,
-    })),
-    { value: CUSTOM, label: t('Custom') },
-  ]
-  const onTrialPreset = (value: string) => {
-    if (value === CUSTOM) {
-      setCustom(true)
-    } else {
-      setCustom(false)
-      p.onTrials(Number(value))
-    }
-  }
   return (
     <div className="battle-sim-controls">
       <div className="battle-sim-control-row">
@@ -127,30 +105,6 @@ export function Controls(p: ControlsProps) {
           <Tag className="battle-sim-mode" round icon="map" intent="none" title={t('Runs use the fleet and map selected here')}>
             {t('Plan mode')}
           </Tag>
-        )}
-      </div>
-      <div className="battle-sim-control-row">
-        <label>
-          {t('Trials')}{' '}
-          <HTMLSelect
-            value={custom ? CUSTOM : String(p.trials)}
-            disabled={p.running}
-            onChange={(e: ChangeEvent) => onTrialPreset(e.currentTarget.value)}
-            options={trialOptions}
-          />
-        </label>
-        {custom && (
-          <input
-            className="bp6-input battle-sim-trials"
-            type="number"
-            min={1}
-            max={MAX_TRIALS}
-            step={100}
-            value={p.trials}
-            disabled={p.running}
-            aria-label={t('Trials')}
-            onChange={(e) => p.onTrials(Number(e.currentTarget.value))}
-          />
         )}
       </div>
       {(mapChoices.branches.length > 0 || mapChoices.phases) && (

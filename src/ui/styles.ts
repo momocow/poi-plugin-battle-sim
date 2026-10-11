@@ -16,7 +16,6 @@ export const PANEL_CSS = `
 .battle-sim-muted { opacity: 0.65; }
 .battle-sim-controls, .battle-sim-control-row { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; }
 .battle-sim-controls { flex: none; flex-direction: column; align-items: stretch; padding: 8px 8px 6px; border-bottom: 1px solid rgba(128, 128, 128, 0.3); }
-.battle-sim-trials { width: 7em; }
 .battle-sim-auto { margin: 0; }
 /* A branch already taken in a sortie: its tooltip's target carries the not-allowed cursor. */
 .battle-sim-decided { cursor: not-allowed; }

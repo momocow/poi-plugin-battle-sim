@@ -99,8 +99,11 @@ export interface PoiState {
   }
   /** The tab poi shows in its main area, and the plugin shown in the plugin pane. */
   ui?: { activeMainTab?: string; activePluginName?: string }
-  /** `tabarea.double`: poi's double-tabbed layout, with plugins in a pane of their own. */
-  config?: { poi?: { tabarea?: { double?: boolean } } }
+  /**
+   * poi's config, mirrored into the store: `tabarea.double` is poi's double-tabbed layout, with plugins in
+   * a pane of their own; `trials` is this plugin's trial count, unvalidated.
+   */
+  config?: { poi?: { tabarea?: { double?: boolean } }; plugin?: { poi_battle_sim?: { trials?: unknown } } }
 }
 
 export interface EquipSnapshot {

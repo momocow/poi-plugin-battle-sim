@@ -1,7 +1,9 @@
 /**
  * The panel's inputs: which maps are offered, and the choices remembered
  * between poi sessions in poi's config under `plugin.poi_battle_sim.*`;
- * plus the development optimizer override set on poi's settings page.
+ * plus the settings set on poi's settings page: the trial count, the
+ * automatic-run delay, the developer log and the development optimizer
+ * override.
  */
 import type { MstMap, MstMaparea, PoiState } from '../fleet/types'
 import { readConfig, writeConfig } from '../poi'
@@ -57,13 +59,15 @@ export function groupMapsByArea(
   return groups
 }
 
+export const TRIALS_KEY = `${PREFIX}.trials`
+
+/** Anything but a whole number of at least 1 is the default; above the maximum is the maximum. */
 export const clampTrials = (n: unknown): number =>
   typeof n === 'number' && Number.isInteger(n) && n >= 1 ? Math.min(n, MAX_TRIALS) : DEFAULT_TRIALS
 
 export interface SavedInputs {
   fleetId: number
   map: string
-  trials: number
   /** Start a run by itself when the fleet or the inputs change. */
   auto: boolean
   /** Per map. */
@@ -78,7 +82,6 @@ export function loadInputs(): SavedInputs {
   return {
     fleetId: typeof fleetId === 'number' && fleetId >= 1 && fleetId <= 4 ? fleetId : 1,
     map: typeof map === 'string' ? map : '1-1',
-    trials: clampTrials(readConfig<unknown>(`${PREFIX}.trials`, DEFAULT_TRIALS)),
     auto: auto !== false,
     choices: choices !== null && typeof choices === 'object' ? (choices as Record<string, ChoiceValues>) : {},
   }
@@ -87,7 +90,6 @@ export function loadInputs(): SavedInputs {
 export function saveInputs(inputs: SavedInputs): void {
   writeConfig(`${PREFIX}.fleetId`, inputs.fleetId)
   writeConfig(`${PREFIX}.map`, inputs.map)
-  writeConfig(`${PREFIX}.trials`, inputs.trials)
   writeConfig(`${PREFIX}.auto`, inputs.auto)
   writeConfig(`${PREFIX}.choices`, inputs.choices)
 }
