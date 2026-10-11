@@ -94,7 +94,8 @@ The panel SHALL start a run by itself, as if Simulate were clicked, when any of 
 - equipment on a ship in the selected fleet: equipped, removed, moved between slots, or improved;
 - the selected map;
 - a branch or phase choice of the selected map;
-- the trial count.
+- the trial count;
+- the current HP of a ship in the selected fleet, up or down: for example damage in a sortie, between nodes or on returning, a docking that finishes, an instant repair, a repair ship's repair, or a modernization or marriage.
 
 The panel SHALL also start a run by itself when the plugin comes into view while the panel has no run: none has started since the panel opened, or the last one was cancelled. The plugin comes into view when its tab becomes the one poi shows, whether the user selected it or poi's plugin auto switch brought it forward, and when the panel opens while its tab is already the one shown. In poi's double-tabbed layout, the plugin is in view when it is the plugin shown in the plugin pane. A panel with a run in progress, finished or failed SHALL NOT start a run on coming into view, even when that result is stale. Coming into view while the selected fleet does not qualify (see below) or while the Auto switch is off SHALL NOT start a run, then or later.
 
@@ -106,7 +107,7 @@ It SHALL do so only when every ship present in the selected fleet has all its ma
 
 The control bar SHALL have an Auto switch, next to the Simulate button, that turns automatic runs on or off. It SHALL be on by default and SHALL be remembered between poi sessions. While it is off, no run starts by itself, and turning it on SHALL NOT start a run for changes made while it was off. The switch SHALL stay usable while a run is in progress; turning it off does not cancel that run.
 
-Apart from coming into view as above, opening the panel and the game data loading SHALL NOT start a run. Changes to HP, morale, level, or aircraft proficiency SHALL NOT start a run. A qualifying change while a run is in progress SHALL cancel that run and start a new one with the current fleet. When the fleets are combined and the combined fleet is selected, the scope is the ships of both fleets.
+Apart from coming into view as above, opening the panel and the game data loading SHALL NOT start a run. Changes to morale, level, or aircraft proficiency SHALL NOT start a run. A qualifying change while a run is in progress SHALL cancel that run and start a new one with the current fleet. When the fleets are combined and the combined fleet is selected, the scope is the ships of both fleets.
 
 #### Scenario: Equipment filled
 - **WHEN** fleet 1 has four ships, one of them with an empty main slot, and the user equips an item into that slot
@@ -141,7 +142,39 @@ Apart from coming into view as above, opening the panel and the game data loadin
 - **THEN** that run is cancelled and a new one starts with the changed fleet
 
 #### Scenario: Sortie return
-- **WHEN** the fleet returns from a sortie with lower HP and morale and no ship or equipment changed
+- **WHEN** the selected fleet returns from a sortie with lower HP and morale, no ship or equipment changed, and every main slot is filled
+- **THEN** a run starts with the damaged HP
+
+#### Scenario: Between nodes
+- **WHEN** a run is in progress and the selected fleet advances to the next node of a sortie with lower HP
+- **THEN** that run is cancelled, and a new one starts after the delay with the HP after the battle
+
+#### Scenario: Morale only
+- **WHEN** only the morale of ships in the selected fleet changes, as when fatigue recovers in port
+- **THEN** no run starts
+
+#### Scenario: Docking finished
+- **WHEN** a ship in the selected fleet finishes repairing in the dock, no ship or equipment changed, and every main slot is filled
+- **THEN** a run starts with the ship at its repaired HP
+
+#### Scenario: Instant repair
+- **WHEN** the user uses an instant repair on a damaged ship in the selected fleet, and every main slot is filled
+- **THEN** a run starts with the ship at full HP
+
+#### Scenario: Several repairs in a row
+- **WHEN** the delay is 1000 ms and the user uses instant repairs on two ships of the selected fleet 500 ms apart
+- **THEN** one run starts, about 1000 ms after the second repair, with both ships repaired
+
+#### Scenario: Repair during a run
+- **WHEN** a run is in progress and a ship in the selected fleet is repaired
+- **THEN** that run is cancelled and a new one starts with the repaired HP
+
+#### Scenario: Repair in another fleet
+- **WHEN** fleet 1 is selected and a ship in fleet 2 is repaired
+- **THEN** no run starts
+
+#### Scenario: Repair with Auto off
+- **WHEN** the Auto switch is off, a ship in the selected fleet is repaired, and then the user turns the switch on
 - **THEN** no run starts
 
 #### Scenario: Default delay
