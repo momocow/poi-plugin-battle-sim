@@ -1,6 +1,16 @@
 import { afterEach, describe, expect, it } from 'vitest'
 
-import { choicesForMap, clampTrials, groupMapsByArea, isTrialPreset, loadInputs, normalMaps, saveInputs } from '../src/ui/inputs'
+import {
+  choicesForMap,
+  clampTrials,
+  groupMapsByArea,
+  isPluginShown,
+  isTrialPreset,
+  loadInputs,
+  normalMaps,
+  PLUGIN_ID,
+  saveInputs,
+} from '../src/ui/inputs'
 import { loadStore } from './helpers'
 
 describe('map list', () => {
@@ -91,5 +101,24 @@ describe('optimizer override', () => {
     expect(loadOptimizerOverride(env)).toEqual({ bin: '/env/bin', data: '/env/data' })
     withConfig({})
     expect(loadOptimizerOverride({})).toEqual({ bin: undefined, data: undefined })
+  })
+})
+
+describe('plugin shown', () => {
+  const double = { poi: { tabarea: { double: true } } }
+
+  it('reads the main tab in the single layout', () => {
+    expect(isPluginShown({ ui: { activeMainTab: PLUGIN_ID, activePluginName: 'other' } })).toBe(true)
+    expect(isPluginShown({ ui: { activeMainTab: 'main-view', activePluginName: PLUGIN_ID } })).toBe(false)
+  })
+
+  it('reads the plugin pane when double-tabbed', () => {
+    expect(isPluginShown({ ui: { activeMainTab: 'main-view', activePluginName: PLUGIN_ID }, config: double })).toBe(true)
+    expect(isPluginShown({ ui: { activeMainTab: PLUGIN_ID, activePluginName: 'other' }, config: double })).toBe(false)
+  })
+
+  it('is not shown without poi\'s tab state', () => {
+    expect(isPluginShown({})).toBe(false)
+    expect(isPluginShown({ config: double })).toBe(false)
   })
 })

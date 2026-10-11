@@ -12,7 +12,9 @@
  * A run also starts by itself when the selected fleet, its ships or equipment,
  * the map, the route choices or the trial count change, once every ship has
  * all its main slots filled and the inputs have settled for the delay set on
- * poi's settings page, unless the automatic-run switch is off.
+ * poi's settings page, unless the automatic-run switch is off. It also starts,
+ * after the same delay, when poi brings the plugin into view while the panel
+ * has no run.
  */
 import { Tag } from '@blueprintjs/core'
 import React, { useEffect, useMemo, useReducer, useRef, useState } from 'react'
@@ -31,6 +33,7 @@ import {
   choicesForMap,
   clampTrials,
   groupMapsByArea,
+  isPluginShown,
   loadAutoRunDelay,
   loadInputs,
   normalMaps,
@@ -96,14 +99,30 @@ export function Panel() {
   const loadout = useMemo(() => fleetLoadout(live, [inputs.fleetId]), [live, inputs.fleetId])
   const autoKey = loadout && JSON.stringify([inputs.fleetId, loadout.key, inputs.map, choices, inputs.trials])
   const lastAutoKey = useRef<string | undefined>(undefined)
+  // One pending automatic run, shared by both triggers, so a focus arriving with a change starts one run.
+  const autoTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  const scheduleAuto = () => {
+    clearTimeout(autoTimer.current)
+    autoTimer.current = setTimeout(simulate, loadAutoRunDelay())
+  }
+  useEffect(() => () => clearTimeout(autoTimer.current), [])
   useEffect(() => {
+    clearTimeout(autoTimer.current)
     if (!autoKey) return
     const changed = lastAutoKey.current !== undefined && lastAutoKey.current !== autoKey
     lastAutoKey.current = autoKey
-    if (!changed || !inputs.auto || !loadout?.complete) return
-    const timer = setTimeout(simulate, loadAutoRunDelay())
-    return () => clearTimeout(timer)
+    if (changed && inputs.auto && loadout?.complete) scheduleAuto()
   }, [autoKey, inputs.auto])
+
+  // Coming into view (or opening already in view) with no run starts one. A focus that does not
+  // qualify is dropped, and leaving the view keeps a pending run.
+  const shown = useSelector(isPluginShown)
+  const lastShown = useRef(false)
+  useEffect(() => {
+    const focused = shown && !lastShown.current
+    lastShown.current = shown
+    if (focused && run.phase === 'idle' && inputs.auto && loadout?.complete) scheduleAuto()
+  }, [shown])
 
   // Live before a run; the run's snapshot from its start through its result, at the run's map.
   let fleet: { model?: FleetViewModel; error?: SimError }

@@ -3,7 +3,7 @@
  * between poi sessions in poi's config under `plugin.poi_battle_sim.*`;
  * plus the development optimizer override set on poi's settings page.
  */
-import type { MstMap, MstMaparea } from '../fleet/types'
+import type { MstMap, MstMaparea, PoiState } from '../fleet/types'
 import { readConfig, writeConfig } from '../poi'
 import { normalizeChoices, type ChoiceValues } from '../routes/choices'
 
@@ -125,4 +125,13 @@ export function loadOptimizerOverride(
   const bin = nonEmpty(readConfig<unknown>(OPTIMIZER_BIN_KEY, ''))
   if (bin) return { bin, data: nonEmpty(readConfig<unknown>(OPTIMIZER_DATA_KEY, '')) }
   return { bin: nonEmpty(env.BATTLE_SIM_OPTIMIZER_BIN), data: nonEmpty(env.BATTLE_SIM_OPTIMIZER_DATA) }
+}
+
+/** poi's id for this plugin: its package name. */
+export const PLUGIN_ID = 'poi-plugin-battle-sim'
+
+/** Whether poi shows this plugin: the main tab, or the plugin pane's tab when double-tabbed. */
+export function isPluginShown(state: Pick<PoiState, 'ui' | 'config'>): boolean {
+  const double = state.config?.poi?.tabarea?.double === true
+  return (double ? state.ui?.activePluginName : state.ui?.activeMainTab) === PLUGIN_ID
 }

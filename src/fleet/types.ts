@@ -83,6 +83,10 @@ export interface PoiState {
     $mapareas?: Record<string, MstMaparea>
   }
   sortie?: { combinedFlag?: number }
+  /** The tab poi shows in its main area, and the plugin shown in the plugin pane. */
+  ui?: { activeMainTab?: string; activePluginName?: string }
+  /** `tabarea.double`: poi's double-tabbed layout, with plugins in a pane of their own. */
+  config?: { poi?: { tabarea?: { double?: boolean } } }
 }
 
 export interface EquipSnapshot {
