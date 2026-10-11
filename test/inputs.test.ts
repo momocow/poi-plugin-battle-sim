@@ -62,6 +62,20 @@ describe('saved inputs', () => {
     expect(choicesForMap(loaded, '5-6')).toEqual({ I: 'J', O: 'P', phase: '1' })
   })
 
+  it('remembers a selection cleared by Reset, which a never-written key is not', () => {
+    const store = new Map<string, unknown>()
+    g.window = { config: { get: (k: string, f: unknown) => (store.has(k) ? store.get(k) : f), set: (k: string, v: unknown) => store.set(k, v) } }
+    saveInputs({ fleetId: null, map: null, auto: true, choices: { '7-5': { F: 'J', H: 'I', O: 'P' } } })
+    // Not null: poi's config would read that back as missing.
+    expect([store.get('plugin.poi_battle_sim.fleetId'), store.get('plugin.poi_battle_sim.map')]).toEqual([0, ''])
+    expect(loadInputs()).toMatchObject({ fleetId: null, map: null, auto: true })
+    store.delete('plugin.poi_battle_sim.fleetId')
+    store.delete('plugin.poi_battle_sim.map')
+    expect(loadInputs()).toMatchObject({ fleetId: 1, map: '1-1' })
+    store.set('plugin.poi_battle_sim.fleetId', null)
+    expect(loadInputs().fleetId).toBe(1)
+  })
+
   it('leaves the trial count, set on the settings page, alone', () => {
     const store = new Map<string, unknown>([[TRIALS_KEY, 500]])
     g.window = { config: { get: (k: string, f: unknown) => (store.has(k) ? store.get(k) : f), set: (k: string, v: unknown) => store.set(k, v) } }

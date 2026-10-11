@@ -1,23 +1,26 @@
 /**
- * Fleet, map, branch and phase choices, the automatic-run switch, and
- * the Simulate / Cancel button, with the panel's mode as a tag at the right of
- * the first row: plan mode in port, sortie mode while the selected fleet is on
- * a sortie. In sortie mode the fleet and map can't be changed (the map shown
- * is the sortie's), and a branch the fleet has already passed shows the branch
- * taken and can't be changed either.
+ * Fleet, map, branch and phase choices, the automatic-run switch, the
+ * Simulate / Cancel button and Reset, with the panel's mode as a tag at the
+ * right of the first row: plan mode in port, sortie mode while the selected
+ * fleet is on a sortie. In sortie mode the fleet and map can't be changed (the
+ * map shown is the sortie's) and Reset is off, and a branch the fleet has
+ * already passed shows the branch taken and can't be changed either. After
+ * Reset, the fleet and map selects show an empty choice that can't be picked.
  */
 import { Button, HTMLSelect, Switch, Tag, Tooltip } from '@blueprintjs/core'
 import React from 'react'
 
 import { gameName, t } from '../i18n'
-import { choicesFor, type ChoiceValues } from '../routes/choices'
+import { choicesFor, type ChoiceValues, type MapChoices } from '../routes/choices'
 import type { MapGroup } from './inputs'
 
 export interface ControlsProps {
-  fleetId: number
+  /** Null when cleared by Reset. */
+  fleetId: number | null
   /** In-game fleet names by fleet id − 1; missing before the game data loads. */
   fleetNames: (string | undefined)[]
-  map: string
+  /** Null when cleared by Reset and not on a sortie. */
+  map: string | null
   /** Offered maps, grouped by sea area. */
   maps: MapGroup[]
   choices: ChoiceValues
@@ -27,44 +30,58 @@ export interface ControlsProps {
   sortieMode: boolean
   auto: boolean
   running: boolean
+  /** There is something to run: a fleet and a map, or the selected fleet's sortie. */
+  canSimulate: boolean
   onFleet: (fleetId: number) => void
   onMap: (map: string) => void
   onChoice: (key: string, value: string) => void
   onAuto: (auto: boolean) => void
   onSimulate: () => void
   onCancel: () => void
+  onReset: () => void
 }
+
+/** Shown only while the select has no selection; disabled, so it can't be picked. */
+const EMPTY = { value: '', label: '—', disabled: true }
 
 type ChangeEvent = { currentTarget: { value: string } }
 
 export function Controls(p: ControlsProps) {
-  const mapChoices = choicesFor(p.map)
+  const mapChoices: MapChoices = p.map !== null ? choicesFor(p.map) : { branches: [] }
   // A remembered map that is not offered (e.g. before the game data loads) still shows, ungrouped.
-  const mapOffered = p.maps.some((g) => g.maps.some((m) => m.map === p.map))
+  const mapOffered = p.map === null || p.maps.some((g) => g.maps.some((m) => m.map === p.map))
   return (
     <div className="battle-sim-controls">
       <div className="battle-sim-control-row">
         <label>
           {t('Fleet')}{' '}
           <HTMLSelect
-            value={p.fleetId}
+            value={p.fleetId ?? ''}
             disabled={p.running || p.sortieMode}
             onChange={(e: ChangeEvent) => p.onFleet(Number(e.currentTarget.value))}
-            options={[1, 2, 3, 4].map((id) => {
-              const name = p.fleetNames[id - 1]
-              return { value: id, label: name ? `${id}: ${name}` : String(id) }
-            })}
+            options={[
+              ...(p.fleetId === null ? [EMPTY] : []),
+              ...[1, 2, 3, 4].map((id) => {
+                const name = p.fleetNames[id - 1]
+                return { value: id, label: name ? `${id}: ${name}` : String(id) }
+              }),
+            ]}
           />
         </label>
         <label>
           {t('Map')}{' '}
           <HTMLSelect
             className="battle-sim-map-select"
-            value={p.map}
+            value={p.map ?? ''}
             disabled={p.running || p.sortieMode}
             onChange={(e: ChangeEvent) => p.onMap(e.currentTarget.value)}
           >
-            {!mapOffered && <option value={p.map}>{p.map}</option>}
+            {p.map === null && (
+              <option value={EMPTY.value} disabled>
+                {EMPTY.label}
+              </option>
+            )}
+            {!mapOffered && <option value={p.map!}>{p.map}</option>}
             {p.maps.map((g) => (
               <optgroup key={g.area} label={g.name ? `${g.area}: ${gameName(g.name)}` : String(g.area)}>
                 {g.maps.map(({ map, name }) => (
@@ -80,10 +97,19 @@ export function Controls(p: ControlsProps) {
         {p.running ? (
           <Button onClick={p.onCancel}>{t('Cancel')}</Button>
         ) : (
-          <Button intent="primary" onClick={p.onSimulate}>
+          <Button intent="primary" disabled={!p.canSimulate} onClick={p.onSimulate}>
             {t('Simulate')}
           </Button>
         )}
+        {/* An icon only: the first row has no room for another label before the mode tag wraps. */}
+        <Button
+          minimal
+          icon="reset"
+          aria-label={t('Reset')}
+          disabled={p.sortieMode || (p.fleetId === null && p.map === null)}
+          title={t('Clear the fleet and map, so nothing runs until you pick them again')}
+          onClick={p.onReset}
+        />
         <Switch
           className="battle-sim-auto"
           checked={p.auto}

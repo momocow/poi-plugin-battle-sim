@@ -120,13 +120,14 @@ const supplyView = (now: number, max: number | undefined, level: number): Supply
     : { now, max, intent: getMaterialStyle((now / max) * 100), cost: resupplyCost(now, max, level) }
 
 /** Formula 33's node-branching multiplier for a map: ×3 on 6-2/6-3, ×4 on 3-5/6-1, ×1 elsewhere. */
-export function losMultiplier(map: string): LosMultiplier {
+export function losMultiplier(map: string | undefined): LosMultiplier {
   if (map === '6-2' || map === '6-3') return 3
   if (map === '3-5' || map === '6-1') return 4
   return 1
 }
 
-export function buildFleetViewModel(snapshot: FleetSnapshot, master: MasterData, map: string): FleetViewModel {
+/** `map` is undefined when none is selected: LoS then shows at ×1. */
+export function buildFleetViewModel(snapshot: FleetSnapshot, master: MasterData, map: string | undefined): FleetViewModel {
   const $ships = master.$ships ?? {}
   const $equips = master.$equips ?? {}
 

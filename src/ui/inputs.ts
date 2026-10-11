@@ -73,9 +73,17 @@ export type RankDisplay = 'individual' | 'cumulative'
 /** Individual unless the config holds `'cumulative'`. */
 export const parseRankDisplay = (value: unknown): RankDisplay => (value === 'cumulative' ? 'cumulative' : 'individual')
 
+/**
+ * poi's config reads a stored `null` as missing, so a selection cleared by Reset is stored as these
+ * and read back as null. A key that was never written still falls back to fleet 1 and 1-1.
+ */
+const NO_FLEET = 0
+const NO_MAP = ''
+
 export interface SavedInputs {
-  fleetId: number
-  map: string
+  /** Null after Reset, until the user picks one. */
+  fleetId: number | null
+  map: string | null
   /** Start a run by itself when the fleet or the inputs change. */
   auto: boolean
   /** Per map. */
@@ -88,16 +96,16 @@ export function loadInputs(): SavedInputs {
   const choices = readConfig<unknown>(`${PREFIX}.choices`, {})
   const auto = readConfig<unknown>(`${PREFIX}.auto`, true)
   return {
-    fleetId: typeof fleetId === 'number' && fleetId >= 1 && fleetId <= 4 ? fleetId : 1,
-    map: typeof map === 'string' ? map : '1-1',
+    fleetId: fleetId === NO_FLEET ? null : typeof fleetId === 'number' && fleetId >= 1 && fleetId <= 4 ? fleetId : 1,
+    map: map === NO_MAP ? null : typeof map === 'string' ? map : '1-1',
     auto: auto !== false,
     choices: choices !== null && typeof choices === 'object' ? (choices as Record<string, ChoiceValues>) : {},
   }
 }
 
 export function saveInputs(inputs: SavedInputs): void {
-  writeConfig(`${PREFIX}.fleetId`, inputs.fleetId)
-  writeConfig(`${PREFIX}.map`, inputs.map)
+  writeConfig(`${PREFIX}.fleetId`, inputs.fleetId ?? NO_FLEET)
+  writeConfig(`${PREFIX}.map`, inputs.map ?? NO_MAP)
   writeConfig(`${PREFIX}.auto`, inputs.auto)
   writeConfig(`${PREFIX}.choices`, inputs.choices)
 }

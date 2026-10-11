@@ -23,6 +23,11 @@
  * map's choices instead of the selected ones, narrowed to the path so far; the
  * fleet advancing a node starts a run, and coming home returns to the selected
  * map.
+ *
+ * Reset clears the fleet and map: it stops any run, drops a pending automatic
+ * run and clears the result, and until both are picked again nothing runs,
+ * by hand or by itself. A selected fleet that sorties still runs in sortie
+ * mode, which never uses the selected map.
  */
 import { Tag } from '@blueprintjs/core'
 import React, { useEffect, useMemo, useReducer, useRef, useState } from 'react'
@@ -112,7 +117,6 @@ export function Panel() {
     setInputs(next)
     saveInputs(next)
   }
-  const choices = choicesForMap(inputs, inputs.map)
   const maps = useMemo(
     () => groupMapsByArea(normalMaps(live.const?.$maps), live.const?.$maps, live.const?.$mapareas),
     [live.const?.$maps, live.const?.$mapareas],
@@ -124,30 +128,38 @@ export function Panel() {
     abortRef.current = controller
     void runSimulation(input, getStoreState() as PoiState | undefined, dispatch, controller.signal)
   }
-  // Mid-sortie the run is on the sortie's map, with that map's choices, whatever map is selected.
-  // A branch the fleet has passed counts as chosen: the one taken, whatever is remembered for the map.
-  const sortie = sortieOf(live, inputs.fleetId)
+  // Mid-sortie the run is on the sortie's map, with that map's choices, whatever map is selected (none
+  // included). A branch the fleet has passed counts as chosen: the one taken, whatever is remembered.
+  const { fleetId } = inputs
+  const sortie = fleetId !== null ? sortieOf(live, fleetId) : undefined
   const letters = sortie && sortieLetters(sortie)
   const taken = sortie && letters ? takenBranches(sortie.map, letters) : {}
-  const current: RunInput = sortie
-    ? {
-        fleetId: inputs.fleetId,
-        map: sortie.map,
-        choices: { ...choicesForMap(inputs, sortie.map), ...taken },
-        trials,
-        sortie: { cells: sortie.cells },
-      }
-    : { fleetId: inputs.fleetId, map: inputs.map, choices, trials }
-  const simulate = () => start(current)
+  // What a run would simulate; undefined while there is nothing to run (cleared by Reset).
+  const current: RunInput | undefined =
+    fleetId === null
+      ? undefined
+      : sortie
+        ? {
+            fleetId,
+            map: sortie.map,
+            choices: { ...choicesForMap(inputs, sortie.map), ...taken },
+            trials,
+            sortie: { cells: sortie.cells },
+          }
+        : inputs.map !== null
+          ? { fleetId, map: inputs.map, choices: choicesForMap(inputs, inputs.map), trials }
+          : undefined
+  const simulate = () => current && start(current)
   // Sortie mode shows the sortie's map and its choices; the remembered selection stays as it is.
   const shownMap = sortie?.map ?? inputs.map
-  const shownChoices = sortie ? choicesForMap(inputs, sortie.map) : choices
+  const shownChoices = shownMap !== null ? choicesForMap(inputs, shownMap) : {}
 
   // Auto-run on a change, not on opening the panel; a change mid-run restarts it. Changes are
   // settled first, for the configured delay (read per change, so a new setting applies at once),
   // so typing a custom trial count or a two-step equipment swap starts one run.
-  const loadout = useMemo(() => fleetLoadout(live, [inputs.fleetId]), [live, inputs.fleetId])
-  const autoKey = loadout && JSON.stringify([loadout.key, current])
+  // With nothing to run the key is 'unselected': picking a target again, even the same one, is a change.
+  const loadout = useMemo(() => (fleetId !== null ? fleetLoadout(live, [fleetId]) : undefined), [live, fleetId])
+  const autoKey = current ? loadout && JSON.stringify([loadout.key, current]) : 'unselected'
   const lastAutoKey = useRef<string | undefined>(undefined)
   // One pending automatic run, shared by both triggers, so a focus arriving with a change starts one run.
   const autoTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
@@ -163,13 +175,13 @@ export function Panel() {
     if (!autoKey) return
     const changed = lastAutoKey.current !== undefined && lastAutoKey.current !== autoKey
     lastAutoKey.current = autoKey
-    if (changed && inputs.auto && loadout?.complete) scheduleAuto('change')
+    if (changed && current && inputs.auto && loadout?.complete) scheduleAuto('change')
   }, [autoKey, inputs.auto])
 
   // What poi's auto switch compares a game response with (see focus.ts).
   useEffect(() => {
-    setShownFleet(loadout && { fleetIds: [inputs.fleetId], setup: loadout.setup })
-  }, [inputs.fleetId, loadout?.setup])
+    setShownFleet(loadout && fleetId !== null ? { fleetIds: [fleetId], setup: loadout.setup } : undefined)
+  }, [fleetId, loadout?.setup])
   useEffect(() => () => setShownFleet(undefined), [])
 
   // Coming into view (or opening already in view) with no run starts one. A focus that does not
@@ -179,21 +191,25 @@ export function Panel() {
   useEffect(() => {
     const focused = shown && !lastShown.current
     lastShown.current = shown
-    if (focused && run.phase === 'idle' && inputs.auto && loadout?.complete) scheduleAuto('focus')
+    if (focused && current && run.phase === 'idle' && inputs.auto && loadout?.complete) scheduleAuto('focus')
   }, [shown])
 
-  // Live before a run; the run's snapshot from its start through its result, at the run's map.
+  // Live before a run; the run's snapshot from its start through its result, at the run's map. With no
+  // map to run, LoS shows at ×1; with no fleet, there is nothing to show.
   let fleet: { model?: FleetViewModel; error?: SimError }
   try {
     fleet = run.snapshot
-      ? { model: buildFleetViewModel(run.snapshot, live.const ?? {}, run.input?.map ?? inputs.map) }
-      : { model: buildFleetViewModel(snapshotFleet(live, inputs.fleetId), live.const ?? {}, current.map) }
+      ? { model: buildFleetViewModel(run.snapshot, live.const ?? {}, run.input?.map) }
+      : fleetId !== null
+        ? { model: buildFleetViewModel(snapshotFleet(live, fleetId), live.const ?? {}, current?.map) }
+        : {}
   } catch (err) {
     fleet = { error: err instanceof SimError ? err : new SimError('INTERNAL', String(err)) }
   }
 
   const fleetNames = [1, 2, 3, 4].map((id) => live.info?.fleets?.find((f) => f.api_id === id)?.api_name)
-  const stale = run.input !== undefined && !running && isStale(run.input, current)
+  // Nothing to run (a sortie's fleet back in port with no map selected) no longer matches the result either.
+  const stale = run.input !== undefined && !running && (!current || isStale(run.input, current))
   // Routes are unknown while predicting; the header and a zeroed summary show already.
   const result =
     (run.routes || run.phase === 'predicting') && run.input && run.snapshot
@@ -205,11 +221,21 @@ export function Panel() {
           sortieUnobserved: run.sortieUnobserved,
         }
       : undefined
+  const shownFleetId = run.snapshot?.fleetId ?? fleetId
+
+  // Stops everything, as Cancel does, and clears what is on screen: a finished result or an error too.
+  const reset = () => {
+    abortRef.current?.abort()
+    clearTimeout(autoTimer.current)
+    dispatch({ type: 'cancelled' })
+    update({ fleetId: null, map: null })
+  }
+
   return (
     <div className="battle-sim">
       <style>{PANEL_CSS}</style>
       <Controls
-        fleetId={inputs.fleetId}
+        fleetId={fleetId}
         fleetNames={fleetNames}
         map={shownMap}
         maps={maps}
@@ -218,14 +244,17 @@ export function Panel() {
         sortieMode={sortie !== undefined}
         auto={inputs.auto}
         running={running}
+        canSimulate={current !== undefined}
         onFleet={(fleetId) => update({ fleetId })}
         onMap={(map) => update({ map })}
-        onChoice={(key, value) => update({ choices: { ...inputs.choices, [shownMap]: { ...shownChoices, [key]: value } } })}
+        onChoice={(key, value) =>
+          shownMap !== null && update({ choices: { ...inputs.choices, [shownMap]: { ...shownChoices, [key]: value } } })
+        }
         onAuto={(auto) => {
           update({ auto })
           // Turned back on while the result is dimmed: catch up at once, not after the next change. Started here,
           // not through the timer, which the input-change effect clears when Auto changes.
-          if (auto && stale && loadout?.complete) {
+          if (auto && current && stale && loadout?.complete) {
             clearTimeout(autoTimer.current)
             devLog('auto.resumed', { input: current })
             simulate()
@@ -233,12 +262,13 @@ export function Panel() {
         }}
         onSimulate={simulate}
         onCancel={() => abortRef.current?.abort()}
+        onReset={reset}
       />
 
       <div className="battle-sim-section">
         <div className="battle-sim-section-head" onClick={() => setFleetOpen(!fleetOpen)}>
           <span>{fleetOpen ? '▾' : '▸'}</span>
-          <span>{t('Fleet {id}', { id: run.snapshot?.fleetId ?? inputs.fleetId })}</span>
+          <span>{shownFleetId !== null ? t('Fleet {id}', { id: shownFleetId }) : t('Fleet')}</span>
           {!run.snapshot && (
             <Tag minimal intent="success">
               {t('Live')}
@@ -248,8 +278,10 @@ export function Panel() {
         {fleetOpen &&
           (fleet.model ? (
             <FleetView model={fleet.model} />
+          ) : fleet.error ? (
+            <div className="battle-sim-muted">{errorSummary(fleet.error.code)}</div>
           ) : (
-            fleet.error && <div className="battle-sim-muted">{errorSummary(fleet.error.code)}</div>
+            <div className="battle-sim-muted">{t('Pick a fleet')}</div>
           ))}
       </div>
 

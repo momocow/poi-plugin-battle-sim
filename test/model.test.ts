@@ -98,6 +98,12 @@ describe('fleet view model', () => {
     expect(model.damagedCount).toBe(2)
   })
 
+  it('shows LoS at ×1 with no map selected', () => {
+    expect(losMultiplier(undefined)).toBe(1)
+    const state = loadStore()
+    expect(buildFleetViewModel(snapshotFleet(state, 1), state.const!, undefined).losMultiplier).toBe(1)
+  })
+
   it('applies the map’s LoS multiplier', () => {
     expect(['6-2', '6-3', '3-5', '6-1', '1-1', '7-5'].map(losMultiplier)).toEqual([3, 3, 4, 4, 1, 1])
     expect(liveFleetViewModel(loadStore(), 1, '6-1').losMultiplier).toBe(4)
