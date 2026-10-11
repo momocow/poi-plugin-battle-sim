@@ -19,18 +19,29 @@ export const RANKS = ['S', 'A', 'B', 'C', 'D', 'E'] as const
 export type Rank = (typeof RANKS)[number]
 export type RankRates = Record<Rank, number>
 
-/** The subset of the optimizer's simulate diag this plugin reads. */
+/**
+ * The subset of the optimizer's simulate diag this plugin reads, under the
+ * optimizer's wire names. For the panel its rates are at the route's last
+ * node, the target: as the optimizer sends them for a boss, and as
+ * `atNodeTarget` derives them from the per-node channels for a node target.
+ */
 export interface SimulateDiag {
-  /** Among trials that reached the boss. */
+  /** Among trials that reached the target. */
   ranks: RankRates
   /** Among all trials. */
   ranks_marginal: RankRates
+  /** Share of all trials reaching the target. */
   reach_boss_rate: number
+  /** Share of all trials sinking the enemy flagship at the target. */
   boss_sunk_rate: number
   /** Share of all trials reaching each battle node, in route order; battle nodes only. */
   per_node_reach: number[]
   /** One entry per route node (start excluded), from `_meta.route`. */
   route: RouteNodeMeta[]
+  /** `ranks-per-node`: per battle node, ranks among trials that fought there; null where none did. */
+  ranks_per_node?: (RankRates | null)[]
+  /** `node-outcomes`: per battle node, among trials that fought there; null where none did. */
+  node_outcomes?: ({ enemy_flag_sunk_rate: number } | null)[]
 }
 
 export interface RouteNodeMeta {
@@ -226,13 +237,18 @@ function readDiag(diag: unknown): SimulateDiag {
     if (typeof v !== 'number') missing.push(key)
     return typeof v === 'number' ? v : 0
   }
+  const rankRates = (v: Record<string, unknown> | undefined): RankRates =>
+    Object.fromEntries(RANKS.map((r) => [r, typeof v?.[r] === 'number' ? (v[r] as number) : 0])) as RankRates
   const ranks = (key: string): RankRates => {
     const v = (d[key] ?? undefined) as Record<string, unknown> | undefined
     if (!v || typeof v !== 'object') missing.push(key)
-    return Object.fromEntries(
-      RANKS.map((r) => [r, typeof v?.[r] === 'number' ? (v[r] as number) : 0]),
-    ) as RankRates
+    return rankRates(v)
   }
+  /** An optional per-node channel; its entries are checked where they are used (`atNodeTarget`). */
+  const perNode = <T>(key: string, read: (v: Record<string, unknown>) => T): (T | null)[] | undefined =>
+    Array.isArray(d[key])
+      ? (d[key] as unknown[]).map((v) => (v && typeof v === 'object' ? read(v as Record<string, unknown>) : null))
+      : undefined
   const perNodeReach: number[] = []
   if (Array.isArray(d.per_node_reach) && d.per_node_reach.every((v) => typeof v === 'number')) {
     perNodeReach.push(...(d.per_node_reach as number[]))
@@ -263,6 +279,10 @@ function readDiag(diag: unknown): SimulateDiag {
     boss_sunk_rate: num('boss_sunk_rate'),
     per_node_reach: perNodeReach,
     route,
+    ranks_per_node: perNode('ranks_per_node', rankRates),
+    node_outcomes: perNode('node_outcomes', (v) =>
+      typeof v.enemy_flag_sunk_rate === 'number' ? { enemy_flag_sunk_rate: v.enemy_flag_sunk_rate } : null,
+    ),
   }
   if (missing.length > 0) {
     throw new SimError('OPTIMIZER_SCHEMA', 'The optimizer version is incompatible with this plugin.', [
@@ -284,4 +304,36 @@ export function checkRoute(diag: SimulateDiag, nodes: string[]): SimulateDiag {
     ])
   }
   return diag
+}
+
+/**
+ * A node target's rates, from the per-node channels of the route's last node
+ * (battle index j), in place of the boss fields, which are 0 on a route
+ * without a boss: reach is `per_node_reach[j]`; ranks are `ranks_per_node[j]`
+ * among the trials that fought there, and times reach over all trials; the
+ * flagship-sunk rate is `node_outcomes[j]` times reach. A node no trial
+ * reached has null entries and reach 0, like a boss never reached.
+ */
+export function atNodeTarget(diag: SimulateDiag): SimulateDiag {
+  const last = diag.route[diag.route.length - 1]
+  if (!last || last.battleIndex === null) {
+    throw new SimError('TARGET_NOT_BATTLE', `Node ${last?.node ?? '?'} has no battle; pick a battle node as the target.`)
+  }
+  const j = last.battleIndex
+  const reach = diag.per_node_reach[j]!
+  const ranks = diag.ranks_per_node?.[j]
+  const outcome = diag.node_outcomes?.[j]
+  if (reach > 0 && (!ranks || !outcome)) {
+    throw new SimError('OPTIMIZER_SCHEMA', 'The optimizer version is incompatible with this plugin.', [
+      `result is missing ranks_per_node / node_outcomes for node ${last.node}`,
+    ])
+  }
+  const conditional = ranks ?? (Object.fromEntries(RANKS.map((r) => [r, 0])) as RankRates)
+  return {
+    ...diag,
+    reach_boss_rate: reach,
+    ranks: conditional,
+    ranks_marginal: Object.fromEntries(RANKS.map((r) => [r, conditional[r] * reach])) as RankRates,
+    boss_sunk_rate: (outcome?.enemy_flag_sunk_rate ?? 0) * reach,
+  }
 }

@@ -1,7 +1,7 @@
 /**
  * The panel's footer: on the left, what a result was run with — map (with the
  * node the fleet was at mid-sortie), fleet, snapshot time, trials and its
- * margin of error, choices, with a marker when a mid-sortie result can't know
+ * margin of error, choices, a node target and night battle off, with a marker when a mid-sortie result can't know
  * the special attacks fired earlier — and whether the settings have moved on
  * since; on the right, the run's status.
  */
@@ -51,6 +51,8 @@ function ResultLine({ input, capturedAt, at, sortieUnobserved }: FooterResult) {
     t('{trials} trials per route', { trials: input.trials }),
     `±${pct(marginOfError(input.trials))}`,
     ...(choices ? [choices] : []),
+    ...(input.target !== undefined ? [t('Target {node}', { node: input.target })] : []),
+    ...(input.nightBattle ? [] : [t('No night battle')]),
   ]
   return (
     <div className="battle-sim-muted">

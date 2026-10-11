@@ -89,5 +89,19 @@
   "The fleet is on a sortie; runs follow it": "The fleet is on a sortie; runs follow it",
   "Sortie mode": "Sortie mode",
   "Plan mode": "Plan mode",
-  "Runs use the fleet and map selected here": "Runs use the fleet and map selected here"
+  "Runs use the fleet and map selected here": "Runs use the fleet and map selected here",
+  "Target": "Target",
+  "Boss": "Boss",
+  "Night battle": "Night battle",
+  "Pursue night battle at the target": "Pursue night battle at the target",
+  "Reach {node}": "Reach {node}",
+  "{node} flagship sunk": "{node} flagship sunk",
+  "When {node} is reached": "When {node} is reached",
+  "Not simulated (does not reach {node})": "Not simulated (does not reach {node})",
+  "Target {node}": "Target {node}",
+  "No night battle": "No night battle",
+  "The target node has no battle — pick a battle node as the target": "The target node has no battle — pick a battle node as the target",
+  "{node} is always a night battle": "{node} is always a night battle",
+  "Target reached": "Target reached",
+  "{node} (Boss)": "{node} (Boss)"
 }

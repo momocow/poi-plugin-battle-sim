@@ -19,7 +19,7 @@ export const PANEL_CSS = `
 .battle-sim-auto { margin: 0; }
 /* A branch already taken in a sortie: its tooltip's target carries the not-allowed cursor. */
 .battle-sim-decided { cursor: not-allowed; }
-.battle-sim-decided select { pointer-events: none; }
+.battle-sim-decided select, .battle-sim-decided .bp6-control { pointer-events: none; }
 /* The mode tag (plan or sortie): pushed to the right end of the first control row. */
 .battle-sim-mode { margin-left: auto; font-weight: bold; }
 /* Fixed, so the long map names in the list do not widen the closed select. */
@@ -95,6 +95,8 @@ export const PANEL_CSS = `
 .battle-sim-step { position: relative; flex: none; width: 21px; }
 .battle-sim-step-node { width: 21px; height: 21px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; color: #fff; background: #2d72d2; position: relative; }
 .battle-sim-step-boss { background: #cd4246; }
+/* A node target: marked like the boss, in another colour. */
+.battle-sim-step-target { background: #c87619; }
 .battle-sim-card-off .battle-sim-step-node { background: #8f99a8; }
 /* Nodes the fleet has already passed mid-sortie: hollow, so the nodes still ahead stand out. */
 .battle-sim-step-passed .battle-sim-step-node { background: transparent; color: #8f99a8; box-shadow: inset 0 0 0 2px #8f99a8; }

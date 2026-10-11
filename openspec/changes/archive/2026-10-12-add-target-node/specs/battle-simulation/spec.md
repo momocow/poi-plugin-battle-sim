@@ -9,11 +9,11 @@
 ## MODIFIED Requirements
 
 ### Requirement: Simulate every candidate that reaches the target
-For each route candidate that reaches the target (see route-prediction), the system SHALL run one optimizer `simulate` with the fleet snapshot, the map, and that candidate's nodes. The last node is the target. Candidates that do not reach the target SHALL NOT be simulated, and they count as "target not reached".
+For each route candidate that reaches the target (see route-prediction), the system SHALL run one optimizer `simulate` with the fleet snapshot, the map, and that candidate's nodes. The last node is the target. Candidates that do not reach the target SHALL NOT be simulated, and they count as "target not reached". Mid-sortie, a candidate that has passed the target (see route-prediction) SHALL NOT be simulated either: it counts as reaching the target in all its trials, and its rank and flagship-sunk rates are unknown, so the overall rank and flagship-sunk rates are reported as undefined.
 
-The fleet SHALL pursue night battle at the target node when the Night battle switch is on, and SHALL NOT when it is off. This applies to the Boss target as well as to a node target.
+The fleet SHALL pursue night battle at the target node when the Night battle switch is on, and SHALL NOT when it is off. This applies to the Boss target as well as to a node target. A night-battle node is the exception: its battle is a night battle only, so the switch has no effect there.
 
-With a node target, the target node SHALL have a battle. When the optimizer's result shows that the target node on a route has no battle (for example a resource or empty node), that route SHALL fail with an error that names the node and says to pick a battle node.
+With a node target, the target node SHALL have a battle, as read from the map's topology data (see simulator-panel, Inputs). When it has none (for example a remembered target on a map whose data has changed), the run SHALL fail before any simulation with an error that names the node and says to pick a battle node.
 
 #### Scenario: Route that misses the boss
 - **WHEN** the target is Boss, and the candidates on 2-5 are `1-C-D` at 0.3 and two boss routes at 0.42 and 0.28
@@ -23,13 +23,17 @@ With a node target, the target node SHALL have a battle. When the optimizer's re
 - **WHEN** the target on 2-5 is E and the candidates after the cut are `1-C-E` at 0.7 and `1-C-D` at 0.3
 - **THEN** one simulation runs, for the route C-E, and it stops after the battle at E
 
+#### Scenario: Target already passed
+- **WHEN** the target on 2-5 is E and the fleet is at G after passing E
+- **THEN** no simulation runs; the chance of reaching the target is 1, and the rank and flagship-sunk rates are undefined
+
 #### Scenario: Night battle off
 - **WHEN** the Night battle switch is off
 - **THEN** each simulation runs without night battle at the target node
 
 #### Scenario: Target without a battle
 - **WHEN** the target is a node where the fleet only gets resources
-- **THEN** the run fails with an error that names the node and asks for a battle node
+- **THEN** the run fails before any simulation with an error that names the node and asks for a battle node
 
 ### Requirement: Weighted aggregate result
 The overall result SHALL combine the results of the simulated routes, each weighted by its route probability. Every per-route rate used for weighting SHALL count all of that route's trials, including trials that retreated before the target. The rank rates conditional on reaching the target SHALL NOT be weighted directly. Routes that do not reach the target count as 0 for every target-related rate.

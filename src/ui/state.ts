@@ -19,6 +19,10 @@ export interface RunInput {
   map: string
   choices: ChoiceValues
   trials: number
+  /** The node a sortie ends at; undefined for the boss. */
+  target?: string
+  /** Pursue night battle at the target. */
+  nightBattle: boolean
   /** Set while the fleet is on a sortie of `map`: the cells visited, the current one last. */
   sortie?: { cells: number[] }
 }
@@ -26,7 +30,7 @@ export interface RunInput {
 export interface RouteRow extends RouteCandidate {
   /** Index in `nodes` of the first node simulated: the node the fleet is at mid-sortie, else 1 (after the start). */
   from?: number
-  /** Set once this route's simulation finished; never set for non-boss routes. */
+  /** Set once this route's simulation finished; never set for routes that miss the target. */
   diag?: SimulateDiag
 }
 
@@ -100,11 +104,14 @@ export function runReducer(state: RunState, action: RunAction): RunState {
   }
 }
 
-/** Indexes (into `routes`) of the rows that are simulated: those reaching the boss. */
-export const bossRouteIndexes = (routes: RouteRow[]): number[] =>
-  routes.flatMap((r, i) => (r.reachesBoss ? [i] : []))
+/** Whether a row is simulated: it reaches the target, and the fleet is not past it. */
+export const isSimulated = (r: RouteRow): boolean => r.reachesTarget && !r.passedTarget
+
+/** Indexes (into `routes`) of the rows that are simulated. */
+export const targetRouteIndexes = (routes: RouteRow[]): number[] =>
+  routes.flatMap((r, i) => (isSimulated(r) ? [i] : []))
 
 export function progress(state: RunState): { finished: number; total: number } {
-  const boss = (state.routes ?? []).filter((r) => r.reachesBoss)
-  return { finished: boss.filter((r) => r.diag).length, total: boss.length }
+  const simulated = (state.routes ?? []).filter(isSimulated)
+  return { finished: simulated.filter((r) => r.diag).length, total: simulated.length }
 }

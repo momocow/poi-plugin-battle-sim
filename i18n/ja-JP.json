@@ -89,5 +89,19 @@
   "The fleet is on a sortie; runs follow it": "艦隊は出撃中です。シミュレーションは出撃の進行に合わせます",
   "Sortie mode": "出撃モード",
   "Plan mode": "計画モード",
-  "Runs use the fleet and map selected here": "ここで選んだ艦隊と海域でシミュレーションします"
+  "Runs use the fleet and map selected here": "ここで選んだ艦隊と海域でシミュレーションします",
+  "Target": "目標",
+  "Boss": "ボス",
+  "Night battle": "夜戦",
+  "Pursue night battle at the target": "目標マスで夜戦を行う",
+  "Reach {node}": "{node} 到達",
+  "{node} flagship sunk": "{node} 旗艦撃沈",
+  "When {node} is reached": "{node} 到達時",
+  "Not simulated (does not reach {node})": "未シミュレート（{node} に到達しない）",
+  "Target {node}": "目標 {node}",
+  "No night battle": "夜戦なし",
+  "The target node has no battle — pick a battle node as the target": "目標マスに戦闘がありません — 戦闘マスを目標に選んでください",
+  "{node} is always a night battle": "{node} は常に夜戦",
+  "Target reached": "目標到達済み",
+  "{node} (Boss)": "{node}（ボス）"
 }

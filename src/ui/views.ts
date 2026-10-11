@@ -4,17 +4,41 @@
  * Per-route cells count all of that route's trials, so each value weighted
  * by the route's probability adds up to the summary's value; the "when
  * reached" values sit next to them and are not weighted. A and B are each
- * rank on its own or cumulative, as the rank display setting says.
+ * rank on its own or cumulative, as the rank display setting says. Every rate
+ * is at the run's target: the boss, or the node the routes were cut at.
  */
+import { t } from '../i18n'
 import { aggregate, aOrBetter, bOrBetter, type Aggregate } from '../optimizer/aggregate'
 import type { RankRates, SimulateDiag } from '../optimizer/run'
 import type { RankDisplay } from './inputs'
-import type { RouteRow, RunInput } from './state'
+import { isSimulated, type RouteRow, type RunInput } from './state'
 
 /** `['1','A','B','C2','D']` → `A-B-C2-D`, plus `[Boss]` when the last node is the boss. */
-export function formatRoute(nodes: string[], reachesBoss: boolean): string {
+export function formatRoute(nodes: string[], endsAtBoss: boolean): string {
   const text = nodes.slice(1).join('-')
-  return reachesBoss ? `${text}[Boss]` : text
+  return endsAtBoss ? `${text}[Boss]` : text
+}
+
+/** The labels that name the run's target: "boss" for the boss (undefined), else the node's letter. */
+export function targetLabels(target: string | undefined): {
+  reach: string
+  sunk: string
+  whenReached: string
+  notSimulated: string
+} {
+  return target === undefined
+    ? {
+        reach: t('Reach boss'),
+        sunk: t('Boss sunk'),
+        whenReached: t('When the boss is reached'),
+        notSimulated: t('Not simulated (does not reach the boss)'),
+      }
+    : {
+        reach: t('Reach {node}', { node: target }),
+        sunk: t('{node} flagship sunk', { node: target }),
+        whenReached: t('When {node} is reached', { node: target }),
+        notSimulated: t('Not simulated (does not reach {node})', { node: target }),
+      }
 }
 
 /** Mid-sortie, the node the fleet was at: the first node simulated. */
@@ -23,26 +47,36 @@ export function atNode(routes: RouteRow[] | undefined): string | undefined {
   return row ? row.nodes[row.from!] : undefined
 }
 
-/** One decimal place; undefined (no trial reached the boss) shows as "—". */
+/** One decimal place; undefined (no trial reached the target) shows as "—". */
 export const pct = (x: number | undefined): string => (x === undefined ? '—' : `${(x * 100).toFixed(1)}%`)
 
 export interface RateCells {
-  reachBoss: number
+  reachTarget: number
   s: number
   /** A, or A or better when the rank display is cumulative. */
   a: number
   /** B, or B or better when the rank display is cumulative. */
   b: number
-  bossSunk: number
-  /** Among trials that reached the boss; undefined when none did. */
-  sAtBoss: number | undefined
-  aAtBoss: number | undefined
-  bAtBoss: number | undefined
-  bossSunkAtBoss: number | undefined
+  targetSunk: number
+  /** Among trials that reached the target; undefined when none did. */
+  sAtTarget: number | undefined
+  aAtTarget: number | undefined
+  bAtTarget: number | undefined
+  targetSunkAtTarget: number | undefined
+}
+
+/** The summary's cells: past the target mid-sortie, the per-sortie rank and sunk values are unknown too. */
+export type SummaryCells = Omit<RateCells, 's' | 'a' | 'b' | 'targetSunk'> & {
+  s: number | undefined
+  a: number | undefined
+  b: number | undefined
+  targetSunk: number | undefined
 }
 
 export type RowCells =
   | { kind: 'not-simulated' }
+  /** Mid-sortie, the fleet is past the target: reached, its battle over. */
+  | { kind: 'passed' }
   | { kind: 'pending' }
   | ({ kind: 'done' } & RateCells)
 
@@ -51,42 +85,60 @@ const rankPair = (r: RankRates, mode: RankDisplay): [number, number] =>
   mode === 'cumulative' ? [aOrBetter(r), bOrBetter(r)] : [r.A, r.B]
 
 export function rowCells(row: RouteRow, mode: RankDisplay): RowCells {
-  if (!row.reachesBoss) return { kind: 'not-simulated' }
+  if (row.passedTarget) return { kind: 'passed' }
+  if (!row.reachesTarget) return { kind: 'not-simulated' }
   if (!row.diag) return { kind: 'pending' }
   const d = row.diag
   const reached = d.reach_boss_rate > 0
   const [a, b] = rankPair(d.ranks_marginal, mode)
-  const [aAtBoss, bAtBoss] = reached ? rankPair(d.ranks, mode) : []
+  const [aAtTarget, bAtTarget] = reached ? rankPair(d.ranks, mode) : []
   return {
     kind: 'done',
-    reachBoss: d.reach_boss_rate,
+    reachTarget: d.reach_boss_rate,
     s: d.ranks_marginal.S,
     a,
     b,
-    bossSunk: d.boss_sunk_rate,
-    sAtBoss: reached ? d.ranks.S : undefined,
-    aAtBoss,
-    bAtBoss,
-    bossSunkAtBoss: reached ? d.boss_sunk_rate / d.reach_boss_rate : undefined,
+    targetSunk: d.boss_sunk_rate,
+    sAtTarget: reached ? d.ranks.S : undefined,
+    aAtTarget,
+    bAtTarget,
+    targetSunkAtTarget: reached ? d.boss_sunk_rate / d.reach_boss_rate : undefined,
   }
 }
 
-/** The summary, once every boss route has a result; undefined before that. */
-export function summaryCells(routes: RouteRow[], mode: RankDisplay): RateCells | undefined {
-  if (routes.some((r) => r.reachesBoss && !r.diag)) return undefined
+/**
+ * The summary, once every simulated route has a result; undefined before that. Past the target mid-sortie,
+ * every route has reached it and nothing is simulated, so only the reach rate is known.
+ */
+export function summaryCells(routes: RouteRow[], mode: RankDisplay): SummaryCells | undefined {
+  if (routes.some((r) => isSimulated(r) && !r.diag)) return undefined
+  if (routes.some((r) => r.passedTarget)) {
+    const reachTarget = routes.filter((r) => r.passedTarget).reduce((sum, r) => sum + r.probability, 0)
+    return {
+      reachTarget,
+      s: undefined,
+      a: undefined,
+      b: undefined,
+      targetSunk: undefined,
+      sAtTarget: undefined,
+      aAtTarget: undefined,
+      bAtTarget: undefined,
+      targetSunkAtTarget: undefined,
+    }
+  }
   const all: Aggregate = aggregate(routes.map((r) => ({ probability: r.probability, diag: r.diag })))
   const [a, b] = rankPair(all.ranks, mode)
-  const [aAtBoss, bAtBoss] = all.ranksAtBoss ? rankPair(all.ranksAtBoss, mode) : []
+  const [aAtTarget, bAtTarget] = all.ranksAtBoss ? rankPair(all.ranksAtBoss, mode) : []
   return {
-    reachBoss: all.reachBoss,
+    reachTarget: all.reachBoss,
     s: all.ranks.S,
     a,
     b,
-    bossSunk: all.bossSunk,
-    sAtBoss: all.ranksAtBoss?.S,
-    aAtBoss,
-    bAtBoss,
-    bossSunkAtBoss: all.reachBoss > 0 ? all.bossSunk / all.reachBoss : undefined,
+    targetSunk: all.bossSunk,
+    sAtTarget: all.ranksAtBoss?.S,
+    aAtTarget,
+    bAtTarget,
+    targetSunkAtTarget: all.reachBoss > 0 ? all.bossSunk / all.reachBoss : undefined,
   }
 }
 
@@ -99,7 +151,7 @@ export interface NodeRate {
  * Share of all trials reaching each route node, start excluded. The
  * optimizer's rates cover battle nodes only; a node without a battle takes the
  * next node's rate, since a fleet only turns back after a battle. Walking
- * backwards from the boss gives that in one pass.
+ * backwards from the target gives that in one pass.
  */
 export function routeReach(diag: SimulateDiag): NodeRate[] {
   const out: NodeRate[] = new Array(diag.route.length)
@@ -126,11 +178,12 @@ export const retreats = (reach: NodeRate[]): NodeRate[] =>
 export const marginOfError = (trials: number): number => 0.98 / Math.sqrt(trials)
 
 /**
- * Whether `current` would run something other than `run`: another fleet, map, trial count or choice, or the
- * sortie moved on or ended.
+ * Whether `current` would run something other than `run`: another fleet, map, trial count, choice, target or
+ * night battle, or the sortie moved on or ended.
  */
 export function isStale(run: RunInput, current: RunInput): boolean {
   if (run.fleetId !== current.fleetId || run.map !== current.map || run.trials !== current.trials) return true
+  if (run.target !== current.target || run.nightBattle !== current.nightBattle) return true
   if (String(run.sortie?.cells) !== String(current.sortie?.cells)) return true
   const keys = new Set([...Object.keys(run.choices), ...Object.keys(current.choices)])
   return [...keys].some((k) => run.choices[k] !== current.choices[k])
@@ -150,11 +203,11 @@ function weightedRanks(row: RouteRow): [number, number, number] {
 /**
  * Card order, most promising first: finished routes by weighted S, then
  * weighted A or better, then weighted B or better, all highest first; then
- * routes still simulating; then routes that do not reach the boss. Ties, and
+ * routes still simulating; then routes that do not reach the target. Ties, and
  * the order within the last two groups, go by probability, highest first.
  */
 export function sortForCards(routes: RouteRow[]): RouteRow[] {
-  const group = (r: RouteRow) => (r.diag ? 0 : r.reachesBoss ? 1 : 2)
+  const group = (r: RouteRow) => (r.diag ? 0 : r.reachesTarget ? 1 : 2)
   return [...routes].sort((a, b) => {
     const [wa, wb] = [weightedRanks(a), weightedRanks(b)]
     return (

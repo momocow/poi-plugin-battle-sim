@@ -23,6 +23,7 @@ const SUMMARY: Record<ErrorCode, string> = {
   COMPASS_TIMEOUT: 'Route prediction failed — compass timed out',
   SORTIE_MAP_UNREADABLE: 'The sortie path could not be read from the map data',
   SORTIE_PATH_UNMATCHED: 'No predicted route matches the sortie path — check the branch choices',
+  TARGET_NOT_BATTLE: 'The target node has no battle — pick a battle node as the target',
   INTERNAL: 'Something unexpected went wrong',
 }
 

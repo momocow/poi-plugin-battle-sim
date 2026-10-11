@@ -21,6 +21,8 @@ export type ErrorCode =
   | 'SORTIE_MAP_UNREADABLE'
   /** Mid-sortie: no predicted route starts with the nodes visited. */
   | 'SORTIE_PATH_UNMATCHED'
+  /** A node target without a battle (a resource, empty or maelstrom node); details name it. */
+  | 'TARGET_NOT_BATTLE'
   /** A bug or an environment poi should have provided; details carry the cause. */
   | 'INTERNAL'
 

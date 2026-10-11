@@ -88,6 +88,10 @@ export interface SavedInputs {
   auto: boolean
   /** Per map. */
   choices: Record<string, ChoiceValues>
+  /** The node the planned sortie ends at, one for every map; undefined for the boss. */
+  target?: string
+  /** Pursue night battle at the target. */
+  nightBattle: boolean
 }
 
 export function loadInputs(): SavedInputs {
@@ -95,11 +99,15 @@ export function loadInputs(): SavedInputs {
   const map = readConfig<unknown>(`${PREFIX}.map`, '1-1')
   const choices = readConfig<unknown>(`${PREFIX}.choices`, {})
   const auto = readConfig<unknown>(`${PREFIX}.auto`, true)
+  const target = readConfig<unknown>(`${PREFIX}.target`, null)
+  const nightBattle = readConfig<unknown>(`${PREFIX}.nightBattle`, true)
   return {
     fleetId: fleetId === NO_FLEET ? null : typeof fleetId === 'number' && fleetId >= 1 && fleetId <= 4 ? fleetId : 1,
     map: map === NO_MAP ? null : typeof map === 'string' ? map : '1-1',
     auto: auto !== false,
     choices: choices !== null && typeof choices === 'object' ? (choices as Record<string, ChoiceValues>) : {},
+    target: typeof target === 'string' && target !== '' ? target : undefined,
+    nightBattle: nightBattle !== false,
   }
 }
 
@@ -108,6 +116,9 @@ export function saveInputs(inputs: SavedInputs): void {
   writeConfig(`${PREFIX}.map`, inputs.map ?? NO_MAP)
   writeConfig(`${PREFIX}.auto`, inputs.auto)
   writeConfig(`${PREFIX}.choices`, inputs.choices)
+  // poi's config reads a stored null as missing, so the boss is stored as null.
+  writeConfig(`${PREFIX}.target`, inputs.target ?? null)
+  writeConfig(`${PREFIX}.nightBattle`, inputs.nightBattle)
 }
 
 export const choicesForMap = (inputs: SavedInputs, map: string): ChoiceValues =>

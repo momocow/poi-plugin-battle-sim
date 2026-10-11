@@ -1,9 +1,11 @@
 /**
  * One run, start to finish: capture the fleet, find the optimizer, predict
- * routes, wait for the map's enemy data, simulate the boss routes, dispatching
- * each step to the panel. Mid-sortie, the predicted routes are narrowed to the
- * sortie's path so far and simulated from the node the fleet is at, with the
- * special attacks already fired. Each step also goes to the developer log
+ * routes, wait for the map's enemy data, simulate the routes that reach the
+ * target, dispatching each step to the panel. Mid-sortie, the predicted routes
+ * are narrowed to the sortie's path so far and simulated from the node the
+ * fleet is at, with the special attacks already fired. The target applies
+ * after narrowing: a node target cuts the routes there and reads the rates at
+ * that node; one without a battle fails before any simulation. Each step also goes to the developer log
  * when it is on.
  *
  * The optimizer is resolved before compass is loaded, so a missing or corrupt
@@ -25,17 +27,18 @@ import { simulateToml } from '../optimizer/config'
 import { simulateRoutes } from '../optimizer/orchestrate'
 import { ensureMapFetched, untilAborted } from '../optimizer/prefetch'
 import { resolveOptimizer, type OptimizerManifest } from '../optimizer/resolve'
-import { Cancelled, checkRoute, kcnavDir, runSimulate } from '../optimizer/run'
+import { atNodeTarget, Cancelled, checkRoute, kcnavDir, runSimulate } from '../optimizer/run'
 import { findPackageRoot, workDir } from '../paths'
-import { bossLettersFor, loadBossLetters } from '../routes/boss'
+import { applyTarget, bossLettersFor, loadBossLetters } from '../routes/boss'
 import { runCompass } from '../routes/compass'
-import { createPredictor, type RouteCandidate } from '../routes/predict'
+import { createPredictor, type PredictedRoute } from '../routes/predict'
 import { cellLetters, narrowToPath, takenBranches } from '../routes/sortie'
+import { battleNodes, readTopology } from '../routes/topology'
 import { loadOptimizerOverride } from './inputs'
-import { bossRouteIndexes, sortRoutes, type RouteRow, type RunAction, type RunInput } from './state'
+import { sortRoutes, targetRouteIndexes, type RouteRow, type RunAction, type RunInput } from './state'
 
-/** One predictor for the poi session, so its cache lives as long as poi. */
-const predictor = createPredictor(runCompass)
+/** One predictor for the poi session, so its cache lives as long as poi; the panel reads its node options. */
+export const predictor = createPredictor(runCompass)
 
 export async function runSimulation(
   input: RunInput,
@@ -60,6 +63,15 @@ export async function runSimulation(
     })
     const bossLetters = bossLettersFor(await loadBossLetters(optimizer.dataDir), input.map)
     const cwd = workDir()
+    if (input.target !== undefined) {
+      // The panel offers only battle nodes, and only once the topology is there; this catches a stale pick.
+      const battles = await readTopology(kcnavDir(cwd), input.map).then(battleNodes, () => undefined)
+      if (battles && !battles.has(input.target)) {
+        throw new SimError('TARGET_NOT_BATTLE', `Node ${input.target} on ${input.map} has no battle.`, [
+          `battle nodes: ${[...battles].sort().join(', ')}`,
+        ])
+      }
+    }
     if (signal.aborted) throw new Cancelled()
 
     // Not awaited here: the fetch overlaps prediction and outlives a cancel.
@@ -92,10 +104,15 @@ export async function runSimulation(
       bossLetters,
     })
     if (signal.aborted) throw new Cancelled()
-    const routeText = (routes: RouteCandidate[]) =>
-      routes.map((c) => ({ nodes: c.nodes.join('-'), probability: c.probability, reachesBoss: c.reachesBoss }))
+    const routeText = (routes: (PredictedRoute & { reachesTarget?: boolean })[]) =>
+      routes.map((c) => ({
+        nodes: c.nodes.join('-'),
+        probability: c.probability,
+        endsAtBoss: c.endsAtBoss,
+        reachesTarget: c.reachesTarget,
+      }))
     devLog('run.predicted', { map: input.map, choices, routes: routeText(candidates) })
-    let narrowed: (RouteCandidate & { from?: number })[] = candidates
+    let narrowed: (PredictedRoute & { from?: number })[] = candidates
     if (input.sortie && letters) {
       narrowed = narrowToPath(candidates, letters, input.map).map((c) => ({ ...c, from: letters!.length - 1 }))
       devLog('run.narrowed', {
@@ -108,8 +125,10 @@ export async function runSimulation(
       })
     }
     if (signal.aborted) throw new Cancelled()
-    const rows: RouteRow[] = sortRoutes(narrowed)
-    const indexes = bossRouteIndexes(rows)
+    const targeted = applyTarget(narrowed, input.target, bossLetters)
+    if (input.target !== undefined) devLog('run.targeted', { target: input.target, routes: routeText(targeted) })
+    const rows: RouteRow[] = sortRoutes(targeted)
+    const indexes = targetRouteIndexes(rows)
     const fetchingEnemyData = indexes.length > 0 && !enemyDataReady
     dispatch({
       type: 'predicted',
@@ -135,11 +154,13 @@ export async function runSimulation(
           map: input.map,
           nodes,
           trials: input.trials,
+          nightBattle: input.nightBattle,
+          perNode: input.target !== undefined,
           specialAttacksFired: specials?.observed ? specials.fired : undefined,
         })
         devLog('route.config', { row: rowIndex, nodes: nodes.join('-'), toml })
         try {
-          const diag = checkRoute(
+          const checked = checkRoute(
             await runSimulate({
               binPath: optimizer.binPath,
               dataDir: optimizer.dataDir,
@@ -150,16 +171,17 @@ export async function runSimulation(
             }),
             nodes,
           )
+          const diag = input.target !== undefined ? atNodeTarget(checked) : checked
           const m = diag.ranks_marginal
           devLog('route.done', {
             row: rowIndex,
             nodes: nodes.join('-'),
-            reachBoss: diag.reach_boss_rate,
+            reachTarget: diag.reach_boss_rate,
             perNodeReach: diag.per_node_reach,
             s: m.S,
             aOrBetter: m.S + m.A,
             bOrBetter: m.S + m.A + m.B,
-            bossSunk: diag.boss_sunk_rate,
+            targetSunk: diag.boss_sunk_rate,
           })
           return diag
         } catch (err) {

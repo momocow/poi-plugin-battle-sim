@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { SimError } from '../src/errors'
 import { snapshotFleet } from '../src/fleet/snapshot'
 import { toDeckbuilder } from '../src/fleet/toDeckbuilder'
-import { bossLettersFor, loadBossLetters, reachesBoss } from '../src/routes/boss'
+import { applyTarget, bossLettersFor, endsAtBoss, loadBossLetters } from '../src/routes/boss'
 import { choiceKeys, defaultChoices, normalizeChoices } from '../src/routes/choices'
 import {
   buildPageScript,
@@ -16,6 +16,7 @@ import {
   type ScriptParams,
 } from '../src/routes/compass'
 import { createPredictor, predictionKey } from '../src/routes/predict'
+import { battleNodes, nightOnlyNodes, topologyNow } from '../src/routes/topology'
 import { loadStore } from './helpers'
 
 /** A stand-in for compass's Pinia stores, behind the same `#app` lookup path. */
@@ -238,13 +239,108 @@ describe('boss marking', () => {
   it('marks a 2-5 candidate ending at D as not reaching the boss', async () => {
     const bosses = bossLettersFor(await loadBossLetters(dataDir), '2-5')
     expect(bosses).toEqual(['O'])
-    expect(reachesBoss(['1', 'C', 'D'], bosses)).toBe(false)
-    expect(reachesBoss(['1', 'C', 'E', 'G', 'L', 'O'], bosses)).toBe(true)
+    expect(endsAtBoss(['1', 'C', 'D'], bosses)).toBe(false)
+    expect(endsAtBoss(['1', 'C', 'E', 'G', 'L', 'O'], bosses)).toBe(true)
   })
 
   it('accepts any of several boss nodes', async () => {
     const bosses = bossLettersFor(await loadBossLetters(dataDir), '7-5')
-    expect(reachesBoss(['1', 'A', 'F', 'G', 'H', 'K'], bosses)).toBe(true)
+    expect(endsAtBoss(['1', 'A', 'F', 'G', 'H', 'K'], bosses)).toBe(true)
+  })
+})
+
+describe('applyTarget', () => {
+  const predicted = [
+    { nodes: ['1', 'C', 'D'], probability: 0.3, endsAtBoss: false },
+    { nodes: ['1', 'C', 'E', 'G', 'L', 'N'], probability: 0.42, endsAtBoss: false },
+    { nodes: ['1', 'C', 'E', 'G', 'L', 'O'], probability: 0.28, endsAtBoss: true },
+  ]
+  const total = (rs: { probability: number }[]) => rs.reduce((sum, r) => sum + r.probability, 0)
+
+  it('leaves every route as it is for the Boss target', () => {
+    const rs = applyTarget(predicted, undefined, ['O'])
+    expect(rs.map((r) => [r.nodes.join('-'), r.probability, r.reachesTarget])).toEqual([
+      ['1-C-D', 0.3, false],
+      ['1-C-E-G-L-N', 0.42, false],
+      ['1-C-E-G-L-O', 0.28, true],
+    ])
+  })
+
+  it('cuts routes at a node target and merges those that become the same', () => {
+    const rs = applyTarget(predicted, 'E', ['O'])
+    expect(rs.map((r) => [r.nodes.join('-'), r.probability, r.reachesTarget, r.endsAtBoss])).toEqual([
+      ['1-C-D', 0.3, false, false],
+      ['1-C-E', 0.7, true, false],
+    ])
+    expect(total(rs)).toBeCloseTo(1, 6)
+  })
+
+  it('marks every route as missing a target that no route passes, and cuts none', () => {
+    const rs = applyTarget(predicted, 'K', ['O'])
+    expect(rs.map((r) => [r.nodes.length, r.reachesTarget])).toEqual([
+      [3, false],
+      [6, false],
+      [6, false],
+    ])
+  })
+
+  it('only looks from the node the fleet is at on', () => {
+    const narrowed = predicted.slice(1).map((r) => ({ ...r, probability: r.probability / 0.7, from: 3 }))
+    const atTarget = applyTarget(narrowed, 'L', ['O'])
+    expect(atTarget.map((r) => [r.nodes.join('-'), r.reachesTarget, r.from])).toEqual([['1-C-E-G-L', true, 3]])
+    expect(atTarget[0]!.probability).toBeCloseTo(1, 6)
+    // C is behind the fleet: reached, cut there and merged, but its battle is over.
+    const passed = applyTarget(narrowed, 'C', ['O'])
+    expect(passed.map((r) => [r.nodes.join('-'), r.reachesTarget, r.passedTarget])).toEqual([['1-C', true, true]])
+    expect(passed[0]!.probability).toBeCloseTo(1, 6)
+    expect(atTarget[0]!.passedTarget).toBeUndefined()
+  })
+})
+
+describe('kcnav topology', () => {
+  const kcnavDir = join(__dirname, 'fixtures', 'kcnav')
+
+  it("tells 2-5's battle nodes from maelstroms and pass-through nodes, as the optimizer does", () => {
+    expect([...battleNodes(topologyNow(kcnavDir, '2-5')!)].sort()).toEqual(['B', 'C', 'E', 'F', 'J', 'L', 'O'])
+  })
+
+  it('counts a node as a battle when any counted edge into it says so, and skips unknown ids', () => {
+    const route = {
+      0: [null, '1', 0, 0],
+      1: ['1', 'A', 90, 6],
+      2: ['1', 'B', 4, 4],
+      3: ['A', 'B', 90, 6],
+      4: ['1', 'C', 0, -1],
+      5: ['C', 'D', 0, -1],
+      6: ['C', 'D', 90, 2],
+    }
+    expect([...battleNodes(route)].sort()).toEqual(['B', 'C'])
+  })
+
+  it('has no topology for a map not fetched yet', () => {
+    expect(topologyNow(kcnavDir, '1-1')).toBeUndefined()
+  })
+
+  it('finds night-battle nodes by the majority colour of the edges into them, as the optimizer does', () => {
+    // 5-3's P and K, as cached: every edge into them is colour 11.
+    const route = {
+      0: [null, '1', 0, 0],
+      1: ['O', 'P', 11, 4],
+      2: ['O', 'K', 11, 4],
+      3: ['P', 'K', 11, 4],
+      // A vote: two night-battle edges against one normal one.
+      4: ['1', 'X', 11, 4],
+      5: ['P', 'X', 11, 4],
+      6: ['K', 'X', 4, 4],
+      // A tie goes to the smaller colour, a normal battle.
+      7: ['1', 'Y', 11, 4],
+      8: ['P', 'Y', 4, 4],
+      // Unknown colours don't vote.
+      9: ['1', 'Z', -1, 4],
+      10: ['P', 'Z', 11, 4],
+    }
+    expect([...nightOnlyNodes(route)].sort()).toEqual(['K', 'P', 'X', 'Z'])
+    expect(nightOnlyNodes(topologyNow(kcnavDir, '2-5')!).size).toBe(0)
   })
 })
 
@@ -269,10 +365,44 @@ describe('predictor', () => {
     const second = await predictor.predict(input)
     expect(calls).toBe(2)
     expect(second).toEqual(first)
-    expect(first[0]?.reachesBoss).toBe(false)
+    expect(first[0]?.endsAtBoss).toBe(false)
 
     await predictor.predict({ ...input, map: '5-2' })
     expect(calls).toBe(3)
+  })
+
+  it('keeps the uncut routes, so a target change reuses the prediction, and gives the node options', async () => {
+    let calls = 0
+    const predictor = createPredictor(async () => {
+      calls++
+      return [
+        { nodes: ['1', 'C', 'D'], probability: 0.3 },
+        { nodes: ['1', 'C', 'E', 'G', 'L', 'N'], probability: 0.42 },
+        { nodes: ['1', 'C', 'E', 'G', 'L', 'O'], probability: 0.28 },
+      ]
+    })
+    const input = { deck: deck(), map: '2-5', choices: {}, bossLetters: ['O'] }
+    expect(predictor.nodesFor('2-5')).toEqual([])
+    const routes = await predictor.predict(input)
+    expect(applyTarget(routes, undefined, ['O']).filter((r) => r.reachesTarget)).toHaveLength(1)
+    expect(applyTarget(await predictor.predict(input), 'E', ['O'])).toHaveLength(2)
+    expect(calls).toBe(1)
+    expect(predictor.nodesFor('2-5')).toEqual(['C', 'D', 'E', 'G', 'L', 'N'])
+    // Mid-sortie at E: C is passed and D can no longer be reached.
+    expect(predictor.nodesFor('2-5', ['1', 'C', 'E'])).toEqual(['E', 'G', 'L', 'N'])
+    expect(predictor.bossFor('2-5')).toEqual(['O'])
+    expect(predictor.bossFor('5-2')).toBeUndefined()
+  })
+
+  it("names the bosses the routes end at, or all the map's when none does", async () => {
+    let routes = [{ nodes: ['1', 'A', 'B', 'C', 'D', 'F'], probability: 1 }]
+    const predictor = createPredictor(async () => routes)
+    const input = { deck: deck(), map: '7-3', choices: { phase: '1' }, bossLetters: ['E', 'P'] }
+    await predictor.predict(input)
+    expect(predictor.bossFor('7-3')).toEqual(['E', 'P'])
+    routes = [{ nodes: ['1', 'A', 'B', 'C', 'D', 'G', 'I', 'L', 'M', 'P'], probability: 1 }]
+    await predictor.predict({ ...input, choices: { phase: '2' } })
+    expect(predictor.bossFor('7-3')).toEqual(['P'])
   })
 
   it('ignores proficiency and luck but not levels or improvement', () => {

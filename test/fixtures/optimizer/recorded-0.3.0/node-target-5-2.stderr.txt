@@ -1,0 +1,33 @@
+2026-10-11T16:26:13.400455Z  INFO 逐艦欄位（level / equipment / modernization / morale / hp_now / fuel_now / ammo_now / slots_now —— CLI 無旗標可表達）
+2026-10-11T16:26:13.400481Z  INFO   [[fleet.ships]] #1  ship_id 969  level 108  equipment 4 件 + ex_slot  modernization [38,0,46,26,3,0,0]  morale 未填（走全隊預設）
+2026-10-11T16:26:13.400485Z  INFO   [[fleet.ships]] #2  ship_id 724  level 94  equipment 4 件 + ex_slot  modernization [29,0,54,20,0,0,0]  morale 未填（走全隊預設）
+2026-10-11T16:26:13.400489Z  INFO   [[fleet.ships]] #3  ship_id 393  level 98  equipment 4 件 + ex_slot  modernization [51,0,46,42,0,0,0]  morale 未填（走全隊預設）
+2026-10-11T16:26:13.400492Z  INFO   [[fleet.ships]] #4  ship_id 496  level 108  equipment 4 件 + ex_slot  modernization [30,48,55,33,3,0,0]  morale 未填（走全隊預設）
+2026-10-11T16:26:13.400496Z  INFO   [[fleet.ships]] #5  ship_id 361  level 90  equipment 4 件  modernization [36,44,52,32,0,0,0]  morale 未填（走全隊預設）
+2026-10-11T16:26:13.400499Z  INFO   [[fleet.ships]] #6  ship_id 693  level 85  equipment 4 件  modernization [40,48,46,33,0,0,0]  morale 未填（走全隊預設）
+2026-10-11T16:26:13.400625Z  INFO 設定合併（CLI 旗標覆寫 TOML；未給則落預設）
+2026-10-11T16:26:13.400630Z  INFO   ships                  None  ← 未使用（[[fleet.ships]] 已內嵌 6 艘）
+2026-10-11T16:26:13.400632Z  INFO   combined_type          None  ← 預設
+2026-10-11T16:26:13.400636Z  INFO   player_formation       None  ← 預設
+2026-10-11T16:26:13.400639Z  INFO   map                    Some("5-2")  ← TOML
+2026-10-11T16:26:13.400644Z  INFO   route                  ["B", "C", "E"]  ← TOML
+2026-10-11T16:26:13.400648Z  INFO   trials                 300  ← TOML
+2026-10-11T16:26:13.400651Z  INFO   seed                   Some(1)  ← CLI
+2026-10-11T16:26:13.414562Z  INFO Node (kcnav eventId): 通過点 — 無戰鬥 map="5-2" node=B
+2026-10-11T16:26:13.414931Z  INFO Node (kcnav cache): primary = max-count variant map="5-2" node=C n_candidates=3 primary_ids="[1579, 1579, 1527, 1555, 1576, 1576]"
+2026-10-11T16:26:13.414937Z  INFO Node 型別自動判定（kcnav 拓樸 colorNo / 敵編成艦種） map="5-2" node=C color=10 node_kind=AirRaid { w6: false } supply_kind=Normal
+2026-10-11T16:26:13.414989Z  INFO Node (kcnav cache): primary = max-count variant map="5-2" node=E n_candidates=6 primary_ids="[1579, 1543, 1555, 1592, 1576, 1576]"
+2026-10-11T16:26:13.415018Z  INFO 路線摘要（3 節點）
+2026-10-11T16:26:13.415023Z  INFO   Node 1 [通過]  通過点（無戰鬥、不扣資源）
+2026-10-11T16:26:13.415025Z  INFO   Node 2 [空襲]  敵×6  輪形陣  夜戰 否  交戰 random
+2026-10-11T16:26:13.415029Z  INFO   Node 3 [通常]  敵×6  輪形陣  夜戰 是  交戰 random
+2026-10-11T16:26:13.415035Z  INFO   玩家陣型：単縦陣 → 単縦陣 → 単縦陣
+2026-10-11T16:26:13.415039Z  INFO   場次：300 trials=300
+2026-10-11T16:26:13.415051Z  INFO   損管：0 艘帶応急修理要員 / 女神（不帶就不會觸發，這是 JS 端的同一條規則） damecon_ships=0
+2026-10-11T16:26:13.415056Z  INFO 我方艦隊（6 艘）：
+2026-10-11T16:26:13.415058Z  INFO   1. Richelieu Deux Lv108
+2026-10-11T16:26:13.415062Z  INFO   2. Jean Bart改 Lv94
+2026-10-11T16:26:13.415065Z  INFO   3. Ark Royal改 Lv98
+2026-10-11T16:26:13.415070Z  INFO   4. Zara due Lv108
+2026-10-11T16:26:13.415074Z  INFO   5. Pola改 Lv90
+2026-10-11T16:26:13.415079Z  INFO   6. L.d.S.D.d.Abruzzi改 Lv85

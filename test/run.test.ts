@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { SimError } from '../src/errors'
-import { Cancelled, checkRoute, interpretOutput, runSimulate, simulateArgs } from '../src/optimizer/run'
+import { atNodeTarget, Cancelled, checkRoute, interpretOutput, runSimulate, simulateArgs } from '../src/optimizer/run'
 import { fakeSpawn, loadOptimizerFixture, tempDir } from './helpers'
 
 const run = (name: string) => {
@@ -131,6 +131,78 @@ describe('runSimulate', () => {
 
     it('rejects an entry without a node letter', () => {
       schemaError({ per_node_reach: [1], _meta: { route: [{ node: null, kind: 'battle', battle_index: 0 }] } })
+    })
+  })
+
+  describe('a node target', () => {
+    it('takes the rates at the last node from the per-node channels (5-2 B-C-E, 0.3.0)', async () => {
+      const raw = await run('recorded-0.3.0/node-target-5-2').promise
+      expect(raw.reach_boss_rate).toBe(0)
+      const diag = atNodeTarget(checkRoute(raw, ['B', 'C', 'E']))
+      const reach = 0.9733333333333334
+      expect(diag.reach_boss_rate).toBe(reach)
+      expect(diag.ranks).toEqual({ S: 1, A: 0, B: 0, C: 0, D: 0, E: 0 })
+      expect(diag.ranks_marginal.S).toBeCloseTo(reach, 9)
+      expect(diag.boss_sunk_rate).toBeCloseTo(reach, 9)
+      expect(diag.per_node_reach).toEqual([1, reach])
+    })
+
+    it('scales the rates where the node was fought by the reach rate', () => {
+      const ranks = { S: 0.6, A: 0.4, B: 0, C: 0, D: 0, E: 0 }
+      const diag = atNodeTarget({
+        ranks: { S: 0, A: 0, B: 0, C: 0, D: 0, E: 0 },
+        ranks_marginal: { S: 0, A: 0, B: 0, C: 0, D: 0, E: 0 },
+        reach_boss_rate: 0,
+        boss_sunk_rate: 0,
+        per_node_reach: [1, 0.9],
+        route: [
+          { node: 'C', battleIndex: 0 },
+          { node: 'E', battleIndex: 1 },
+        ],
+        ranks_per_node: [ranks, ranks],
+        node_outcomes: [{ enemy_flag_sunk_rate: 1 }, { enemy_flag_sunk_rate: 0.5 }],
+      })
+      expect(diag.reach_boss_rate).toBe(0.9)
+      expect(diag.ranks_marginal.S).toBeCloseTo(0.54, 9)
+      expect(diag.boss_sunk_rate).toBeCloseTo(0.45, 9)
+    })
+
+    const base = {
+      ranks: { S: 0, A: 0, B: 0, C: 0, D: 0, E: 0 },
+      ranks_marginal: { S: 0, A: 0, B: 0, C: 0, D: 0, E: 0 },
+      reach_boss_rate: 0,
+      boss_sunk_rate: 0,
+      per_node_reach: [1],
+    }
+
+    it('reads a node no trial reached as reach 0, not as an error', () => {
+      const diag = atNodeTarget({
+        ...base,
+        per_node_reach: [0],
+        route: [{ node: 'E', battleIndex: 0 }],
+        ranks_per_node: [null],
+        node_outcomes: [null],
+      })
+      expect(diag.reach_boss_rate).toBe(0)
+      expect(diag.ranks_marginal.S).toBe(0)
+    })
+
+    it('fails naming a last node without a battle', () => {
+      expect(() => atNodeTarget({ ...base, route: [{ node: 'B', battleIndex: null }] })).toThrow(
+        expect.objectContaining({ code: 'TARGET_NOT_BATTLE', message: expect.stringContaining('B') }),
+      )
+    })
+
+    it('fails as incompatible without the per-node entries', () => {
+      expect(() => atNodeTarget({ ...base, route: [{ node: 'E', battleIndex: 0 }] })).toThrow(
+        expect.objectContaining({ code: 'OPTIMIZER_SCHEMA' }),
+      )
+    })
+
+    it('records why the optimizer itself rejects a no-battle target (5-2 B, 0.3.0)', async () => {
+      const err = await failure(run('recorded-0.3.0/no-battle-5-2').promise)
+      expect(err.code).toBe('OPTIMIZER_FAILED')
+      expect(err.message).toContain('[tactics]')
     })
   })
 

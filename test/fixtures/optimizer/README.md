@@ -24,3 +24,18 @@ binary), recorded against a warm kcnav cache. Same file layout as
 
 The 0.2.0 `success` recording has no `_meta.route`, so it now stands for an
 optimizer that is too old.
+
+`recorded-0.3.0/`: real `simulate --config - --json --seed 1` output from
+optimizer 0.3.0 (tag `v0.3.0`, the darwin-arm64 release binary), recorded
+against a warm kcnav cache. Same file layout as `recorded-0.2.0/`.
+
+- `node-target-5-2`: 5-2 `B-C-E` from `input-node-target.toml`, a route cut
+  before the boss O, with `fields = ["ranks", "ranks-per-node",
+  "node-outcomes"]` and `do_night_battle = true` at E. The route has no boss,
+  so the `ranks` channel's boss fields are all 0; E is battle index 1 in
+  `ranks_per_node`, `node_outcomes` and `per_node_reach`.
+- `no-battle-5-2`: 5-2 `B` from `input-no-battle.toml`, cut at the
+  pass-through node B. The optimizer rejects it at load, exit 1, with an
+  `error` line: a `[tactics.nodes.B]` table on a node without a battle has
+  nothing to act on. So a no-battle target never reaches the result's null
+  `battle_index`.

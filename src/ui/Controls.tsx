@@ -1,11 +1,16 @@
 /**
- * Fleet, map, branch and phase choices, the automatic-run switch, the
- * Simulate / Cancel button and Reset, with the panel's mode as a tag at the
- * right of the first row: plan mode in port, sortie mode while the selected
+ * Fleet, map, target and night battle, branch and phase choices, the
+ * automatic-run switch, the Simulate / Cancel button and Reset, with the
+ * panel's mode as a tag at the right of the first row: plan mode in port,
+ * sortie mode while the selected
  * fleet is on a sortie. In sortie mode the fleet and map can't be changed (the
  * map shown is the sortie's) and Reset is off, and a branch the fleet has
  * already passed shows the branch taken and can't be changed either. After
  * Reset, the fleet and map selects show an empty choice that can't be picked.
+ * The target row shows once the map's topology is cached (a map's first run
+ * fetches it), offering Boss and the predicted battle nodes; it stays
+ * editable in sortie mode. At a night-battle target the Night battle switch
+ * shows on and is locked, with a tooltip saying why.
  */
 import { Button, HTMLSelect, Switch, Tag, Tooltip } from '@blueprintjs/core'
 import React from 'react'
@@ -24,6 +29,18 @@ export interface ControlsProps {
   /** Offered maps, grouped by sea area. */
   maps: MapGroup[]
   choices: ChoiceValues
+  /** The target row; undefined hides it (no map, or its topology isn't cached yet). */
+  target?: {
+    /** Undefined for the boss. */
+    value: string | undefined
+    /** Battle nodes to offer after Boss. */
+    options: string[]
+    /** The boss letters, to name the Boss option ("Q (Boss)"); undefined before the map is predicted. */
+    boss?: string[]
+    nightBattle: boolean
+    /** The target is a night-battle node: always a night battle, so the switch shows on and is locked. */
+    nightOnly: boolean
+  }
   /** Branches the fleet has already passed in a sortie of this map: shown as taken, and locked. */
   decided: ChoiceValues
   /** The selected fleet is on a sortie: runs follow it, and the fleet and map are locked. */
@@ -35,6 +52,8 @@ export interface ControlsProps {
   onFleet: (fleetId: number) => void
   onMap: (map: string) => void
   onChoice: (key: string, value: string) => void
+  onTarget: (target: string | undefined) => void
+  onNightBattle: (nightBattle: boolean) => void
   onAuto: (auto: boolean) => void
   onSimulate: () => void
   onCancel: () => void
@@ -43,6 +62,11 @@ export interface ControlsProps {
 
 /** Shown only while the select has no selection; disabled, so it can't be picked. */
 const EMPTY = { value: '', label: '—', disabled: true }
+
+/** The Boss option's value: not a node letter. */
+const BOSS = ''
+
+type CheckEvent = { currentTarget: { checked: boolean } }
 
 type ChangeEvent = { currentTarget: { value: string } }
 
@@ -115,7 +139,7 @@ export function Controls(p: ControlsProps) {
           checked={p.auto}
           label={t('Auto')}
           title={t('Simulate when the fleet or these settings change')}
-          onChange={(e: { currentTarget: { checked: boolean } }) => p.onAuto(e.currentTarget.checked)}
+          onChange={(e: CheckEvent) => p.onAuto(e.currentTarget.checked)}
         />
         {p.sortieMode ? (
           <Tag
@@ -133,6 +157,7 @@ export function Controls(p: ControlsProps) {
           </Tag>
         )}
       </div>
+      {p.target && <TargetRow {...p.target} running={p.running} onTarget={p.onTarget} onNightBattle={p.onNightBattle} />}
       {(mapChoices.branches.length > 0 || mapChoices.phases) && (
         <div className="battle-sim-control-row">
           {mapChoices.branches.map((b) => (
@@ -172,6 +197,52 @@ export function Controls(p: ControlsProps) {
           )}
         </div>
       )}
+    </div>
+  )
+}
+
+function TargetRow({
+  value,
+  options,
+  boss,
+  nightBattle,
+  nightOnly,
+  running,
+  onTarget,
+  onNightBattle,
+}: NonNullable<ControlsProps['target']> & Pick<ControlsProps, 'running' | 'onTarget' | 'onNightBattle'>) {
+  // A remembered target that is not offered (not predicted yet this session) still shows.
+  const letters = value === undefined || options.includes(value) ? options : [...options, value].sort()
+  return (
+    <div className="battle-sim-control-row">
+      <label>
+        {t('Target')}{' '}
+        <HTMLSelect
+          value={value ?? BOSS}
+          disabled={running}
+          onChange={(e: ChangeEvent) => onTarget(e.currentTarget.value === BOSS ? undefined : e.currentTarget.value)}
+          options={[
+            { value: BOSS, label: boss?.length ? t('{node} (Boss)', { node: boss.join('/') }) : t('Boss') },
+            ...letters,
+          ]}
+        />
+      </label>
+      {/* A disabled switch gets no mouse events, so the pointer goes through to the tooltip's target. */}
+      <Tooltip
+        content={t('{node} is always a night battle', { node: value ?? '' })}
+        disabled={!nightOnly}
+        placement="top"
+        targetTagName="span"
+        targetProps={{ className: nightOnly ? 'battle-sim-decided' : undefined }}
+      >
+        <Switch
+          checked={nightBattle || nightOnly}
+          disabled={running || nightOnly}
+          label={t('Night battle')}
+          title={nightOnly ? undefined : t('Pursue night battle at the target')}
+          onChange={(e: CheckEvent) => onNightBattle(e.currentTarget.checked)}
+        />
+      </Tooltip>
     </div>
   )
 }

@@ -10,8 +10,8 @@
  * at the moment Simulate is clicked.
  *
  * A run also starts by itself when the selected fleet, its ships, their HP or
- * equipment, the map, the route choices or the trial count (set on poi's
- * settings page, and followed live) change, once every
+ * equipment, the map, the route choices, the target, night battle or the
+ * trial count (set on poi's settings page, and followed live) change, once every
  * ship has all its main slots filled and the inputs have settled for the delay
  * set on poi's settings page, unless the automatic-run switch is off. It also starts,
  * after the same delay, when poi brings the plugin into view while the panel
@@ -23,6 +23,14 @@
  * map's choices instead of the selected ones, narrowed to the path so far; the
  * fleet advancing a node starts a run, and coming home returns to the selected
  * map.
+ *
+ * The target and night battle belong to the planned sortie, not to a map:
+ * picking another map sets them back to Boss and on. A sortie on the selected
+ * map uses and changes them; one on another map gets its own pair, Boss and on
+ * at first, kept only while that sortie lasts. Until the shown map's kcnav
+ * topology is cached (its first run fetches it) the target row is hidden and
+ * runs use Boss and night battle, as before targets; the topology also tells
+ * which predicted nodes have a battle, the only ones offered.
  *
  * Reset clears the fleet and map: it stops any run, drops a pending automatic
  * run and clears the result, and until both are picked again nothing runs,
@@ -44,6 +52,7 @@ import { kcnavDir } from '../optimizer/run'
 import { workDir } from '../paths'
 import { getStoreState } from '../poi'
 import { cellLettersNow, sortieOf, takenBranches, type Sortie } from '../routes/sortie'
+import { battleNodes, nightOnlyNodes, topologyNow, type RouteTable } from '../routes/topology'
 import { Controls } from './Controls'
 import { errorSummary, ErrorView } from './ErrorView'
 import { setShownFleet } from './focus'
@@ -61,7 +70,7 @@ import {
 } from './inputs'
 import { ResultFooter } from './ResultFooter'
 import { RouteCards } from './RouteCards'
-import { runSimulation } from './runner'
+import { predictor, runSimulation } from './runner'
 import { initialRunState, isRunning, runReducer, type RunInput } from './state'
 import { StatusArea } from './StatusArea'
 import { PANEL_CSS } from './styles'
@@ -88,6 +97,23 @@ function useLiveState(): PoiState {
     [basic, fleets, ships, equips, master, combinedFlag, sortieStatus, sortieMapId, spotHistory],
   )
 }
+
+/** The map's kcnav topology, once its first run has fetched it. */
+function mapTopology(map: string): RouteTable | undefined {
+  try {
+    return topologyNow(kcnavDir(workDir()), map)
+  } catch {
+    return undefined
+  }
+}
+
+/** A target (undefined for the boss) and whether to pursue night battle there. */
+interface TargetPair {
+  target?: string
+  nightBattle: boolean
+}
+
+const BOSS_PAIR: TargetPair = { target: undefined, nightBattle: true }
 
 /** The sortie's visited letters, once its map's topology has been fetched. */
 function sortieLetters(sortie: Sortie): string[] | undefined {
@@ -134,6 +160,28 @@ export function Panel() {
   const sortie = fleetId !== null ? sortieOf(live, fleetId) : undefined
   const letters = sortie && sortieLetters(sortie)
   const taken = sortie && letters ? takenBranches(sortie.map, letters) : {}
+  // A sortie on another map than the selected one has its own target pair, dropped when that sortie ends.
+  const [sortiePair, setSortiePair] = useState<TargetPair & { map: string }>()
+  useEffect(() => {
+    if (sortiePair && sortiePair.map !== sortie?.map) setSortiePair(undefined)
+  }, [sortie?.map])
+  const ownPair = sortie !== undefined && sortie.map !== inputs.map
+  const pair: TargetPair = ownPair
+    ? sortiePair?.map === sortie.map
+      ? sortiePair
+      : BOSS_PAIR
+    : { target: inputs.target, nightBattle: inputs.nightBattle }
+  const setPair = (patch: Partial<TargetPair>) =>
+    ownPair ? setSortiePair({ ...pair, ...patch, map: sortie.map }) : update(patch)
+  // Sortie mode shows the sortie's map and its choices; the remembered selection stays as it is.
+  const shownMap = sortie?.map ?? inputs.map
+  const shownChoices = shownMap !== null ? choicesForMap(inputs, shownMap) : {}
+  // Until the map's first run has fetched its topology, runs use the boss with night battle, as before targets.
+  const topology = shownMap !== null ? mapTopology(shownMap) : undefined
+  const battles = topology && battleNodes(topology)
+  // A night-battle node is always a night battle: runs say so whatever the switch holds, which stays as saved.
+  const nightOnly = topology !== undefined && pair.target !== undefined && nightOnlyNodes(topology).has(pair.target)
+  const { target, nightBattle } = battles ? { ...pair, nightBattle: pair.nightBattle || nightOnly } : BOSS_PAIR
   // What a run would simulate; undefined while there is nothing to run (cleared by Reset).
   const current: RunInput | undefined =
     fleetId === null
@@ -144,15 +192,14 @@ export function Panel() {
             map: sortie.map,
             choices: { ...choicesForMap(inputs, sortie.map), ...taken },
             trials,
+            target,
+            nightBattle,
             sortie: { cells: sortie.cells },
           }
         : inputs.map !== null
-          ? { fleetId, map: inputs.map, choices: choicesForMap(inputs, inputs.map), trials }
+          ? { fleetId, map: inputs.map, choices: choicesForMap(inputs, inputs.map), trials, target, nightBattle }
           : undefined
   const simulate = () => current && start(current)
-  // Sortie mode shows the sortie's map and its choices; the remembered selection stays as it is.
-  const shownMap = sortie?.map ?? inputs.map
-  const shownChoices = shownMap !== null ? choicesForMap(inputs, shownMap) : {}
 
   // Auto-run on a change, not on opening the panel; a change mid-run restarts it. Changes are
   // settled first, for the configured delay (read per change, so a new setting applies at once),
@@ -228,7 +275,7 @@ export function Panel() {
     abortRef.current?.abort()
     clearTimeout(autoTimer.current)
     dispatch({ type: 'cancelled' })
-    update({ fleetId: null, map: null })
+    update({ fleetId: null, map: null, ...BOSS_PAIR })
   }
 
   return (
@@ -240,16 +287,31 @@ export function Panel() {
         map={shownMap}
         maps={maps}
         choices={shownChoices}
+        target={
+          shownMap !== null && battles
+            ? {
+                value: pair.target,
+                // Mid-sortie, only the nodes still ahead of the fleet.
+                options: predictor.nodesFor(shownMap, letters).filter((node) => battles.has(node)),
+                boss: predictor.bossFor(shownMap, letters),
+                nightBattle: pair.nightBattle,
+                nightOnly,
+              }
+            : undefined
+        }
         decided={taken}
         sortieMode={sortie !== undefined}
         auto={inputs.auto}
         running={running}
         canSimulate={current !== undefined}
         onFleet={(fleetId) => update({ fleetId })}
-        onMap={(map) => update({ map })}
+        // A target is a node of one map, so another map starts again at the boss, with night battle.
+        onMap={(map) => update({ map, ...BOSS_PAIR })}
         onChoice={(key, value) =>
           shownMap !== null && update({ choices: { ...inputs.choices, [shownMap]: { ...shownChoices, [key]: value } } })
         }
+        onTarget={(target) => setPair({ target })}
+        onNightBattle={(nightBattle) => setPair({ nightBattle })}
         onAuto={(auto) => {
           update({ auto })
           // Turned back on while the result is dimmed: catch up at once, not after the next change. Started here,
@@ -287,7 +349,7 @@ export function Panel() {
 
       {result && (
         <div className={`battle-sim-section battle-sim-result${stale ? ' battle-sim-stale' : ''}`}>
-          <Summary routes={result.routes} mode={rankDisplay} />
+          <Summary routes={result.routes} mode={rankDisplay} target={result.input.target} />
         </div>
       )}
 
@@ -295,7 +357,7 @@ export function Panel() {
         {run.phase === 'error' && run.error && (
           <ErrorView error={run.error} onRetry={run.input ? () => start(run.input!) : undefined} />
         )}
-        {result?.routes && <RouteCards routes={result.routes} mode={rankDisplay} />}
+        {result?.routes && <RouteCards routes={result.routes} mode={rankDisplay} target={result.input.target} />}
       </div>
 
       <ResultFooter result={result} stale={stale} status={<StatusArea run={run} />} />

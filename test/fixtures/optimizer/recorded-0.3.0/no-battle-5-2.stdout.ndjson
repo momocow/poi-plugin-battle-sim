@@ -1,0 +1,2 @@
+{"command":"simulate","schema":1,"type":"start","version":"0.3.0"}
+{"chain":["[tactics] 第 1 個節點是 [通過] —— 不打仗，戰術鍵在那裡沒有作用面"],"message":"[tactics] 第 1 個節點是 [通過] —— 不打仗，戰術鍵在那裡沒有作用面","schema":1,"type":"error"}
