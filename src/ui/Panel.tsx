@@ -9,10 +9,10 @@
  * run it shows the run's snapshot. The fleet for a run is read from the store
  * at the moment Simulate is clicked.
  *
- * A run also starts by itself when the selected fleet, its ships or equipment,
- * the map, the route choices or the trial count change, once every ship has
- * all its main slots filled and the inputs have settled for the delay set on
- * poi's settings page, unless the automatic-run switch is off. It also starts,
+ * A run also starts by itself when the selected fleet, its ships, their HP or
+ * equipment, the map, the route choices or the trial count change, once every
+ * ship has all its main slots filled and the inputs have settled for the delay
+ * set on poi's settings page, unless the automatic-run switch is off. It also starts,
  * after the same delay, when poi brings the plugin into view while the panel
  * has no run.
  */

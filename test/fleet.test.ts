@@ -160,13 +160,15 @@ describe('fleetLoadout', () => {
     expect(fleetLoadout(state, [1])?.complete).toBe(false)
   })
 
-  it('changes with equipment or ships, not with HP or morale', () => {
+  it('changes with equipment, ships or HP, not with morale', () => {
     const state = loadStore()
     const before = fleetLoadout(state, [1])!.key
     const flagship = state.info!.ships!['545']!
-    flagship.api_nowhp -= 1
     flagship.api_cond = 10
     expect(fleetLoadout(state, [1])!.key).toBe(before)
+    flagship.api_nowhp -= 1
+    expect(fleetLoadout(state, [1])!.key).not.toBe(before)
+    flagship.api_nowhp += 1
     flagship.api_slot = [flagship.api_slot[1]!, flagship.api_slot[0]!, ...flagship.api_slot.slice(2)]
     expect(fleetLoadout(state, [1])!.key).not.toBe(before)
     state.info!.fleets![0]!.api_ship = [344, 545, 132, 169, 7455, 388]

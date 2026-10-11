@@ -69,16 +69,16 @@ export function snapshotFleet(state: PoiState | undefined, fleetId: number, now 
 }
 
 export interface Loadout {
-  /** Equal for two states exactly when the same ships carry the same equipment. */
+  /** Equal for two states exactly when the same ships, at the same HP, carry the same equipment. */
   key: string
   /** At least one ship, and every ship's main slots all filled; the expansion slot is not counted. */
   complete: boolean
 }
 
 /**
- * The ships and equipment of the given fleets, enough to tell whether they
- * changed; undefined while the game data is not loaded. Levels, HP, morale
- * and proficiency are left out, so a sortie alone does not change it.
+ * The ships, their HP and equipment of the given fleets, enough to tell
+ * whether they changed; undefined while the game data is not loaded. Levels,
+ * morale and proficiency are left out, so those alone do not change it.
  */
 export function fleetLoadout(state: PoiState | undefined, fleetIds: number[]): Loadout | undefined {
   const info = state?.info
@@ -99,7 +99,7 @@ export function fleetLoadout(state: PoiState | undefined, fleetIds: number[]): L
         }
         const slots = ship.api_slot.slice(0, ship.api_slotnum)
         if (slots.length < ship.api_slotnum || slots.some((id) => id <= 0)) complete = false
-        return `${rosterId}:${ship.api_ship_id}[${slots.map(equipKey).join(',')}+${equipKey(ship.api_slot_ex)}]`
+        return `${rosterId}:${ship.api_ship_id}♥${ship.api_nowhp}[${slots.map(equipKey).join(',')}+${equipKey(ship.api_slot_ex)}]`
       })
       .join(' ')
   })
