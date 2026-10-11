@@ -96,6 +96,8 @@ The panel SHALL start a run by itself, as if Simulate were clicked, when any of 
 - a branch or phase choice of the selected map;
 - the trial count.
 
+The panel SHALL also start a run by itself when the plugin comes into view while the panel has no run: none has started since the panel opened, or the last one was cancelled. The plugin comes into view when its tab becomes the one poi shows, whether the user selected it or poi's plugin auto switch brought it forward, and when the panel opens while its tab is already the one shown. In poi's double-tabbed layout, the plugin is in view when it is the plugin shown in the plugin pane. A panel with a run in progress, finished or failed SHALL NOT start a run on coming into view, even when that result is stale. Coming into view while the selected fleet does not qualify (see below) or while the Auto switch is off SHALL NOT start a run, then or later.
+
 The run SHALL start once the inputs have stayed unchanged for the auto-run delay, so typing a custom trial count or a change made in several steps in game starts one run, with the final values. Each further change within the delay SHALL restart the wait.
 
 The auto-run delay SHALL be a poi config setting in milliseconds, defaulting to 1000. A value that is not a whole number from 0 to 60000 SHALL be treated as the default. The plugin's poi settings page SHALL have a field for the delay. A changed delay SHALL apply from the next qualifying change, without restarting poi or reopening the panel.
@@ -104,7 +106,7 @@ It SHALL do so only when every ship present in the selected fleet has all its ma
 
 The control bar SHALL have an Auto switch, next to the Simulate button, that turns automatic runs on or off. It SHALL be on by default and SHALL be remembered between poi sessions. While it is off, no run starts by itself, and turning it on SHALL NOT start a run for changes made while it was off. The switch SHALL stay usable while a run is in progress; turning it off does not cancel that run.
 
-Opening the panel and the game data loading SHALL NOT start a run. Changes to HP, morale, level, or aircraft proficiency SHALL NOT start a run. A qualifying change while a run is in progress SHALL cancel that run and start a new one with the current fleet. When the fleets are combined and the combined fleet is selected, the scope is the ships of both fleets.
+Apart from coming into view as above, opening the panel and the game data loading SHALL NOT start a run. Changes to HP, morale, level, or aircraft proficiency SHALL NOT start a run. A qualifying change while a run is in progress SHALL cancel that run and start a new one with the current fleet. When the fleets are combined and the combined fleet is selected, the scope is the ships of both fleets.
 
 #### Scenario: Equipment filled
 - **WHEN** fleet 1 has four ships, one of them with an empty main slot, and the user equips an item into that slot
@@ -157,6 +159,38 @@ Opening the panel and the game data loading SHALL NOT start a run. Changes to HP
 #### Scenario: Invalid delay
 - **WHEN** the config holds -5 or "fast" for the delay
 - **THEN** automatic runs wait 1000 ms
+
+#### Scenario: First view after poi starts
+- **WHEN** poi has started, the panel has no run, the Auto switch is on, every ship in the selected fleet has all main slots filled, and the user selects the plugin's tab
+- **THEN** a run starts about one auto-run delay later, without the user clicking Simulate
+
+#### Scenario: Tab already shown at startup
+- **WHEN** poi starts with the plugin's tab remembered as the shown tab, and the selected fleet qualifies once the panel opens
+- **THEN** a run starts about one auto-run delay after the panel opens
+
+#### Scenario: Result already shown
+- **WHEN** a run has finished, the user switches to another tab, then back to the plugin's tab
+- **THEN** no run starts and the finished result stays shown
+
+#### Scenario: Stale result kept on focus
+- **WHEN** a run on 1-4 has finished, the user selects 1-5 with the Auto switch off, switches to another tab and back
+- **THEN** no run starts, and the 1-4 result stays shown, dimmed
+
+#### Scenario: After a cancel
+- **WHEN** the user cancels a run, switches to another tab, then back, and the selected fleet qualifies
+- **THEN** a run starts
+
+#### Scenario: Focus with an equipment swap
+- **WHEN** the panel has no run, another tab is shown, and the user swaps a gun so poi's auto switch brings the plugin's tab forward
+- **THEN** one run starts, with the fleet after the swap
+
+#### Scenario: Focus with an incomplete fleet
+- **WHEN** the panel has no run, a ship in the selected fleet has an empty main slot, and the user selects the plugin's tab
+- **THEN** no run starts
+
+#### Scenario: Focus with Auto off
+- **WHEN** the panel has no run, the Auto switch is off, and the user selects the plugin's tab
+- **THEN** no run starts
 
 ### Requirement: Auto focus
 poi SHALL switch to the plugin's tab when the player enters the remodel screen, and when a ship or its equipment is changed in game: a ship placed in, removed from or moved within a fleet, a fleet preset loaded, a ship remodeled or modernized, equipment equipped, removed, or moved between slots or ships, or an expansion slot opened. This applies to any fleet, not only the selected one.
