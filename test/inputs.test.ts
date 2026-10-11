@@ -107,6 +107,11 @@ describe('optimizer override', () => {
 describe('plugin shown', () => {
   const double = { poi: { tabarea: { double: true } } }
 
+  it('uses the id poi gives the plugin', async () => {
+    const pkg = (await import('../package.json')).default as { poiPlugin: { id: string } }
+    expect(PLUGIN_ID).toBe(pkg.poiPlugin.id)
+  })
+
   it('reads the main tab in the single layout', () => {
     expect(isPluginShown({ ui: { activeMainTab: PLUGIN_ID, activePluginName: 'other' } })).toBe(true)
     expect(isPluginShown({ ui: { activeMainTab: 'main-view', activePluginName: PLUGIN_ID } })).toBe(false)

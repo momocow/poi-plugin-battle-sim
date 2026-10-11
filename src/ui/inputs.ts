@@ -127,8 +127,8 @@ export function loadOptimizerOverride(
   return { bin: nonEmpty(env.BATTLE_SIM_OPTIMIZER_BIN), data: nonEmpty(env.BATTLE_SIM_OPTIMIZER_DATA) }
 }
 
-/** poi's id for this plugin: its package name. */
-export const PLUGIN_ID = 'poi-plugin-battle-sim'
+/** poi's id for this plugin: `poiPlugin.id` in package.json, which poi prefers over the package name. */
+export const PLUGIN_ID = 'poi_battle_sim'
 
 /** Whether poi shows this plugin: the main tab, or the plugin pane's tab when double-tabbed. */
 export function isPluginShown(state: Pick<PoiState, 'ui' | 'config'>): boolean {

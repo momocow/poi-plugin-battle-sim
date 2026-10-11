@@ -2,7 +2,7 @@
 
 `Panel.tsx` owns automatic runs in one effect: it keys the inputs (`fleetId`, loadout key, map, choices, trials), and when the key changes after the first one seen, with Auto on and the loadout complete, it schedules `simulate` after `loadAutoRunDelay()`; the effect's cleanup clears a pending timer, which is what makes rapid changes settle into one run. The panel stays mounted while poi shows another tab, so "coming into view" is not a mount.
 
-poi records the shown tab in its store: `ui.activeMainTab` is the tab in the main area (a plugin's id when a plugin tab is shown there), and in the double-tabbed layout (`config.poi.tabarea.double`) the plugin pane shows `ui.activePluginName`. A plugin's id is its package name, `poi-plugin-battle-sim`. poi's plugin auto switch changes the same fields, on the same game response that updates the fleet, so a focus and an in-game change arrive within a few milliseconds of each other in either order.
+poi records the shown tab in its store: `ui.activeMainTab` is the tab in the main area (a plugin's id when a plugin tab is shown there), and in the double-tabbed layout (`config.poi.tabarea.double`) the plugin pane shows `ui.activePluginName`. A plugin's id is `poiPlugin.id` from its package.json when set, else its package name; this plugin's is `poi_battle_sim`. poi's plugin auto switch changes the same fields, on the same game response that updates the fleet, so a focus and an in-game change arrive within a few milliseconds of each other in either order.
 
 The run state is `idle` before any run and again after a cancel ("nothing kept"); every other phase means the panel has a run (see specs/simulator-panel/spec.md).
 
@@ -18,7 +18,7 @@ The run state is `idle` before any run and again after a cancel ("nothing kept")
 
 ## Decisions
 
-**Read visibility from poi's store, not DOM/visibility APIs.** A pure helper `isPluginShown(state)` returns `double ? ui.activePluginName === PLUGIN_ID : ui.activeMainTab === PLUGIN_ID`, selected with `useSelector`. The store is the source of truth poi itself renders from; `IntersectionObserver` or `document.visibilityState` would also fire on window minimise/restore, which is not what was asked. `PLUGIN_ID` is the package name, kept as a constant next to the other poi identifiers (`PREFIX` in `inputs.ts` is a config path, not the id, so it is not reused).
+**Read visibility from poi's store, not DOM/visibility APIs.** A pure helper `isPluginShown(state)` returns `double ? ui.activePluginName === PLUGIN_ID : ui.activeMainTab === PLUGIN_ID`, selected with `useSelector`. The store is the source of truth poi itself renders from; `IntersectionObserver` or `document.visibilityState` would also fire on window minimise/restore, which is not what was asked. `PLUGIN_ID` is `poiPlugin.id` (`poi_battle_sim`), kept as a constant in `inputs.ts` and pinned to package.json by a test, since a wrong id makes the helper silently false.
 
 **Detect focus as a not-shown → shown edge.** A focus effect depends only on the shown flag and compares it with a `lastShown` ref that starts false, so both a tab switch into view and a mount while already in view count. It updates the ref before checking anything else, so a focus while the game data is still loading, Auto is off, or the fleet is incomplete is consumed and does not fire later.
 

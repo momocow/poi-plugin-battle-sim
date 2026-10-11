@@ -1,7 +1,7 @@
 ## 1. Plugin visibility
 
 - [x] 1.1 Add the `ui` slice (`activeMainTab`, `activePluginName`) and `config.poi.tabarea.double` to `PoiState` in `src/fleet/types.ts`
-- [x] 1.2 Add a `PLUGIN_ID` constant (`poi-plugin-battle-sim`) and a pure `isPluginShown(state)` helper in `src/ui/inputs.ts`: `activeMainTab === PLUGIN_ID` in the single layout, `activePluginName === PLUGIN_ID` when double-tabbed
+- [x] 1.2 Add a `PLUGIN_ID` constant (`poi_battle_sim`, from `poiPlugin.id` in package.json) and a pure `isPluginShown(state)` helper in `src/ui/inputs.ts`: `activeMainTab === PLUGIN_ID` in the single layout, `activePluginName === PLUGIN_ID` when double-tabbed
 - [x] 1.3 Unit-test `isPluginShown` in `test/inputs.test.ts`: shown and not shown in each layout, and a state with no `ui` or `config` slice reads as not shown
 
 ## 2. Focus trigger in the panel
@@ -13,5 +13,5 @@
 ## 3. Verify
 
 - [x] 3.1 Run the type check and the test suite
-- [ ] 3.2 In poi: with no run, select the plugin's tab → one run starts after the delay; switch away and back after it finishes → no new run; cancel, switch away and back → a run starts; with no run and another tab shown, swap a gun so auto switch brings the tab forward → exactly one run, with the new gun; with Auto off or an empty main slot, focusing starts nothing
-- [ ] 3.3 In poi's double-tabbed layout, selecting the plugin in the plugin pane with no run starts a run
+- [x] 3.2 In poi: with no run, select the plugin's tab → one run starts after the delay; switch away and back after it finishes → no new run; cancel, switch away and back → a run starts; with no run and another tab shown, swap a gun so auto switch brings the tab forward → exactly one run, with the new gun; with Auto off or an empty main slot, focusing starts nothing
+- [x] 3.3 In poi's double-tabbed layout, selecting the plugin in the plugin pane with no run starts a run
