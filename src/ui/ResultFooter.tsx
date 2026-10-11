@@ -1,9 +1,10 @@
 /**
  * The panel's footer: on the left, what a result was run with — map (with the
  * node the fleet was at mid-sortie), fleet, snapshot time, trials and its
- * margin of error, choices, a node target and night battle off, with a marker when a mid-sortie result can't know
- * the special attacks fired earlier — and whether the settings have moved on
- * since; on the right, the run's status.
+ * margin of error, choices, a node target and night battle off — ending with a
+ * marker when a mid-sortie result can't know the special attacks fired earlier
+ * and one when the settings have moved on since, so neither adds a line; on the
+ * right, the run's status.
  */
 import { Icon, Tooltip } from '@blueprintjs/core'
 import React from 'react'
@@ -34,15 +35,14 @@ export function ResultFooter({
   return (
     <div className="battle-sim-footer">
       <div className={`battle-sim-footer-result${stale ? ' battle-sim-stale' : ''}`}>
-        {result && <ResultLine {...result} />}
-        {stale && <div className="bp6-text-muted">{t('Settings have changed since this result')}</div>}
+        {result && <ResultLine {...result} stale={stale} />}
       </div>
       {status}
     </div>
   )
 }
 
-function ResultLine({ input, capturedAt, at, sortieUnobserved }: FooterResult) {
+function ResultLine({ input, capturedAt, at, sortieUnobserved, stale }: FooterResult & { stale: boolean }) {
   const choices = describeChoices(input.map, input.choices, t('Phase'))
   const parts = [
     at ? t('{map} at {node}', { map: input.map, node: at }) : input.map,
@@ -66,6 +66,16 @@ function ResultLine({ input, capturedAt, at, sortieUnobserved }: FooterResult) {
           targetProps={{ className: 'battle-sim-footer-marker' }}
         >
           <Icon icon="eye-off" intent="warning" size={12} />
+        </Tooltip>
+      )}
+      {stale && (
+        <Tooltip
+          content={t('Settings have changed since this result')}
+          placement="top"
+          targetTagName="span"
+          targetProps={{ className: 'battle-sim-footer-marker' }}
+        >
+          <Icon icon="history" size={12} />
         </Tooltip>
       )}
     </div>
