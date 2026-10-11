@@ -95,6 +95,7 @@ The panel SHALL start a run by itself, as if Simulate were clicked, when any of 
 - the selected map;
 - a branch or phase choice of the selected map;
 - the trial count;
+- the node the selected fleet is at during a sortie, when it advances to another one, with or without a battle there;
 - the current fuel, ammo or planes of a ship in the selected fleet: for example resupplying, supplies used in a sortie, or planes lost;
 - the current HP of a ship in the selected fleet, up or down: for example damage in a sortie, between nodes or on returning, a docking that finishes, an instant repair, a repair ship's repair, or a modernization or marriage.
 
@@ -106,7 +107,7 @@ The auto-run delay SHALL be a poi config setting in milliseconds, defaulting to 
 
 It SHALL do so only when every ship present in the selected fleet has all its main slots filled, counting only the slots that ship has. The expansion slot SHALL NOT count, and the fleet need not be full: a fleet of three ships with every main slot filled qualifies. A fleet with no ships SHALL NOT start a run.
 
-The control bar SHALL have an Auto switch, next to the Simulate button, that turns automatic runs on or off. It SHALL be on by default and SHALL be remembered between poi sessions. While it is off, no run starts by itself, and turning it on SHALL NOT start a run for changes made while it was off. The switch SHALL stay usable while a run is in progress; turning it off does not cancel that run.
+The control bar SHALL have an Auto switch, next to the Simulate button, that turns automatic runs on or off. It SHALL be on by default and SHALL be remembered between poi sessions. While it is off, no run starts by itself. Turning it on while the result on screen is dimmed as stale (see Result footer), and the selected fleet qualifies (see below), SHALL start a run at once, without waiting for the auto-run delay. Otherwise turning it on SHALL NOT start a run for changes made while it was off. The switch SHALL stay usable while a run is in progress; turning it off does not cancel that run.
 
 Apart from coming into view as above, opening the panel and the game data loading SHALL NOT start a run. Changes to morale, level, or aircraft proficiency SHALL NOT start a run. A qualifying change while a run is in progress SHALL cancel that run and start a new one with the current fleet. When the fleets are combined and the combined fleet is selected, the scope is the ships of both fleets.
 
@@ -138,6 +139,14 @@ Apart from coming into view as above, opening the panel and the game data loadin
 - **WHEN** the Auto switch is off and the user swaps equipment, leaving every main slot filled
 - **THEN** no run starts until the user clicks Simulate
 
+#### Scenario: Auto turned back on over a stale result
+- **WHEN** the Auto switch is off, the fleet advances a node so the result is dimmed, and the user turns the switch on
+- **THEN** a run starts at once, for the node the fleet is at
+
+#### Scenario: Auto turned back on over a current result
+- **WHEN** the Auto switch is off, nothing that the result depends on has changed, and the user turns the switch on
+- **THEN** no run starts
+
 #### Scenario: Change during a run
 - **WHEN** a run is in progress and the user swaps equipment on a ship in the selected fleet, leaving every main slot filled
 - **THEN** that run is cancelled and a new one starts with the changed fleet
@@ -145,6 +154,10 @@ Apart from coming into view as above, opening the panel and the game data loadin
 #### Scenario: Sortie return
 - **WHEN** the selected fleet returns from a sortie with lower HP and morale, no ship or equipment changed, and every main slot is filled
 - **THEN** a run starts with the damaged HP
+
+#### Scenario: Node without a battle
+- **WHEN** the selected fleet advances to a node with no battle, with no HP change
+- **THEN** a run starts for the rest of the sortie from that node
 
 #### Scenario: Between nodes
 - **WHEN** a run is in progress and the selected fleet advances to the next node of a sortie with lower HP
@@ -229,6 +242,47 @@ Apart from coming into view as above, opening the panel and the game data loadin
 #### Scenario: Focus with Auto off
 - **WHEN** the panel has no run, the Auto switch is off, and the user selects the plugin's tab
 - **THEN** no run starts
+
+### Requirement: Mid-sortie runs
+While the selected fleet is on a sortie, a run SHALL simulate the sortie's map, with the branch and phase choices remembered for that map, whatever map is selected in the panel. This is sortie mode; otherwise the panel is in plan mode. A round tag with an icon at the right end of the control bar's first row SHALL name the mode: a grey Plan mode (規劃模式) tag with a map icon in plan mode, a red Sortie mode (出擊模式) tag with a flag icon in sortie mode. In sortie mode, the fleet and map selects SHALL be disabled, and the map select SHALL show the sortie's map, with that map's branch and phase controls. The selected map SHALL stay remembered unchanged. Once the fleet is back in port, the tag SHALL show Plan mode again, the selects SHALL be enabled and show the selected map again, and runs SHALL use it. The run SHALL narrow the routes to the sortie's path so far (see route-prediction) and simulate them from the node the fleet is at (see battle-simulation). When the fleets are combined and the combined fleet is selected, the sortie is the combined fleet's.
+
+While the selected map is the sortie's map, each branch control whose node the fleet has passed SHALL show the branch taken and SHALL NOT be changeable until the fleet is back in port. The choice remembered for the map SHALL NOT change. Branches not passed yet stay changeable, and runs use them.
+
+The route cards SHALL show each route's nodes before the one the fleet is at as passed, visibly set apart from the nodes still ahead, with no retreat rate under them. The route probability on each card SHALL be the narrowed probability.
+
+The footer SHALL name the sortie's map and the node the fleet is at, for example "5-2 at E", in place of the map. When the sortie's earlier battles were not observed from its start, the footer's result line SHALL end with a warning marker whose tooltip says that special attacks fired before are not known. The marker SHALL NOT take a line of its own. The result SHALL count as stale, and be dimmed as for other setting changes, once the fleet advances to another node or returns to port, until the next run. While the fleet is on a sortie, the sortie's map and choices count as the selected ones when deciding whether a result is stale, so a mid-sortie result is not dimmed just because the map select shows another map.
+
+#### Scenario: Sortie on another map
+- **WHEN** the panel's selected map is 1-5, the selected fleet sorties to 2-5, and advances to C
+- **THEN** a run simulates 2-5 from C, the Sortie mode tag shows, and the fleet and map selects are disabled with the map select showing 2-5
+
+#### Scenario: Sortie mode ends in port
+- **WHEN** the fleet returns to port from that 2-5 sortie
+- **THEN** the tag shows Plan mode again, and the selects are enabled again with the map select showing 1-5
+
+#### Scenario: Back in port
+- **WHEN** the fleet returns from a 2-5 sortie and the selected map is 1-5
+- **THEN** the next run simulates 1-5 from its start
+
+#### Scenario: Branch passed in game
+- **WHEN** O → K is remembered for 5-3, and the selected fleet passes O to P on a 5-3 sortie
+- **THEN** the O → control shows P and can't be changed, runs use O→P, and after the fleet returns to port the control shows K and is changeable again
+
+#### Scenario: Passed nodes on a card
+- **WHEN** a run is made with the fleet at L on route `1-C-E-G-L-O`
+- **THEN** that card shows C, E and G as passed, with no retreat rates under them, and L and O as ahead
+
+#### Scenario: Footer mid-sortie
+- **WHEN** a run is made with fleet 1 at E on 5-2
+- **THEN** the footer shows "5-2 at E"
+
+#### Scenario: Footer for a sortie not observed from its start
+- **WHEN** the plugin was turned off and on in poi's plugin settings while fleet 1 was at sea, and a run is made with the fleet at E on 5-2
+- **THEN** the footer's result line shows "5-2 at E" and ends with a warning marker, and hovering over the marker says that earlier special attacks are not known
+
+#### Scenario: Result after advancing
+- **WHEN** a run at E has finished and the fleet advances to F with Auto off
+- **THEN** the result stays visible but dimmed, with a note that the settings have changed
 
 ### Requirement: Auto focus
 poi SHALL switch to the plugin's tab when a ship or its equipment is changed in game, and the change leaves the ships or equipment of the selected fleet different from what the panel last showed. The changes that count are: a ship placed in, removed from, or moved within or into or out of the selected fleet; a fleet preset loaded into it; a ship in it remodeled or modernized; equipment on a ship in it equipped, removed, improved, or moved between slots or ships; or an expansion slot opened on a ship in it. When the fleets are combined and the combined fleet is selected, the selected fleet is both fleets. Entering the remodel screen, and changes that leave the selected fleet's ships and equipment as they were, such as a change to another fleet only, SHALL NOT switch the tab. Changes to HP, morale or level SHALL NOT switch the tab, including repairs, so that poi's own switch to its main view on the docking screen and on returning to port stands.
