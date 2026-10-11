@@ -42,7 +42,6 @@
 npm install
 npm run typecheck
 npm test            # vitest
-npm run build       # tsc → dist/
 ```
 
 **使用本機建置的 optimizer。** 在 poi 中本插件的設定頁面設定 optimizer 執行檔路徑，必要時也設定資料路徑。也可以在 shell 中設定 `BATTLE_SIM_OPTIMIZER_BIN` 與 `BATTLE_SIM_OPTIMIZER_DATA` 後啟動 poi。設定頁面的優先順序高於環境變數，且執行檔與資料路徑一定來自同一個來源。

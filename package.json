@@ -2,9 +2,10 @@
   "name": "poi-plugin-battle-sim",
   "version": "0.2.0",
   "description": "Simulate a fleet's odds on a map: routes from compass, battles from kancolle-fleet-optimizer",
-  "main": "dist/index.js",
+  "main": "index.ts",
   "files": [
-    "dist",
+    "index.ts",
+    "src",
     "i18n",
     "optimizer.json",
     "data"
@@ -26,10 +27,8 @@
     "url": "git+https://github.com/momocow/poi-plugin-battle-sim.git"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "prepack": "npm run build",
     "fetch-optimizer": "node scripts/fetch-optimizer.mjs",
     "prepublishOnly": "npm run fetch-optimizer"
   },
