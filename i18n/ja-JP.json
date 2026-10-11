@@ -68,5 +68,7 @@
   "Auto": "自動",
   "Simulate when the fleet or these settings change": "艦隊や設定が変わったら自動でシミュレート",
   "Automatic run delay (ms)": "自動実行の待ち時間（ms）",
-  "How long the fleet and inputs must stay unchanged before a run starts by itself; 0–60000, default {ms}": "艦隊や設定の変更が止まってから自動でシミュレーションを始めるまでの時間。0〜60000、既定値 {ms}"
+  "How long the fleet and inputs must stay unchanged before a run starts by itself; 0–60000, default {ms}": "艦隊や設定の変更が止まってから自動でシミュレーションを始めるまでの時間。0〜60000、既定値 {ms}",
+  "Developer log": "開発者ログ",
+  "Writes a detailed log of sorties and runs, for checking behavior afterwards, to {path}": "出撃とシミュレーションの詳細なログを {path} に書き出し、後から動作を確認できるようにします"
 }

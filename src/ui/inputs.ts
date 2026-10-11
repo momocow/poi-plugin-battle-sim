@@ -107,6 +107,11 @@ export function loadAutoRunDelay(): number {
     : DEFAULT_AUTO_RUN_DELAY_MS
 }
 
+export const DEV_LOG_KEY = `${PREFIX}.devLog`
+
+/** Whether the developer log is on; off unless the config holds `true`. */
+export const loadDevLog = (): boolean => readConfig<unknown>(DEV_LOG_KEY, false) === true
+
 export const OPTIMIZER_BIN_KEY = `${PREFIX}.optimizerBin`
 export const OPTIMIZER_DATA_KEY = `${PREFIX}.optimizerData`
 

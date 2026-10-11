@@ -20,6 +20,7 @@ import { Tag } from '@blueprintjs/core'
 import React, { useEffect, useMemo, useReducer, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 
+import { devLog } from '../devlog'
 import { SimError } from '../errors'
 import { buildFleetViewModel, type FleetViewModel } from '../fleet-view/model'
 import { FleetView } from '../fleet-view/FleetView'
@@ -102,9 +103,11 @@ export function Panel() {
   const lastAutoKey = useRef<string | undefined>(undefined)
   // One pending automatic run, shared by both triggers, so a focus arriving with a change starts one run.
   const autoTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
-  const scheduleAuto = () => {
+  const scheduleAuto = (trigger: 'change' | 'focus') => {
     clearTimeout(autoTimer.current)
-    autoTimer.current = setTimeout(simulate, loadAutoRunDelay())
+    const delay = loadAutoRunDelay()
+    devLog('auto.scheduled', { trigger, delay, input: current })
+    autoTimer.current = setTimeout(simulate, delay)
   }
   useEffect(() => () => clearTimeout(autoTimer.current), [])
   useEffect(() => {
@@ -112,7 +115,7 @@ export function Panel() {
     if (!autoKey) return
     const changed = lastAutoKey.current !== undefined && lastAutoKey.current !== autoKey
     lastAutoKey.current = autoKey
-    if (changed && inputs.auto && loadout?.complete) scheduleAuto()
+    if (changed && inputs.auto && loadout?.complete) scheduleAuto('change')
   }, [autoKey, inputs.auto])
 
   // What poi's auto switch compares a game response with (see focus.ts).
@@ -128,7 +131,7 @@ export function Panel() {
   useEffect(() => {
     const focused = shown && !lastShown.current
     lastShown.current = shown
-    if (focused && run.phase === 'idle' && inputs.auto && loadout?.complete) scheduleAuto()
+    if (focused && run.phase === 'idle' && inputs.auto && loadout?.complete) scheduleAuto('focus')
   }, [shown])
 
   // Live before a run; the run's snapshot from its start through its result, at the run's map.

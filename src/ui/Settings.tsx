@@ -1,16 +1,21 @@
 /**
- * poi's settings page for this plugin: the automatic-run delay and the
- * development optimizer override. poi derives no UI from config keys, so
- * without this they could only be set by editing config.cson.
+ * poi's settings page for this plugin: the automatic-run delay, the
+ * developer log switch and the development optimizer override. poi derives
+ * no UI from config keys, so without this they could only be set by editing
+ * config.cson.
  */
+import { Switch } from '@blueprintjs/core'
 import React, { useState } from 'react'
 
+import { devLogPath } from '../devlog'
 import { t } from '../i18n'
 import { readConfig, writeConfig } from '../poi'
 import {
   AUTO_RUN_DELAY_KEY,
   DEFAULT_AUTO_RUN_DELAY_MS,
+  DEV_LOG_KEY,
   loadAutoRunDelay,
+  loadDevLog,
   MAX_AUTO_RUN_DELAY_MS,
   OPTIMIZER_BIN_KEY,
   OPTIMIZER_DATA_KEY,
@@ -67,10 +72,38 @@ function AutoRunDelaySetting() {
   )
 }
 
+function DevLogSetting() {
+  const [on, setOn] = useState(loadDevLog)
+  let path: string | undefined
+  try {
+    path = devLogPath()
+  } catch {
+    path = undefined
+  }
+  return (
+    <div className="battle-sim-setting">
+      <Switch
+        checked={on}
+        label={t('Developer log')}
+        onChange={(e: { currentTarget: { checked: boolean } }) => {
+          setOn(e.currentTarget.checked)
+          writeConfig(DEV_LOG_KEY, e.currentTarget.checked)
+        }}
+      />
+      <div className="bp6-text-muted">
+        {t('Writes a detailed log of sorties and runs, for checking behavior afterwards, to {path}', {
+          path: path ?? 'logs/dev.ndjson',
+        })}
+      </div>
+    </div>
+  )
+}
+
 export function Settings() {
   return (
     <div className="battle-sim-settings" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       <AutoRunDelaySetting />
+      <DevLogSetting />
       <div>{t('Development optimizer')}</div>
       <PathSetting
         configKey={OPTIMIZER_BIN_KEY}

@@ -68,5 +68,7 @@
   "Auto": "Auto",
   "Simulate when the fleet or these settings change": "Simulate when the fleet or these settings change",
   "Automatic run delay (ms)": "Automatic run delay (ms)",
-  "How long the fleet and inputs must stay unchanged before a run starts by itself; 0–60000, default {ms}": "How long the fleet and inputs must stay unchanged before a run starts by itself; 0–60000, default {ms}"
+  "How long the fleet and inputs must stay unchanged before a run starts by itself; 0–60000, default {ms}": "How long the fleet and inputs must stay unchanged before a run starts by itself; 0–60000, default {ms}",
+  "Developer log": "Developer log",
+  "Writes a detailed log of sorties and runs, for checking behavior afterwards, to {path}": "Writes a detailed log of sorties and runs, for checking behavior afterwards, to {path}"
 }
