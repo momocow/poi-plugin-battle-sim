@@ -1,0 +1,23 @@
+{
+  "name": "poi-plugin-battle-sim-data",
+  "version": "1.0.1",
+  "description": "Frequently changed game data for poi-plugin-battle-sim: optimizer data, map choices, node distances, event gauges and a kcnav snapshot",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/momocow/poi-plugin-battle-sim.git",
+    "directory": "fcd"
+  },
+  "files": [
+    "manifest.json",
+    "optimizer",
+    "map-choices.json",
+    "node-distances.json",
+    "event-gauges.json",
+    "kcnav"
+  ],
+  "author": {
+    "name": "MomoCow",
+    "url": "https://github.com/momocow"
+  }
+}

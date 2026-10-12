@@ -1,0 +1,107 @@
+{
+  "fetched_at": "2026-10-11T14:15:13Z",
+  "source": "kcnav",
+  "kcnav_query": {
+    "map": "5-4",
+    "node": "J",
+    "start": "2026-07-13",
+    "end": "2026-10-11",
+    "difficulty": null,
+    "cleared": null,
+    "min_gauge": null,
+    "max_gauge": null,
+    "min_gauge_level": null,
+    "max_gauge_level": null,
+    "min_hq_level": null,
+    "max_hq_level": null
+  },
+  "candidates": [
+    {
+      "enemy_ids": [
+        1526,
+        1526,
+        1513,
+        1576,
+        1501,
+        1501
+      ],
+      "enemy_formation": "DoubleLine",
+      "weight": 463.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1526,
+        1526,
+        1526,
+        1576,
+        1576,
+        1576
+      ],
+      "enemy_formation": "DoubleLine",
+      "weight": 451.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1526,
+        1513,
+        1513,
+        1576,
+        1501,
+        1501
+      ],
+      "enemy_formation": "DoubleLine",
+      "weight": 344.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1558,
+        1526,
+        1526,
+        1576,
+        1576,
+        1576
+      ],
+      "enemy_formation": "DoubleLine",
+      "weight": 334.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1526,
+        1526,
+        1513,
+        1576,
+        1576,
+        1501
+      ],
+      "enemy_formation": "DoubleLine",
+      "weight": 329.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1526,
+        1526,
+        1526,
+        1576,
+        1576,
+        1501
+      ],
+      "enemy_formation": "DoubleLine",
+      "weight": 298.0,
+      "engagement": null,
+      "ships_escort": null
+    }
+  ],
+  "total_samples": 2219,
+  "label": null,
+  "samples_without_gauge_filter": 2219
+}

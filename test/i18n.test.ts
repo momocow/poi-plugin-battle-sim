@@ -8,14 +8,13 @@ const sources = (dir: string): string[] =>
     e.isDirectory() ? sources(join(dir, e.name)) : /\.tsx?$/.test(e.name) ? [join(dir, e.name)] : [],
   )
 
-/** Every string the panel passes through `t()`, the error summaries, the phase labels, the formation and special-attack names, and the reasons. */
+/** Every string the panel passes through `t()`, the error summaries, the package's phase labels, the formation, special-attack and gauge-state names, and the reasons. */
 function usedKeys(): Set<string> {
   const keys = new Set<string>(['Battle Sim', "Simulate your fleet's odds on a map"])
   for (const file of sources('src')) {
     const text = readFileSync(join(root, file), 'utf8')
     for (const m of text.matchAll(/\bt\('((?:[^'\\]|\\.)*)'/g)) keys.add(m[1]!)
     if (file.endsWith('ErrorView.tsx')) for (const m of text.matchAll(/^\s+[A-Z_]+: '([^']*)',/gm)) keys.add(m[1]!)
-    if (file.endsWith('choices.ts')) for (const m of text.matchAll(/label: '([^']*)'/g)) keys.add(m[1]!)
     // Default reasons and night battle settings, looked up from records.
     if (file.endsWith('NodeSettings.tsx')) for (const m of text.matchAll(/^\s+\w+: '([^']*)',/gm)) keys.add(m[1]!)
     // Formation, node type and special-attack names, from the `*_NAMES` records.
@@ -25,6 +24,11 @@ function usedKeys(): Set<string> {
       }
     }
   }
+  // Phase labels come from the game-data package; the tables translate the ones it has.
+  const choices = JSON.parse(readFileSync(join(root, 'fcd', 'map-choices.json'), 'utf8')) as {
+    maps: Record<string, { phases?: { label: string }[] }>
+  }
+  for (const map of Object.values(choices.maps)) for (const p of map.phases ?? []) keys.add(p.label)
   return keys
 }
 

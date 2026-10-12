@@ -24,6 +24,9 @@ const SUMMARY: Record<ErrorCode, string> = {
   SORTIE_MAP_UNREADABLE: 'The sortie path could not be read from the map data',
   SORTIE_PATH_UNMATCHED: 'No predicted route matches the sortie path — check the branch choices',
   TARGET_NOT_BATTLE: 'The target node has no battle — pick a battle node as the target',
+  GAME_DATA_MISSING: 'The game data package is missing or unreadable — reinstall the plugin',
+  EVENT_DIFFICULTY_UNSET: 'Pick a difficulty for this event map',
+  EVENT_COMBINED_ONLY: 'Combined fleets are not supported yet on this map',
   INTERNAL: 'Something unexpected went wrong',
 }
 

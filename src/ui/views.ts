@@ -12,6 +12,7 @@ import type { SpecialAttack } from '../fleet/specialGates'
 import { t } from '../i18n'
 import { aggregate, aOrBetter, bOrBetter, type Aggregate } from '../optimizer/aggregate'
 import type { RankRates, SimulateDiag } from '../optimizer/run'
+import type { Difficulty, EventState } from '../routes/eventState'
 import type { Formation } from '../routes/formation'
 import type { RankDisplay } from './inputs'
 import { isSimulated, type BattleType, type NodeInfo, type RouteRow, type RunInput } from './state'
@@ -280,6 +281,7 @@ export function isStale(run: RunInput, current: RunInput): boolean {
   if (run.fleetId !== current.fleetId || run.map !== current.map || run.trials !== current.trials) return true
   if (run.target !== current.target) return true
   if (String(run.sortie?.cells) !== String(current.sortie?.cells)) return true
+  if (JSON.stringify(run.event ?? null) !== JSON.stringify(current.event ?? null)) return true
   return (
     differ(run.choices, current.choices) ||
     differ(run.formations, current.formations) ||
@@ -322,4 +324,36 @@ export function sortForCards(routes: RouteRow[]): RouteRow[] {
       b.probability - a.probability
     )
   })
+}
+
+const DIFFICULTY_NAMES: Record<Difficulty, string> = { 1: '丁', 2: '丙', 3: '乙', 4: '甲' }
+
+export const GAUGE_STATE_NAMES = {
+  chip: 'Chip',
+  last: 'Last dance',
+  cleared: 'Cleared',
+} as const
+
+export const difficultyName = (d: Difficulty): string => DIFFICULTY_NAMES[d]
+
+/** An event state for the footer, for example "甲 · Gauge 2 · Last dance"; the gauge state left out when unknown. */
+export function describeEvent(e: EventState): string {
+  return [
+    e.difficulty !== undefined ? difficultyName(e.difficulty) : '—',
+    ...(e.gaugeState !== 'cleared' ? [t('Gauge {n}', { n: e.gauge })] : []),
+    ...(e.gaugeState ? [t(GAUGE_STATE_NAMES[e.gaugeState])] : []),
+  ].join(' ')
+}
+
+/** Versions of the game data whose update popup has opened by itself this poi session. */
+const autoOpened = new Set<string>()
+
+/**
+ * Whether the update popup should open by itself now for `available`: once per version, and only when it can (the
+ * plugin in view, no other popup open). Marks the version as opened when it says yes.
+ */
+export function takeAutoOpen(available: string | undefined, canAutoOpen: boolean, opened: Set<string> = autoOpened): boolean {
+  if (!available || !canAutoOpen || opened.has(available)) return false
+  opened.add(available)
+  return true
 }

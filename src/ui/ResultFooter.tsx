@@ -1,11 +1,10 @@
 /**
  * The panel's footer: on the left, what a result was run with — map (with the
  * node the fleet was at mid-sortie), fleet, snapshot time, trials and its
- * margin of error, choices, a node target and night battle off at the target — ending with a
+ * margin of error, choices, an event map's event state, a node target and night battle off at the target — ending with a
  * marker when a mid-sortie result can't know the special attacks fired earlier
  * and one when the settings have moved on since, so neither adds a line; on the
- * right, the run's status, then the normal-map fetch queue's spinner or
- * failure marker at the far right.
+ * right, the run's status, then the game-data update prompt at the far right.
  */
 import { Icon, Tooltip } from '@blueprintjs/core'
 import React from 'react'
@@ -13,8 +12,7 @@ import React from 'react'
 import { t } from '../i18n'
 import { describeChoices } from '../routes/choices'
 import type { RunInput } from './state'
-import { NormalMapFetchIndicator } from './NormalMapFetchIndicator'
-import { marginOfError, pct } from './views'
+import { describeEvent, marginOfError, pct } from './views'
 
 export interface FooterResult {
   input: RunInput
@@ -31,10 +29,13 @@ export function ResultFooter({
   result,
   stale,
   status,
+  dataUpdate,
 }: {
   result?: FooterResult
   stale: boolean
   status: React.ReactNode
+  /** The game-data update prompt. */
+  dataUpdate?: React.ReactNode
 }) {
   return (
     <div className="battle-sim-footer">
@@ -42,7 +43,7 @@ export function ResultFooter({
         {result && <ResultLine {...result} stale={stale} />}
       </div>
       {status}
-      <NormalMapFetchIndicator />
+      {dataUpdate}
     </div>
   )
 }
@@ -63,6 +64,7 @@ function ResultLine({
     t('{trials} trials per route', { trials: input.trials }),
     `±${pct(marginOfError(input.trials))}`,
     ...(choices ? [choices] : []),
+    ...(input.event ? [describeEvent(input.event)] : []),
     ...(input.target !== undefined ? [t('Target {node}', { node: input.target })] : []),
     ...(nightBattleAtTarget === false ? [t('No night battle')] : []),
   ]

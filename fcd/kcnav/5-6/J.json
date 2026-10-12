@@ -1,0 +1,149 @@
+{
+  "fetched_at": "2026-10-12T04:32:49Z",
+  "source": "kcnav",
+  "kcnav_query": {
+    "map": "5-6",
+    "node": "J",
+    "start": "2026-07-14",
+    "end": "2026-10-12",
+    "difficulty": null,
+    "cleared": null,
+    "min_gauge": null,
+    "max_gauge": null,
+    "min_gauge_level": null,
+    "max_gauge_level": null,
+    "min_hq_level": null,
+    "max_hq_level": null
+  },
+  "candidates": [
+    {
+      "enemy_ids": [
+        1554,
+        1591,
+        1577,
+        1576,
+        1576,
+        1530
+      ],
+      "enemy_formation": "LineAhead",
+      "weight": 439.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1555,
+        1591,
+        1577,
+        1576,
+        1576,
+        1531
+      ],
+      "enemy_formation": "LineAhead",
+      "weight": 430.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1591,
+        1577,
+        1577,
+        1576,
+        1576,
+        1575
+      ],
+      "enemy_formation": "LineAhead",
+      "weight": 393.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1591,
+        1577,
+        1577,
+        1576,
+        1576,
+        1575
+      ],
+      "enemy_formation": "DoubleLine",
+      "weight": 181.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1555,
+        1591,
+        1577,
+        1576,
+        1576,
+        1531
+      ],
+      "enemy_formation": "DoubleLine",
+      "weight": 171.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1554,
+        1591,
+        1577,
+        1576,
+        1576,
+        1530
+      ],
+      "enemy_formation": "DoubleLine",
+      "weight": 170.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1555,
+        1591,
+        1577,
+        1576,
+        1576,
+        1531
+      ],
+      "enemy_formation": "Echelon",
+      "weight": 125.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1591,
+        1577,
+        1577,
+        1576,
+        1576,
+        1575
+      ],
+      "enemy_formation": "Echelon",
+      "weight": 103.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1554,
+        1591,
+        1577,
+        1576,
+        1576,
+        1530
+      ],
+      "enemy_formation": "Echelon",
+      "weight": 101.0,
+      "engagement": null,
+      "ships_escort": null
+    }
+  ],
+  "total_samples": 2113,
+  "label": null,
+  "samples_without_gauge_filter": 2113
+}

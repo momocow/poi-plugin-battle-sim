@@ -1,0 +1,107 @@
+{
+  "fetched_at": "2026-10-10T14:10:57Z",
+  "source": "kcnav",
+  "kcnav_query": {
+    "map": "7-5",
+    "node": "J",
+    "start": "2026-07-12",
+    "end": "2026-10-10",
+    "difficulty": null,
+    "cleared": null,
+    "min_gauge": null,
+    "max_gauge": null,
+    "min_gauge_level": null,
+    "max_gauge_level": null,
+    "min_hq_level": null,
+    "max_hq_level": null
+  },
+  "candidates": [
+    {
+      "enemy_ids": [
+        1527,
+        1555,
+        1622,
+        1622,
+        1575,
+        1575
+      ],
+      "enemy_formation": "LineAhead",
+      "weight": 4257.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1527,
+        1555,
+        1622,
+        1622,
+        1575,
+        1575
+      ],
+      "enemy_formation": "DoubleLine",
+      "weight": 2277.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1527,
+        1555,
+        1762,
+        1622,
+        1622,
+        1622
+      ],
+      "enemy_formation": "LineAhead",
+      "weight": 1221.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1527,
+        1555,
+        1622,
+        1575,
+        1501,
+        1501
+      ],
+      "enemy_formation": "LineAhead",
+      "weight": 291.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1527,
+        1555,
+        1622,
+        1575,
+        1501,
+        1501
+      ],
+      "enemy_formation": "DoubleLine",
+      "weight": 179.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1527,
+        1555,
+        1523,
+        1622,
+        1575,
+        1575
+      ],
+      "enemy_formation": "LineAhead",
+      "weight": 110.0,
+      "engagement": null,
+      "ships_escort": null
+    }
+  ],
+  "total_samples": 8335,
+  "label": null,
+  "samples_without_gauge_filter": 8335
+}

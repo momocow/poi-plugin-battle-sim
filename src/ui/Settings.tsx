@@ -1,16 +1,15 @@
 /**
  * poi's settings page for this plugin: the trial count, the rank display,
- * the automatic-run delay, the developer log switch, the development
- * optimizer override, and a button that refreshes the normal maps' enemy
- * data. poi derives
+ * the automatic-run delay, the developer log switch, the game data version in
+ * use, and the development optimizer override. poi derives
  * no UI from config keys, so without this they could only be set by editing
  * config.cson.
  */
-import { Button, HTMLSelect, RadioGroup, Switch } from '@blueprintjs/core'
-import React, { useState } from 'react'
+import { HTMLSelect, RadioGroup, Switch } from '@blueprintjs/core'
+import React, { useState, useSyncExternalStore } from 'react'
 
 import { devLogPath } from '../devlog'
-import { SimError } from '../errors'
+import { gameData, isBundled, onGameData, workDirOrNone } from '../gameData/store'
 import { t } from '../i18n'
 import { readConfig, writeConfig } from '../poi'
 import {
@@ -31,9 +30,6 @@ import {
   TRIAL_PRESETS,
   TRIALS_KEY,
 } from './inputs'
-import { errorSummary } from './ErrorView'
-import { queueProgressText, useQueueStatus } from './NormalMapFetchIndicator'
-import { fetchNormalMaps } from './runner'
 
 const CUSTOM = 'custom'
 
@@ -167,6 +163,23 @@ function AutoRunDelaySetting() {
   )
 }
 
+/** The game data version in use, and whether it came with the plugin or from an update; follows an update live. */
+function GameDataVersion() {
+  const data = useSyncExternalStore(onGameData, gameData)
+  return (
+    <div className="battle-sim-setting">
+      <div>{t('Game data')}</div>
+      <div className="bp6-text-muted">
+        {!data
+          ? t('Not available')
+          : isBundled(data, workDirOrNone())
+            ? t('{version}, installed with the plugin', { version: data.version })
+            : t('{version}, from an update', { version: data.version })}
+      </div>
+    </div>
+  )
+}
+
 function DevLogSetting() {
   const [on, setOn] = useState(loadDevLog)
   let path: string | undefined
@@ -194,30 +207,6 @@ function DevLogSetting() {
   )
 }
 
-/** Downloads every normal map again; off while any queue of map fetches runs, which it then shows. */
-function RefreshMapsSetting() {
-  const status = useQueueStatus()
-  const [error, setError] = useState<string>()
-  const running = status?.kind === 'running'
-  const refresh = () => {
-    setError(undefined)
-    fetchNormalMaps({ force: true }).catch((err: unknown) =>
-      setError(err instanceof SimError ? errorSummary(err.code) : String(err)),
-    )
-  }
-  return (
-    <div className="battle-sim-setting">
-      <Button small icon="refresh" disabled={running} text={t('Refresh enemy data of normal maps')} onClick={refresh} />
-      <div className="bp6-text-muted">
-        {running
-          ? queueProgressText(status)
-          : t('Downloads the enemy data of every normal map again from kcnav, one map at a time')}
-      </div>
-      {error && <div className="bp6-text-danger">{error}</div>}
-    </div>
-  )
-}
-
 export function Settings() {
   return (
     <div className="battle-sim-settings" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -225,7 +214,7 @@ export function Settings() {
       <RankDisplaySetting />
       <AutoRunDelaySetting />
       <DevLogSetting />
-      <RefreshMapsSetting />
+      <GameDataVersion />
       <div>{t('Development optimizer')}</div>
       <PathSetting
         configKey={OPTIMIZER_BIN_KEY}
@@ -235,7 +224,7 @@ export function Settings() {
       <PathSetting
         configKey={OPTIMIZER_DATA_KEY}
         label={t('Optimizer data directory')}
-        hint={t('Absolute path; leave empty to use the bundled data')}
+        hint={t('Absolute path; leave empty to use the game data package')}
       />
       <div className="bp6-text-muted">
         {t('A binary set here skips the integrity check and applies from the next run')}

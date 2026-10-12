@@ -11,7 +11,7 @@ const BB = 26
 
 let ships: ShipGateTable
 beforeAll(async () => {
-  ships = await loadShipGateData('data')
+  ships = await loadShipGateData('fcd/optimizer')
 })
 
 const special = (shipIds: number[], formation: Formation, opts: { night?: boolean; fired?: number[] } = {}) =>

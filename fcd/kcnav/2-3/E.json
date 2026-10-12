@@ -1,0 +1,141 @@
+{
+  "fetched_at": "2026-10-10T10:53:28Z",
+  "source": "kcnav",
+  "kcnav_query": {
+    "map": "2-3",
+    "node": "E",
+    "start": "2026-07-12",
+    "end": "2026-10-10",
+    "difficulty": null,
+    "cleared": null,
+    "min_gauge": null,
+    "max_gauge": null,
+    "min_gauge_level": null,
+    "max_gauge_level": null,
+    "min_hq_level": null,
+    "max_hq_level": null
+  },
+  "candidates": [
+    {
+      "enemy_ids": [
+        1518,
+        1575,
+        1575,
+        1501,
+        1501,
+        1501
+      ],
+      "enemy_formation": "LineAhead",
+      "weight": 1751.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1518,
+        1575,
+        1575,
+        1501,
+        1501,
+        1501
+      ],
+      "enemy_formation": "DoubleLine",
+      "weight": 1545.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1518,
+        1575,
+        1501,
+        1501,
+        1501,
+        1501
+      ],
+      "enemy_formation": "LineAhead",
+      "weight": 1335.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1518,
+        1575,
+        1501,
+        1501,
+        1501,
+        1501
+      ],
+      "enemy_formation": "DoubleLine",
+      "weight": 557.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1518,
+        1575,
+        1501,
+        1501,
+        1501
+      ],
+      "enemy_formation": "LineAhead",
+      "weight": 69.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1518,
+        1575,
+        1501,
+        1501
+      ],
+      "enemy_formation": "LineAhead",
+      "weight": 59.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1518,
+        1575,
+        1501,
+        1501,
+        1501
+      ],
+      "enemy_formation": "DoubleLine",
+      "weight": 55.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1518,
+        1501,
+        1501,
+        1501
+      ],
+      "enemy_formation": "LineAhead",
+      "weight": 40.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1518,
+        1575,
+        1501,
+        1501
+      ],
+      "enemy_formation": "DoubleLine",
+      "weight": 40.0,
+      "engagement": null,
+      "ships_escort": null
+    }
+  ],
+  "total_samples": 5451,
+  "label": null,
+  "samples_without_gauge_filter": 5451
+}

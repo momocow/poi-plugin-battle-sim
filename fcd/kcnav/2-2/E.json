@@ -1,0 +1,107 @@
+{
+  "fetched_at": "2026-10-10T17:30:24Z",
+  "source": "kcnav",
+  "kcnav_query": {
+    "map": "2-2",
+    "node": "E",
+    "start": "2026-07-12",
+    "end": "2026-10-10",
+    "difficulty": null,
+    "cleared": null,
+    "min_gauge": null,
+    "max_gauge": null,
+    "min_gauge_level": null,
+    "max_gauge_level": null,
+    "min_hq_level": null,
+    "max_hq_level": null
+  },
+  "candidates": [
+    {
+      "enemy_ids": [
+        1518,
+        1521,
+        1521,
+        1501,
+        1501,
+        1501
+      ],
+      "enemy_formation": "LineAhead",
+      "weight": 3538.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1518,
+        1508,
+        1508,
+        1501,
+        1501,
+        1501
+      ],
+      "enemy_formation": "LineAhead",
+      "weight": 2883.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1505,
+        1508,
+        1508,
+        1501,
+        1501,
+        1501
+      ],
+      "enemy_formation": "LineAhead",
+      "weight": 2358.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1518,
+        1508,
+        1508,
+        1501,
+        1501,
+        1501
+      ],
+      "enemy_formation": "DoubleLine",
+      "weight": 2174.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1518,
+        1521,
+        1521,
+        1501,
+        1501,
+        1501
+      ],
+      "enemy_formation": "DoubleLine",
+      "weight": 2100.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1505,
+        1508,
+        1508,
+        1501,
+        1501,
+        1501
+      ],
+      "enemy_formation": "DoubleLine",
+      "weight": 1527.0,
+      "engagement": null,
+      "ships_escort": null
+    }
+  ],
+  "total_samples": 14580,
+  "label": null,
+  "samples_without_gauge_filter": 14580
+}

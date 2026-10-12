@@ -7,7 +7,7 @@ import { initialRunState, routeNodeInfo, runReducer } from '../src/ui/state'
 
 let ships: ShipGateTable
 beforeAll(async () => {
-  ships = await loadShipGateData('data')
+  ships = await loadShipGateData('fcd/optimizer')
 })
 
 // Only the ship ids matter here: 金剛改二丙, 比叡改二丙 and 睦月s.

@@ -24,9 +24,11 @@ export const PANEL_CSS = `
 .battle-sim-controls { flex: none; display: flex; flex-direction: column; gap: 6px; padding: 8px 8px 6px; border-bottom: 1px solid rgba(128, 128, 128, 0.3); }
 .battle-sim-control-row { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; }
 /* Label text centered on its select, also inside a tooltip's wrapper, so "能動分歧" and "F →" line up. */
-.battle-sim-control-row > .bp6-popover-target, .battle-sim-target > .bp6-popover-target, .battle-sim-run > .bp6-popover-target { display: flex; align-items: center; }
+.battle-sim-control-row > .bp6-popover-target, .battle-sim-target > .bp6-popover-target, .battle-sim-event > .bp6-popover-target, .battle-sim-run > .bp6-popover-target { display: flex; align-items: center; }
 /* Target and Node settings wrap as one, so neither is left alone on a line. */
 .battle-sim-target { display: inline-flex; flex-wrap: nowrap; align-items: center; gap: 10px; }
+/* The event state's three selects wrap as one too. */
+.battle-sim-event { display: inline-flex; flex-wrap: nowrap; align-items: center; gap: 10px; }
 /* No bottom margin from poi's global label style or Blueprint's control style, which would lift them above the row's plain text. */
 .battle-sim-controls label:not(.bp6-control) { display: inline-flex; align-items: center; gap: 4px; margin: 0; }
 .battle-sim-controls .bp6-switch { margin: 0; }
@@ -73,10 +75,9 @@ export const PANEL_CSS = `
 .battle-sim-footer { flex: none; display: flex; gap: 8px; align-items: center; min-height: 26px; padding: 4px 8px; font-size: 12px; border-top: 1px solid rgba(128, 128, 128, 0.3); }
 .battle-sim-footer-result { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
 .battle-sim-footer-marker { margin-left: 6px; vertical-align: -1px; }
-.battle-sim-map-fetch { flex: none; margin-left: auto; display: inline-flex; align-items: center; }
-/* Opened against the panel's right edge, the tooltip would otherwise break "1 / 22" apart. */
-.battle-sim-map-fetch-tip { white-space: nowrap; }
-.battle-sim-map-fetch-failed { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; padding: 8px 10px; font-size: 12px; }
+.battle-sim-data-update-icon { flex: none; margin-left: auto; display: inline-flex; align-items: center; cursor: pointer; }
+.battle-sim-data-update { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; padding: 8px 10px; font-size: 12px; max-width: 280px; }
+.battle-sim-data-update-actions { display: flex; align-items: center; gap: 6px; }
 .battle-sim-section-head { display: flex; gap: 6px; align-items: center; cursor: pointer; user-select: none; }
 .battle-sim-fleet-summary { display: flex; flex-wrap: wrap; gap: 2px 12px; margin: 2px 0; }
 .battle-sim-hover { text-decoration: underline dotted; cursor: help; }

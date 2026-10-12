@@ -77,6 +77,9 @@ const cmp = (a, b) => a.split('.').map(Number).reduce((r, n, i) => r || n - b.sp
 if (cmp(version, pkg.version) < 0) fail(`${version} is older than the current ${pkg.version}`)
 const tagAt = git('rev-list', '-n', '1', tag)
 if (tagAt.ok && tagAt.out !== git('rev-parse', 'HEAD').out) fail(`${tag} already exists on another commit`)
+// A local dependency (the game-data package as `file:./fcd` before its first publish) can't be installed from npm.
+const localDeps = Object.entries(pkg.dependencies ?? {}).filter(([, spec]) => String(spec).startsWith('file:'))
+if (localDeps.length) fail(`depend on published versions first: ${localDeps.map(([name, spec]) => `${name}@${spec}`).join(', ')}`)
 if (!read('npm', ['whoami']).ok) fail('not logged in to npm (npm login)')
 
 step(`Bump to ${version}`)

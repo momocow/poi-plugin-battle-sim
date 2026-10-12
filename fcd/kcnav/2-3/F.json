@@ -1,0 +1,107 @@
+{
+  "fetched_at": "2026-10-10T10:53:31Z",
+  "source": "kcnav",
+  "kcnav_query": {
+    "map": "2-3",
+    "node": "F",
+    "start": "2026-07-12",
+    "end": "2026-10-10",
+    "difficulty": null,
+    "cleared": null,
+    "min_gauge": null,
+    "max_gauge": null,
+    "min_gauge_level": null,
+    "max_gauge_level": null,
+    "min_hq_level": null,
+    "max_hq_level": null
+  },
+  "candidates": [
+    {
+      "enemy_ids": [
+        1518,
+        1521,
+        1521,
+        1575,
+        1501,
+        1501
+      ],
+      "enemy_formation": "LineAhead",
+      "weight": 1858.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1518,
+        1508,
+        1508,
+        1575,
+        1501,
+        1501
+      ],
+      "enemy_formation": "LineAhead",
+      "weight": 1525.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1518,
+        1521,
+        1521,
+        1575,
+        1501,
+        1501
+      ],
+      "enemy_formation": "DoubleLine",
+      "weight": 1454.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1518,
+        1508,
+        1508,
+        1575,
+        1501,
+        1501
+      ],
+      "enemy_formation": "DoubleLine",
+      "weight": 1171.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1518,
+        1508,
+        1508,
+        1501,
+        1501,
+        1501
+      ],
+      "enemy_formation": "DoubleLine",
+      "weight": 816.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1518,
+        1508,
+        1508,
+        1501,
+        1501,
+        1501
+      ],
+      "enemy_formation": "LineAhead",
+      "weight": 780.0,
+      "engagement": null,
+      "ships_escort": null
+    }
+  ],
+  "total_samples": 7604,
+  "label": null,
+  "samples_without_gauge_filter": 7604
+}

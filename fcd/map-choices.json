@@ -1,0 +1,40 @@
+{
+  "maps": {
+    "4-5": {
+      "branches": [
+        { "node": "A", "targets": ["B", "D"], "default": "D" },
+        { "node": "C", "targets": ["D", "F"], "default": "F" },
+        { "node": "I", "targets": ["G", "J"], "default": "J" }
+      ]
+    },
+    "5-3": { "branches": [{ "node": "O", "targets": ["K", "P"], "default": "K" }] },
+    "5-5": { "branches": [{ "node": "F", "targets": ["D", "J"], "default": "D" }] },
+    "5-6": {
+      "branches": [
+        { "node": "I", "targets": ["J", "O"], "default": "J" },
+        { "node": "O", "targets": ["P", "Q"], "default": "P" }
+      ],
+      "phases": [
+        { "value": "1", "label": "At the start" },
+        { "value": "2", "label": "After boss N appears" },
+        { "value": "3", "label": "After boss Z appears" }
+      ]
+    },
+    "6-3": { "branches": [{ "node": "A", "targets": ["B", "C"], "default": "B" }] },
+    "7-3": {
+      "branches": [],
+      "phases": [
+        { "value": "1", "label": "Before the second boss appears" },
+        { "value": "2", "label": "After the second boss appears" }
+      ]
+    },
+    "7-4": { "branches": [{ "node": "F", "targets": ["H", "J"], "default": "H" }] },
+    "7-5": {
+      "branches": [
+        { "node": "F", "targets": ["G", "J"], "default": "G" },
+        { "node": "H", "targets": ["I", "K"], "default": "I" },
+        { "node": "O", "targets": ["P", "Q"], "default": "P" }
+      ]
+    }
+  }
+}

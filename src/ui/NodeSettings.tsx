@@ -73,6 +73,7 @@ export function NodeSettingsButton({
   shipCount,
   disabled,
   onClose,
+  onOpenChange,
 }: {
   /** The map's battle nodes, with their default formations and reasons. */
   nodes: Record<string, NodeFormation>
@@ -87,6 +88,8 @@ export function NodeSettingsButton({
   disabled: boolean
   /** Called on closing with the edited settings, only when they changed. */
   onClose: (settings: NodeSettings) => void
+  /** Called as the popup opens and closes. */
+  onOpenChange?: (open: boolean) => void
 }) {
   const [open, setOpen] = useState(false)
   const [draft, setDraft] = useState<NodeSettings>(saved)
@@ -95,6 +98,7 @@ export function NodeSettingsButton({
     if (next) setDraft(saved)
     else if (differ(draft.formations, saved.formations) || differ(draft.nightBattles, saved.nightBattles)) onClose(draft)
     setOpen(next)
+    onOpenChange?.(next)
   }
   // A run starting by itself (the fleet advancing, say) disables the button: that closes the popup too.
   useEffect(() => {

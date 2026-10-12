@@ -1,0 +1,37 @@
+{
+  "fetched_at": "2026-10-10T08:44:54Z",
+  "source": "kcnav",
+  "kcnav_query": {
+    "map": "5-2",
+    "node": "B",
+    "start": "2026-07-12",
+    "end": "2026-10-10",
+    "difficulty": null,
+    "cleared": null,
+    "min_gauge": null,
+    "max_gauge": null,
+    "min_gauge_level": null,
+    "max_gauge_level": null,
+    "min_hq_level": null,
+    "max_hq_level": null
+  },
+  "candidates": [
+    {
+      "enemy_ids": [
+        1579,
+        1528,
+        1527,
+        1555,
+        1576,
+        1576
+      ],
+      "enemy_formation": "DoubleLine",
+      "weight": 1.0,
+      "engagement": null,
+      "ships_escort": null
+    }
+  ],
+  "total_samples": 1,
+  "label": "auto-fetch",
+  "samples_without_gauge_filter": 1
+}

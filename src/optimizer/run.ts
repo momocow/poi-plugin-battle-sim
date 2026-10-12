@@ -78,6 +78,8 @@ export interface RunOptions {
   dataDir: string
   /** `<APPDATA_PATH>/battle-sim`: cwd, kcnav cache and logs live here. */
   workDir: string
+  /** The kcnav data to read: the game-data package's snapshot, or the plugin's own fetches (the default). */
+  kcnavDir?: string
   /** Log file name under `<workDir>/logs`, distinct per concurrent process. */
   logName: string
   toml: string
@@ -88,31 +90,33 @@ export interface RunOptions {
 export const defaultSpawn: SpawnFn = (bin, args, opts) =>
   nodeSpawn(bin, args, { cwd: opts.cwd, stdio: ['pipe', 'pipe', 'pipe'], windowsHide: true })
 
-/** The optimizer's kcnav cache: in poi's app data, so it survives plugin updates. */
+/** The plugin's own kcnav fetches, for what the game-data package doesn't cover: in poi's app data. */
 export const kcnavDir = (workDir: string): string => join(workDir, 'kcnav')
 
 /**
- * `kcnav fetch` for every node of `map`; nodes already cached are skipped by
- * the optimizer, unless `force` makes it download and overwrite them.
+ * `kcnav fetch` for every node of `map`, into the plugin's own kcnav directory; nodes already there are skipped by
+ * the optimizer. An event map passes its variant's flags, so the files land in that variant's directory.
  */
-export function kcnavFetchArgs(opts: Pick<RunOptions, 'dataDir' | 'workDir'> & { map: string; force?: boolean }): string[] {
+export function kcnavFetchArgs(
+  opts: Pick<RunOptions, 'dataDir' | 'workDir'> & { map: string; variantArgs?: string[]; logKey?: string },
+): string[] {
   return [
     'kcnav',
     'fetch',
     '--map',
     opts.map,
     '--all-nodes',
+    ...(opts.variantArgs ?? []),
     '--data-dir',
     opts.dataDir,
     '--kcnav-dir',
     kcnavDir(opts.workDir),
     '--log-file',
-    join(opts.workDir, 'logs', `kcnav-fetch-${opts.map}.log`),
-    ...(opts.force ? ['--force'] : []),
+    join(opts.workDir, 'logs', `kcnav-fetch-${(opts.logKey ?? opts.map).replace('/', '_')}.log`),
   ]
 }
 
-export function simulateArgs(opts: Pick<RunOptions, 'dataDir' | 'workDir' | 'logName'>): string[] {
+export function simulateArgs(opts: Pick<RunOptions, 'dataDir' | 'workDir' | 'logName' | 'kcnavDir'>): string[] {
   return [
     'simulate',
     '--config',
@@ -121,7 +125,7 @@ export function simulateArgs(opts: Pick<RunOptions, 'dataDir' | 'workDir' | 'log
     '--data-dir',
     opts.dataDir,
     '--kcnav-dir',
-    kcnavDir(opts.workDir),
+    opts.kcnavDir ?? kcnavDir(opts.workDir),
     '--log-file',
     join(opts.workDir, 'logs', opts.logName),
   ]

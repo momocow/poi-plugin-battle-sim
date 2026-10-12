@@ -1,0 +1,107 @@
+{
+  "fetched_at": "2026-10-12T04:29:09Z",
+  "source": "kcnav",
+  "kcnav_query": {
+    "map": "4-5",
+    "node": "H",
+    "start": "2026-07-14",
+    "end": "2026-10-12",
+    "difficulty": null,
+    "cleared": null,
+    "min_gauge": null,
+    "max_gauge": null,
+    "min_gauge_level": null,
+    "max_gauge_level": null,
+    "min_hq_level": null,
+    "max_hq_level": null
+  },
+  "candidates": [
+    {
+      "enemy_ids": [
+        1566,
+        1542,
+        1542,
+        1595,
+        1592,
+        1575
+      ],
+      "enemy_formation": "LineAhead",
+      "weight": 9043.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1566,
+        1542,
+        1595,
+        1592,
+        1575,
+        1575
+      ],
+      "enemy_formation": "LineAhead",
+      "weight": 5253.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1566,
+        1542,
+        1542,
+        1595,
+        1592,
+        1575
+      ],
+      "enemy_formation": "DoubleLine",
+      "weight": 3944.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1566,
+        1542,
+        1592,
+        1575,
+        1575,
+        1575
+      ],
+      "enemy_formation": "DoubleLine",
+      "weight": 2694.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1566,
+        1542,
+        1595,
+        1592,
+        1575,
+        1575
+      ],
+      "enemy_formation": "DoubleLine",
+      "weight": 2622.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1566,
+        1542,
+        1592,
+        1575,
+        1575,
+        1575
+      ],
+      "enemy_formation": "LineAhead",
+      "weight": 2539.0,
+      "engagement": null,
+      "ships_escort": null
+    }
+  ],
+  "total_samples": 26095,
+  "label": null,
+  "samples_without_gauge_filter": 26095
+}

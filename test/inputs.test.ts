@@ -7,7 +7,7 @@ import {
   isPluginShown,
   isTrialPreset,
   loadInputs,
-  normalMaps,
+  offeredMaps,
   parseRankDisplay,
   PLUGIN_ID,
   RANK_DISPLAY_KEY,
@@ -17,18 +17,19 @@ import {
 import { loadStore } from './helpers'
 
 describe('map list', () => {
-  it('offers worlds 1–7 including sub-maps, and no event maps', () => {
-    const maps = normalMaps(loadStore().const!.$maps)
+  it('offers worlds 1–7 including sub-maps, then the event maps in the game data', () => {
+    const maps = offeredMaps(loadStore().const!.$maps)
     expect(maps[0]).toBe('1-1')
     expect(maps).toContain('7-2')
     expect(maps).toContain('7-5')
     expect(maps.every((m) => Number(m.split('-')[0]) <= 7)).toBe(true)
-    expect(normalMaps({ 611: { api_id: 611, api_maparea_id: 61, api_no: 1, api_name: 'event' } })).toEqual([])
+    const event = (area: number, no: number) => ({ api_id: area * 10 + no, api_maparea_id: area, api_no: no, api_name: 'event' })
+    expect(offeredMaps({ 622: event(62, 2), 11: event(1, 1), 621: event(62, 1), 81: event(8, 1) })).toEqual(['1-1', '62-1', '62-2'])
   })
 
   it('groups maps by sea area, named from the master data', () => {
     const store = loadStore()
-    const groups = groupMapsByArea(normalMaps(store.const!.$maps), store.const!.$maps, store.const!.$mapareas)
+    const groups = groupMapsByArea(offeredMaps(store.const!.$maps), store.const!.$maps, store.const!.$mapareas)
     expect(groups.map((g) => g.area)).toEqual([1, 2, 3, 4, 5, 6, 7])
     expect(groups[0]!.name).toBe('鎮守府海域')
     expect(groups[0]!.maps[0]).toEqual({ map: '1-1', name: '鎮守府正面海域' })
@@ -54,7 +55,7 @@ describe('saved inputs', () => {
   it('round-trips through poi config, with defaults when nothing is saved', () => {
     const store = new Map<string, unknown>()
     g.window = { config: { get: (k: string, f: unknown) => (store.has(k) ? store.get(k) : f), set: (k: string, v: unknown) => store.set(k, v) } }
-    expect(loadInputs()).toEqual({ fleetId: 1, map: '1-1', auto: true, choices: {}, formations: {}, nightBattles: {} })
+    expect(loadInputs()).toEqual({ fleetId: 1, map: '1-1', auto: true, choices: {}, formations: {}, nightBattles: {}, eventStates: {} })
     saveInputs({
       fleetId: 2,
       map: '5-2',
@@ -63,6 +64,7 @@ describe('saved inputs', () => {
       target: 'E',
       formations: { '5-2': { C: 'LineAhead', D: 'DoubleLine' } },
       nightBattles: { '2-5': { E: 'always', O: 'never' } },
+      eventStates: {},
     })
     const loaded = loadInputs()
     expect(loaded.formations).toEqual({ '5-2': { C: 'LineAhead', D: 'DoubleLine' } })
@@ -75,7 +77,7 @@ describe('saved inputs', () => {
   it('remembers a selection cleared by Reset, which a never-written key is not', () => {
     const store = new Map<string, unknown>()
     g.window = { config: { get: (k: string, f: unknown) => (store.has(k) ? store.get(k) : f), set: (k: string, v: unknown) => store.set(k, v) } }
-    saveInputs({ fleetId: null, map: null, auto: true, choices: { '7-5': { F: 'J', H: 'I', O: 'P' } }, formations: {}, nightBattles: {} })
+    saveInputs({ fleetId: null, map: null, auto: true, choices: { '7-5': { F: 'J', H: 'I', O: 'P' } }, formations: {}, nightBattles: {}, eventStates: {} })
     // Not null: poi's config would read that back as missing.
     expect([store.get('plugin.poi_battle_sim.fleetId'), store.get('plugin.poi_battle_sim.map')]).toEqual([0, ''])
     expect(loadInputs()).toMatchObject({ fleetId: null, map: null, auto: true })
@@ -89,13 +91,27 @@ describe('saved inputs', () => {
   it('stores the boss target as null, read back as the boss, and falls back on invalid values', () => {
     const store = new Map<string, unknown>()
     g.window = { config: { get: (k: string, f: unknown) => (store.has(k) ? store.get(k) : f), set: (k: string, v: unknown) => store.set(k, v) } }
-    saveInputs({ fleetId: 1, map: '2-5', auto: true, choices: {}, target: undefined, formations: {}, nightBattles: {} })
+    saveInputs({ fleetId: 1, map: '2-5', auto: true, choices: {}, target: undefined, formations: {}, nightBattles: {}, eventStates: {} })
     expect(store.get('plugin.poi_battle_sim.target')).toBeNull()
     expect(loadInputs()).toMatchObject({ target: undefined })
     store.set('plugin.poi_battle_sim.target', 7)
     expect(loadInputs()).toMatchObject({ target: undefined })
     store.set('plugin.poi_battle_sim.target', '')
     expect(loadInputs().target).toBeUndefined()
+  })
+
+  it('remembers event-state overrides per map and drops invalid ones', () => {
+    const store = new Map<string, unknown>([
+      [
+        'plugin.poi_battle_sim.eventState',
+        { '62-3': { difficulty: 3, gauge: 2, gaugeState: 'last' }, '62-4': { difficulty: 5, gauge: 0, gaugeState: 'x' }, '62-1': 'hard' },
+      ],
+    ])
+    g.window = { config: { get: (k: string, f: unknown) => (store.has(k) ? store.get(k) : f), set: (k: string, v: unknown) => store.set(k, v) } }
+    const loaded = loadInputs()
+    expect(loaded.eventStates).toEqual({ '62-3': { difficulty: 3, gauge: 2, gaugeState: 'last' } })
+    saveInputs({ ...loaded, eventStates: { '62-4': { difficulty: 1 } } })
+    expect(loadInputs().eventStates).toEqual({ '62-4': { difficulty: 1 } })
   })
 
   it('drops saved formations that are not formations of node letters', () => {
@@ -128,7 +144,7 @@ describe('saved inputs', () => {
   it('leaves the trial count, set on the settings page, alone', () => {
     const store = new Map<string, unknown>([[TRIALS_KEY, 500]])
     g.window = { config: { get: (k: string, f: unknown) => (store.has(k) ? store.get(k) : f), set: (k: string, v: unknown) => store.set(k, v) } }
-    saveInputs({ fleetId: 1, map: '1-1', auto: true, choices: {}, formations: {}, nightBattles: {} })
+    saveInputs({ fleetId: 1, map: '1-1', auto: true, choices: {}, formations: {}, nightBattles: {}, eventStates: {} })
     expect(store.get(TRIALS_KEY)).toBe(500)
     expect(TRIALS_KEY).toBe('plugin.poi_battle_sim.trials')
   })

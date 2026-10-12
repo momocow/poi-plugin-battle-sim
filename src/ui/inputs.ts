@@ -1,7 +1,7 @@
 /**
  * The panel's inputs: which maps are offered, and the choices remembered
  * between poi sessions in poi's config under `plugin.poi_battle_sim.*`,
- * node formations per map among them;
+ * node formations and event-state overrides per map among them;
  * plus the settings set on poi's settings page: the trial count, the rank
  * display, the automatic-run delay, the developer log and the development
  * optimizer override.
@@ -9,6 +9,7 @@
 import type { MstMap, MstMaparea, PoiState } from '../fleet/types'
 import { readConfig, writeConfig } from '../poi'
 import { normalizeChoices, type ChoiceValues } from '../routes/choices'
+import { FIRST_EVENT_AREA, isDifficulty, isGaugeState, type EventOverride } from '../routes/eventState'
 import { isFormation, isNightBattle, type Formation, type NightBattle } from '../routes/formation'
 
 const PREFIX = 'plugin.poi_battle_sim'
@@ -19,10 +20,13 @@ export const TRIAL_PRESETS = [500, 2000, 10000] as const
 
 export const isTrialPreset = (n: number): boolean => (TRIAL_PRESETS as readonly number[]).includes(n)
 
-/** Normal maps (worlds 1–7, sub-maps included), in world/number order. Event areas are left out. */
-export function normalMaps($maps: Record<string, MstMap> | undefined): string[] {
+/**
+ * The maps offered: normal maps (worlds 1–7, sub-maps included), then the current event's (areas from 21 on,
+ * which the game data has only while an event runs), in area/number order.
+ */
+export function offeredMaps($maps: Record<string, MstMap> | undefined): string[] {
   return Object.values($maps ?? {})
-    .filter((m) => m.api_maparea_id >= 1 && m.api_maparea_id <= 7)
+    .filter((m) => (m.api_maparea_id >= 1 && m.api_maparea_id <= 7) || m.api_maparea_id >= FIRST_EVENT_AREA)
     .sort((a, b) => a.api_maparea_id - b.api_maparea_id || a.api_no - b.api_no)
     .map((m) => `${m.api_maparea_id}-${m.api_no}`)
 }
@@ -42,7 +46,7 @@ export interface MapGroup {
   maps: MapOption[]
 }
 
-/** `normalMaps` output grouped by world, in order; groups and maps named from the master data. */
+/** `offeredMaps` output grouped by world, in order; groups and maps named from the master data. */
 export function groupMapsByArea(
   maps: string[],
   $maps: Record<string, MstMap> | undefined,
@@ -96,6 +100,8 @@ export interface SavedInputs {
   formations: Record<string, Record<string, Formation>>
   /** The user's night battle settings, per map, by node letter; a node without one pursues it only as the target. */
   nightBattles: Record<string, Record<string, NightBattle>>
+  /** Per event map, the values the user chose over the game's. */
+  eventStates: Record<string, EventOverride>
 }
 
 const isRecord = (v: unknown): v is Record<string, unknown> => v !== null && typeof v === 'object' && !Array.isArray(v)
@@ -112,6 +118,22 @@ function parsePerNode<T>(value: unknown, valid: (v: unknown) => v is T): Record<
   return maps
 }
 
+/** Saved event-state overrides with anything invalid dropped. */
+function parseEventStates(value: unknown): Record<string, EventOverride> {
+  if (!isRecord(value)) return {}
+  const out: Record<string, EventOverride> = {}
+  for (const [map, v] of Object.entries(value)) {
+    if (!isRecord(v)) continue
+    const o: EventOverride = {
+      ...(isDifficulty(v.difficulty) ? { difficulty: v.difficulty } : {}),
+      ...(typeof v.gauge === 'number' && Number.isInteger(v.gauge) && v.gauge >= 1 ? { gauge: v.gauge } : {}),
+      ...(isGaugeState(v.gaugeState) ? { gaugeState: v.gaugeState } : {}),
+    }
+    if (Object.keys(o).length > 0) out[map] = o
+  }
+  return out
+}
+
 export function loadInputs(): SavedInputs {
   const fleetId = readConfig<unknown>(`${PREFIX}.fleetId`, 1)
   const map = readConfig<unknown>(`${PREFIX}.map`, '1-1')
@@ -121,6 +143,7 @@ export function loadInputs(): SavedInputs {
   // The single Night battle switch (`.nightBattle`) of earlier versions is no longer read.
   const formations = readConfig<unknown>(`${PREFIX}.formations`, {})
   const nightBattles = readConfig<unknown>(`${PREFIX}.nightBattles`, {})
+  const eventStates = readConfig<unknown>(`${PREFIX}.eventState`, {})
   return {
     fleetId: fleetId === NO_FLEET ? null : typeof fleetId === 'number' && fleetId >= 1 && fleetId <= 4 ? fleetId : 1,
     map: map === NO_MAP ? null : typeof map === 'string' ? map : '1-1',
@@ -129,6 +152,7 @@ export function loadInputs(): SavedInputs {
     target: typeof target === 'string' && target !== '' ? target : undefined,
     formations: parsePerNode(formations, isFormation),
     nightBattles: parsePerNode(nightBattles, isNightBattle),
+    eventStates: parseEventStates(eventStates),
   }
 }
 
@@ -141,6 +165,7 @@ export function saveInputs(inputs: SavedInputs): void {
   writeConfig(`${PREFIX}.target`, inputs.target ?? null)
   writeConfig(`${PREFIX}.formations`, inputs.formations)
   writeConfig(`${PREFIX}.nightBattles`, inputs.nightBattles)
+  writeConfig(`${PREFIX}.eventState`, inputs.eventStates)
 }
 
 export const choicesForMap = (inputs: SavedInputs, map: string): ChoiceValues =>

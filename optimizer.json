@@ -1,7 +1,7 @@
 {
   "repo": "momocow/kancolle-fleet-optimizer",
   "version": "0.3.1",
-  "data": "data",
+  "data": "fcd/optimizer",
   "dataArchive": {
     "name": "kancolle-fleet-optimizer-v0.3.1-data.tar.gz",
     "sha256": "ba82bdeea5d274e5d51e04c17755cbc189976f401791f97cf5331515bb939cc8"

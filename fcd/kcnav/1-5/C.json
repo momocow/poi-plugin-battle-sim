@@ -1,0 +1,102 @@
+{
+  "fetched_at": "2026-10-11T15:50:53Z",
+  "source": "kcnav",
+  "kcnav_query": {
+    "map": "1-5",
+    "node": "C",
+    "start": "2026-07-13",
+    "end": "2026-10-11",
+    "difficulty": null,
+    "cleared": null,
+    "min_gauge": null,
+    "max_gauge": null,
+    "min_gauge_level": null,
+    "max_gauge_level": null,
+    "min_hq_level": null,
+    "max_hq_level": null
+  },
+  "candidates": [
+    {
+      "enemy_ids": [
+        1554,
+        1575,
+        1501,
+        1501,
+        1501
+      ],
+      "enemy_formation": "LineAhead",
+      "weight": 72.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1555,
+        1559,
+        1575,
+        1575,
+        1575
+      ],
+      "enemy_formation": "LineAhead",
+      "weight": 53.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1555,
+        1559,
+        1575,
+        1501,
+        1501
+      ],
+      "enemy_formation": "LineAhead",
+      "weight": 51.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1555,
+        1559,
+        1559,
+        1575,
+        1575,
+        1575
+      ],
+      "enemy_formation": "LineAhead",
+      "weight": 47.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1555,
+        1559,
+        1559,
+        1575,
+        1575
+      ],
+      "enemy_formation": "LineAhead",
+      "weight": 45.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1554,
+        1575,
+        1575,
+        1501,
+        1501
+      ],
+      "enemy_formation": "LineAhead",
+      "weight": 22.0,
+      "engagement": null,
+      "ships_escort": null
+    }
+  ],
+  "total_samples": 290,
+  "label": null,
+  "samples_without_gauge_filter": 290
+}

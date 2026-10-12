@@ -1,0 +1,107 @@
+{
+  "fetched_at": "2026-10-10T10:48:12Z",
+  "source": "kcnav",
+  "kcnav_query": {
+    "map": "3-2",
+    "node": "L",
+    "start": "2026-07-12",
+    "end": "2026-10-10",
+    "difficulty": null,
+    "cleared": null,
+    "min_gauge": null,
+    "max_gauge": null,
+    "min_gauge_level": null,
+    "max_gauge_level": null,
+    "min_hq_level": null,
+    "max_hq_level": null
+  },
+  "candidates": [
+    {
+      "enemy_ids": [
+        1555,
+        1519,
+        1577,
+        1577,
+        1577,
+        1526
+      ],
+      "enemy_formation": "LineAhead",
+      "weight": 18787.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1555,
+        1518,
+        1577,
+        1577,
+        1513,
+        1513
+      ],
+      "enemy_formation": "LineAhead",
+      "weight": 15086.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1555,
+        1518,
+        1577,
+        1577,
+        1513,
+        1513
+      ],
+      "enemy_formation": "DoubleLine",
+      "weight": 11436.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1555,
+        1519,
+        1577,
+        1577,
+        1577,
+        1526
+      ],
+      "enemy_formation": "DoubleLine",
+      "weight": 11381.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1554,
+        1518,
+        1576,
+        1576,
+        1513,
+        1513
+      ],
+      "enemy_formation": "LineAhead",
+      "weight": 11231.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1554,
+        1518,
+        1576,
+        1576,
+        1513,
+        1513
+      ],
+      "enemy_formation": "DoubleLine",
+      "weight": 7604.0,
+      "engagement": null,
+      "ships_escort": null
+    }
+  ],
+  "total_samples": 75525,
+  "label": null,
+  "samples_without_gauge_filter": 75525
+}

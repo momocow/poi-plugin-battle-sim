@@ -7,6 +7,11 @@
  * (`?pdz=`, LZString), and a script injected into the page drives compass's
  * Pinia store and reads `simResult`. Every failure is a typed error; there is
  * no fallback and no automatic retry.
+ *
+ * On some event maps compass also routes by difficulty, an `options[map]` key
+ * like the choices (`difficulty: "1"`–`"4"`, bundle of 2026-10-12). It is
+ * optional: set from `choices.difficulty` where compass has it, and not part
+ * of the key check, since only some event maps have it.
  */
 import { compressToEncodedURIComponent } from 'lz-string'
 
@@ -41,11 +46,16 @@ export function compassUrl(deck: DeckBuilder): string {
   return `${COMPASS_URL}?pdz=${compressToEncodedURIComponent(JSON.stringify(deck))}`
 }
 
+/** `options[map]` keys compass has on some maps only: set when present, never required. */
+export const OPTIONAL_KEYS = ['difficulty']
+
 export interface ScriptParams {
   map: string
   choices: ChoiceValues
   /** Keys compass's `options[map]` must have, sorted. */
   keys: string[]
+  /** Keys to set only where compass has them. */
+  optional: string[]
   timeoutMs: number
   pollMs: number
   mountWaitMs: number
@@ -92,7 +102,9 @@ export async function compassPageScript(p: ScriptParams): Promise<ScriptResult> 
     ])
   }
 
-  const actual = Object.keys((store.options && store.options[p.map]) || {}).sort()
+  const present = Object.keys((store.options && store.options[p.map]) || {})
+  const actual = present.filter((k) => !p.optional.includes(k)).sort()
+  const optional = p.optional.filter((k) => present.includes(k) && p.choices[k] !== undefined)
   if (actual.join(',') !== p.keys.join(',')) {
     const unknown = actual.filter((k) => !p.keys.includes(k))
     const gone = p.keys.filter((k) => !actual.includes(k))
@@ -101,7 +113,7 @@ export async function compassPageScript(p: ScriptParams): Promise<ScriptResult> 
       ...gone.map((k) => `${p.map}: compass no longer has a choice at ${k}`),
     ])
   }
-  if (p.keys.length > 0 && typeof store.UPDATE_OPTION_WITH_KEY !== 'function') {
+  if (p.keys.length + optional.length > 0 && typeof store.UPDATE_OPTION_WITH_KEY !== 'function') {
     return fail('COMPASS_SHAPE', 'The compass page has an unexpected structure.', [
       `UPDATE_OPTION_WITH_KEY: ${typeof store.UPDATE_OPTION_WITH_KEY}`,
     ])
@@ -112,7 +124,7 @@ export async function compassPageScript(p: ScriptParams): Promise<ScriptResult> 
   if (modal) modal.isErrorVisible = false
   store.UPDATE_SELECTED_AREA(null)
   store.UPDATE_SELECTED_AREA(p.map)
-  for (const key of p.keys) store.UPDATE_OPTION_WITH_KEY(p.map, key, p.choices[key])
+  for (const key of [...p.keys, ...optional]) store.UPDATE_OPTION_WITH_KEY(p.map, key, p.choices[key])
 
   for (let waited = 0; waited < p.timeoutMs; waited += p.pollMs) {
     await sleep(p.pollMs)
@@ -146,6 +158,7 @@ export function buildPageScript(map: string, choices: ChoiceValues): string {
     map,
     choices,
     keys: choiceKeys(map),
+    optional: OPTIONAL_KEYS,
     timeoutMs: ROUTE_TIMEOUT_MS,
     pollMs: 250,
     mountWaitMs: 5_000,

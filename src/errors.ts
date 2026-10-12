@@ -23,6 +23,12 @@ export type ErrorCode =
   | 'SORTIE_PATH_UNMATCHED'
   /** A node target without a battle (a resource, empty or maelstrom node); details name it. */
   | 'TARGET_NOT_BATTLE'
+  /** Not even the game-data package installed with the plugin can be read. */
+  | 'GAME_DATA_MISSING'
+  /** An event map with no difficulty, from the game or the panel. */
+  | 'EVENT_DIFFICULTY_UNSET'
+  /** An event map the game lets only combined fleets sortie on. */
+  | 'EVENT_COMBINED_ONLY'
   /** A bug or an environment poi should have provided; details carry the cause. */
   | 'INTERNAL'
 

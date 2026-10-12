@@ -1,19 +1,20 @@
 /**
  * poi plugin entry point: one panel. Every run starts from the panel, by its
  * Simulate button or a change to the fleet or map. The work that outlives a
- * run is the kcnav fetches — a map's shared fetch, and the queue that fetches
- * the normal maps not fetched yet, started when the plugin loads — which are
- * killed when poi unloads the plugin, and the record of special attacks fired
- * in the sortie in progress, which listens to game responses while the plugin
- * is loaded.
+ * run is a map's shared kcnav fetch, for enemy data the game-data package
+ * doesn't cover, killed when poi unloads the plugin; the check for newer game
+ * data, at load and then every few hours, stopped then too; and the record of
+ * special attacks fired in the sortie in progress, which listens to game
+ * responses while the plugin is loaded.
  */
 import { devLog } from './src/devlog'
 import { startRecordingSpecials, stopRecordingSpecials } from './src/fleet/specials'
+import { startUpdateChecks, stopUpdateChecks } from './src/gameData/update'
 import { stopPrefetch } from './src/optimizer/prefetch'
+import { workDir } from './src/paths'
 import { getStoreState } from './src/poi'
 import { selectedFleetChanged } from './src/ui/focus'
 import { Panel } from './src/ui/Panel'
-import { fetchNormalMaps } from './src/ui/runner'
 
 export const windowMode = false
 
@@ -56,11 +57,16 @@ export const switchPluginPath = [
 
 export const pluginDidLoad = (): void => {
   startRecordingSpecials()
-  // A missing optimizer is reported by the first run; at load it only goes to the developer log.
-  fetchNormalMaps().catch((err: unknown) => devLog('prefetch.unavailable', { error: String(err) }))
+  // Newer game data is looked for now and every few hours; the panel asks before installing it.
+  try {
+    startUpdateChecks({ work: workDir() })
+  } catch (err) {
+    devLog('gameData.checksUnavailable', { error: String(err) })
+  }
 }
 
 export const pluginWillUnload = (): void => {
+  stopUpdateChecks()
   stopPrefetch()
   stopRecordingSpecials()
 }

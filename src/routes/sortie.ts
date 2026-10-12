@@ -12,6 +12,7 @@
 import { SimError } from '../errors'
 import type { PoiState } from '../fleet/types'
 import { choicesFor, type ChoiceValues } from './choices'
+import { FIRST_EVENT_AREA } from './eventState'
 import type { PredictedRoute } from './predict'
 import { readTopology, topologyNow, topologyPath, type RouteTable } from './topology'
 
@@ -22,14 +23,16 @@ export interface Sortie {
   cells: number[]
 }
 
-/** The fleet's sortie while it is out on a normal map; undefined at home or when the store lacks it. */
+/** The fleet's sortie while it is out on a normal or event map; undefined at home or when the store lacks it. */
 export function sortieOf(state: Pick<PoiState, 'sortie'> | undefined, fleetId: number): Sortie | undefined {
   const sortie = state?.sortie
   if (sortie?.sortieStatus?.[fleetId - 1] !== true) return undefined
   const id = String(sortie.sortieMapId ?? '')
   const cells = sortie.spotHistory
-  if (!/^[1-7]\d$/.test(id) || !Array.isArray(cells) || cells.length < 2) return undefined
-  return { map: `${id[0]}-${id[1]}`, cells: [...cells] }
+  if (!/^\d{2,3}$/.test(id) || !Array.isArray(cells) || cells.length < 2) return undefined
+  const area = Number(id.slice(0, -1))
+  if (!((area >= 1 && area <= 7) || area >= FIRST_EVENT_AREA)) return undefined
+  return { map: `${area}-${id.slice(-1)}`, cells: [...cells] }
 }
 
 /** The cells' letters in a topology's route table; throws naming the first cell it lacks. */

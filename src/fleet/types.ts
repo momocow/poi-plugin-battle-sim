@@ -67,6 +67,24 @@ export interface MstMap {
   api_maparea_id: number
   api_no: number
   api_name: string
+  /** Which fleet types may sortie; `[0]`'s bit 1 allows a single fleet (see `routes/eventState.ts`). */
+  api_sally_flag?: number[]
+}
+
+/** A map's progress, `info.maps[<area><no>]` (from `api_get_member/mapinfo`). */
+export interface ApiMapInfo {
+  api_id: number
+  /** 1 once the map is cleared. */
+  api_cleared?: number
+  /** Event maps only. */
+  api_eventmap?: {
+    api_now_maphp?: number
+    api_max_maphp?: number
+    /** 1 丁, 2 丙, 3 乙, 4 甲; 0 or missing until the player picks one. */
+    api_selected_rank?: number
+    /** The current gauge, from 1. */
+    api_gauge_num?: number
+  }
 }
 
 export interface MstMaparea {
@@ -80,6 +98,7 @@ export interface PoiState {
     fleets?: ApiFleet[]
     ships?: Record<string, ApiShip>
     equips?: Record<string, ApiEquip>
+    maps?: Record<string, ApiMapInfo>
   }
   const?: {
     $ships?: Record<string, MstShip>

@@ -1,0 +1,107 @@
+{
+  "fetched_at": "2026-10-10T08:45:04Z",
+  "source": "kcnav",
+  "kcnav_query": {
+    "map": "5-2",
+    "node": "O",
+    "start": "2026-07-12",
+    "end": "2026-10-10",
+    "difficulty": null,
+    "cleared": null,
+    "min_gauge": null,
+    "max_gauge": null,
+    "min_gauge_level": null,
+    "max_gauge_level": null,
+    "min_hq_level": null,
+    "max_hq_level": null
+  },
+  "candidates": [
+    {
+      "enemy_ids": [
+        1619,
+        1595,
+        1595,
+        1592,
+        1576,
+        1576
+      ],
+      "enemy_formation": "LineAhead",
+      "weight": 1662.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1619,
+        1595,
+        1595,
+        1592,
+        1576,
+        1576
+      ],
+      "enemy_formation": "Diamond",
+      "weight": 1558.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1565,
+        1595,
+        1595,
+        1591,
+        1576,
+        1576
+      ],
+      "enemy_formation": "Diamond",
+      "weight": 1320.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1565,
+        1595,
+        1595,
+        1592,
+        1576,
+        1576
+      ],
+      "enemy_formation": "Diamond",
+      "weight": 1301.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1565,
+        1594,
+        1594,
+        1591,
+        1576,
+        1576
+      ],
+      "enemy_formation": "Diamond",
+      "weight": 471.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1565,
+        1595,
+        1594,
+        1591,
+        1576,
+        1576
+      ],
+      "enemy_formation": "Diamond",
+      "weight": 460.0,
+      "engagement": null,
+      "ships_escort": null
+    }
+  ],
+  "total_samples": 6772,
+  "label": "auto-fetch",
+  "samples_without_gauge_filter": 6772
+}

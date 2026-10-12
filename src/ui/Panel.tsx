@@ -37,13 +37,21 @@
  * a change saves it and starts a run at once, as Simulate does, whatever the
  * automatic-run switch says; no automatic run follows for it.
  *
+ * On an event map, the run simulates one event state — difficulty, gauge and
+ * gauge state — read from the game, with the user's per-map overrides on top
+ * (none mid-sortie); it changes with the game, and a change starts a run as
+ * any input does. The map and enemy data come from the game-data package in
+ * use, or the plugin's own fetches for what it doesn't cover; a newer package
+ * version is offered by the footer's update prompt, which opens by itself only
+ * while the plugin is in view and no popup of the panel is open.
+ *
  * Reset clears the fleet and map: it stops any run, drops a pending automatic
  * run and clears the result (node settings stay), and until both are picked again nothing runs,
  * by hand or by itself. A selected fleet that sorties still runs in sortie
  * mode, which never uses the selected map.
  */
 import { Tag } from '@blueprintjs/core'
-import React, { useEffect, useMemo, useReducer, useRef, useState } from 'react'
+import React, { useEffect, useMemo, useReducer, useRef, useState, useSyncExternalStore } from 'react'
 import { useSelector } from 'react-redux'
 
 import { devLog } from '../devlog'
@@ -52,10 +60,12 @@ import { buildFleetViewModel, type FleetViewModel } from '../fleet-view/model'
 import { FleetView } from '../fleet-view/FleetView'
 import { fleetLoadout, snapshotFleet } from '../fleet/snapshot'
 import type { PoiState } from '../fleet/types'
+import { kcnavDirFor } from '../gameData/kcnav'
+import { gameData, onGameData } from '../gameData/store'
 import { t } from '../i18n'
-import { kcnavDir } from '../optimizer/run'
 import { workDir } from '../paths'
 import { getStoreState } from '../poi'
+import { eventStateFor, gaugesOf, isEventMap, kcnavVariant, mapIdOf, thresholdOf, type EventOverride } from '../routes/eventState'
 import { mapFormations, type NightBattle } from '../routes/formation'
 import { cellLettersNow, sortieOf, takenBranches, type Sortie } from '../routes/sortie'
 import {
@@ -68,6 +78,7 @@ import {
   type RouteTable,
 } from '../routes/topology'
 import { Controls } from './Controls'
+import { DataUpdate } from './DataUpdate'
 import { errorSummary, ErrorView } from './ErrorView'
 import { NodeSettingsButton, type NodeSettings } from './NodeSettings'
 import { setShownFleet } from './focus'
@@ -78,7 +89,7 @@ import {
   isPluginShown,
   loadAutoRunDelay,
   loadInputs,
-  normalMaps,
+  offeredMaps,
   parseRankDisplay,
   saveInputs,
   type SavedInputs,
@@ -98,6 +109,7 @@ function useLiveState(): PoiState {
   const fleets = useSelector((s: PoiState) => s.info?.fleets)
   const ships = useSelector((s: PoiState) => s.info?.ships)
   const equips = useSelector((s: PoiState) => s.info?.equips)
+  const mapInfo = useSelector((s: PoiState) => s.info?.maps)
   const master = useSelector((s: PoiState) => s.const)
   const combinedFlag = useSelector((s: PoiState) => s.sortie?.combinedFlag)
   const sortieStatus = useSelector((s: PoiState) => s.sortie?.sortieStatus)
@@ -105,21 +117,27 @@ function useLiveState(): PoiState {
   const spotHistory = useSelector((s: PoiState) => s.sortie?.spotHistory)
   return useMemo(
     () => ({
-      info: { basic, fleets, ships, equips },
+      info: { basic, fleets, ships, equips, maps: mapInfo },
       const: master,
       sortie: { combinedFlag, sortieStatus, sortieMapId, spotHistory },
     }),
-    [basic, fleets, ships, equips, master, combinedFlag, sortieStatus, sortieMapId, spotHistory],
+    [basic, fleets, ships, equips, mapInfo, master, combinedFlag, sortieStatus, sortieMapId, spotHistory],
   )
 }
 
-/** The map's kcnav topology, once its first run has fetched it. */
-function mapTopology(map: string): RouteTable | undefined {
+/** Where the map's kcnav data is (the game-data package's, or the plugin's fetches), for `variant` on an event map. */
+function mapKcnavDir(map: string, variant?: string): string | undefined {
   try {
-    return topologyNow(kcnavDir(workDir()), map)
+    return kcnavDirFor(gameData(), workDir(), map, variant)
   } catch {
     return undefined
   }
+}
+
+/** The map's kcnav topology, from the game-data package, or once its first run has fetched it. */
+function mapTopology(map: string): RouteTable | undefined {
+  const dir = mapKcnavDir(map)
+  return dir ? topologyNow(dir, map) : undefined
 }
 
 /** A target; undefined for the boss. */
@@ -131,11 +149,8 @@ const BOSS_PAIR: TargetPair = { target: undefined }
 
 /** The sortie's visited letters, once its map's topology has been fetched. */
 function sortieLetters(sortie: Sortie): string[] | undefined {
-  try {
-    return cellLettersNow(kcnavDir(workDir()), sortie)
-  } catch {
-    return undefined
-  }
+  const dir = mapKcnavDir(sortie.map)
+  return dir ? cellLettersNow(dir, sortie) : undefined
 }
 
 export function Panel() {
@@ -157,10 +172,17 @@ export function Panel() {
     setInputs(next)
     saveInputs(next)
   }
+  // A data update re-renders: map choices, event gauges and covered maps may change with it.
+  const data = useSyncExternalStore(onGameData, gameData)
+  const offered = useMemo(() => offeredMaps(live.const?.$maps), [live.const?.$maps])
   const maps = useMemo(
-    () => groupMapsByArea(normalMaps(live.const?.$maps), live.const?.$maps, live.const?.$mapareas),
-    [live.const?.$maps, live.const?.$mapareas],
+    () => groupMapsByArea(offered, live.const?.$maps, live.const?.$mapareas),
+    [offered, live.const?.$maps, live.const?.$mapareas],
   )
+  // A remembered map the game data no longer has (an event that ended) gives way to 1-1.
+  useEffect(() => {
+    if (live.const?.$maps && inputs.map !== null && !offered.includes(inputs.map)) update({ map: '1-1', target: undefined })
+  }, [offered])
 
   const start = (input: RunInput) => {
     abortRef.current?.abort()
@@ -190,7 +212,24 @@ export function Panel() {
   // Sortie mode shows the sortie's map and its choices; the remembered selection stays as it is.
   const shownMap = sortie?.map ?? inputs.map
   const shownChoices = shownMap !== null ? choicesForMap(inputs, shownMap) : {}
-  // Until the map's first run has fetched its topology, runs use the boss, as before targets.
+  // An event map's state: the game's, with the user's overrides, or the game's alone mid-sortie.
+  const eventGauges = data?.eventGauges ?? {}
+  const event =
+    shownMap !== null && isEventMap(shownMap)
+      ? eventStateFor({
+          info: live.info?.maps?.[mapIdOf(shownMap)],
+          gauges: eventGauges,
+          map: shownMap,
+          override: inputs.eventStates[shownMap],
+          sortie: sortie !== undefined,
+        })
+      : undefined
+  const eventFromGame =
+    shownMap !== null && event
+      ? eventStateFor({ info: live.info?.maps?.[mapIdOf(shownMap)], gauges: eventGauges, map: shownMap, sortie: true })
+      : undefined
+  const variant = event && kcnavVariant(event, thresholdOf(eventGauges, shownMap!, event.difficulty, event.gauge))
+  // Until the map's topology is there (in the package, or fetched by its first run), runs use the boss, as before targets.
   const topology = shownMap !== null ? mapTopology(shownMap) : undefined
   const battles = topology && battleNodes(topology)
   const target = battles ? pair.target : undefined
@@ -208,6 +247,7 @@ export function Panel() {
             formations: inputs.formations[sortie.map] ?? {},
             nightBattles: inputs.nightBattles[sortie.map] ?? {},
             sortie: { cells: sortie.cells },
+            ...(event ? { event } : {}),
           }
         : inputs.map !== null
           ? {
@@ -218,6 +258,7 @@ export function Panel() {
               target,
               formations: inputs.formations[inputs.map] ?? {},
               nightBattles: inputs.nightBattles[inputs.map] ?? {},
+              ...(event ? { event } : {}),
             }
           : undefined
   const simulate = () => current && start(current)
@@ -266,14 +307,15 @@ export function Panel() {
     () =>
       shownMap !== null && topology
         ? mapFormations({
-            kcnavDir: kcnavDir(workDir()),
+            kcnavDir: mapKcnavDir(shownMap, variant?.name) ?? '',
             map: shownMap,
+            variant: variant?.name,
             topology,
             $ships: live.const?.$ships,
             user: savedFormations ?? {},
           })
         : undefined,
-    [shownMap, topology, live.const?.$ships, savedFormations, run.phase],
+    [shownMap, topology, live.const?.$ships, savedFormations, run.phase, variant?.name, data],
   )
   const shipCount =
     fleetId !== null ? live.info?.fleets?.find((f) => f.api_id === fleetId)?.api_ship.filter((id) => id > 0).length : undefined
@@ -306,6 +348,8 @@ export function Panel() {
   // Coming into view (or opening already in view) with no run starts one. A focus that does not
   // qualify is dropped, and leaving the view keeps a pending run.
   const shown = useSelector(isPluginShown)
+  // A popup of the panel is open: the data update prompt waits for it to close.
+  const [popupOpen, setPopupOpen] = useState(false)
   const lastShown = useRef(false)
   useEffect(() => {
     const focused = shown && !lastShown.current
@@ -380,9 +424,26 @@ export function Panel() {
               shipCount={shipCount}
               disabled={running}
               onClose={applyNodeSettings}
+              onOpenChange={setPopupOpen}
             />
           )
         }
+        event={
+          event && eventFromGame
+            ? {
+                state: event,
+                fromGame: eventFromGame,
+                override: inputs.eventStates[shownMap!] ?? {},
+                gauges: gaugesOf(eventGauges, shownMap!, event.difficulty),
+                locked: sortie !== undefined,
+              }
+            : undefined
+        }
+        onEvent={(override: EventOverride) => {
+          if (shownMap === null) return
+          const { [shownMap]: _, ...others } = inputs.eventStates
+          update({ eventStates: Object.keys(override).length > 0 ? { ...others, [shownMap]: override } : others })
+        }}
         decided={taken}
         sortieMode={sortie !== undefined}
         auto={inputs.auto}
@@ -444,7 +505,12 @@ export function Panel() {
         {result?.routes && <RouteCards routes={result.routes} mode={rankDisplay} target={result.input.target} />}
       </div>
 
-      <ResultFooter result={result} stale={stale} status={<StatusArea run={run} />} />
+      <ResultFooter
+        result={result}
+        stale={stale}
+        status={<StatusArea run={run} />}
+        dataUpdate={<DataUpdate canAutoOpen={shown && !popupOpen} />}
+      />
     </div>
   )
 }

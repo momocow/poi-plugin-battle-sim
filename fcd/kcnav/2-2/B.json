@@ -1,0 +1,107 @@
+{
+  "fetched_at": "2026-10-10T17:30:17Z",
+  "source": "kcnav",
+  "kcnav_query": {
+    "map": "2-2",
+    "node": "B",
+    "start": "2026-07-12",
+    "end": "2026-10-10",
+    "difficulty": null,
+    "cleared": null,
+    "min_gauge": null,
+    "max_gauge": null,
+    "min_gauge_level": null,
+    "max_gauge_level": null,
+    "min_hq_level": null,
+    "max_hq_level": null
+  },
+  "candidates": [
+    {
+      "enemy_ids": [
+        1518,
+        1526,
+        1526,
+        1575,
+        1575,
+        1575
+      ],
+      "enemy_formation": "DoubleLine",
+      "weight": 21435.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1518,
+        1526,
+        1526,
+        1575,
+        1501,
+        1501
+      ],
+      "enemy_formation": "DoubleLine",
+      "weight": 17135.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1518,
+        1513,
+        1513,
+        1575,
+        1501,
+        1501
+      ],
+      "enemy_formation": "DoubleLine",
+      "weight": 13063.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1526,
+        1526,
+        1518,
+        1575,
+        1501,
+        1501
+      ],
+      "enemy_formation": "Diamond",
+      "weight": 13014.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1526,
+        1526,
+        1518,
+        1575,
+        1575,
+        1575
+      ],
+      "enemy_formation": "Diamond",
+      "weight": 12971.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1513,
+        1513,
+        1518,
+        1575,
+        1501,
+        1501
+      ],
+      "enemy_formation": "Diamond",
+      "weight": 8631.0,
+      "engagement": null,
+      "ships_escort": null
+    }
+  ],
+  "total_samples": 86249,
+  "label": null,
+  "samples_without_gauge_filter": 86249
+}

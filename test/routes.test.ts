@@ -72,6 +72,7 @@ const params = (map: string, choices = defaultChoices(map)): ScriptParams => ({
   map,
   choices,
   keys: choiceKeys(map),
+  optional: ['difficulty'],
   timeoutMs: 200,
   pollMs: 10,
   mountWaitMs: 30,
@@ -121,6 +122,17 @@ describe('compass page script', () => {
       ['7-5', 'H', 'I'],
       ['7-5', 'O', 'Q'],
     ])
+  })
+
+  it("sets an event map's difficulty where compass has it, without requiring it", async () => {
+    const { document, store } = fakeCompass({ options: { '62-3': { difficulty: '4' } }, routes: route25 })
+    const result = await withDocument(document, () => compassPageScript(params('62-3', { difficulty: '1' })))
+    expect(result.ok).toBe(true)
+    expect(store.applied).toEqual([['62-3', 'difficulty', '1']])
+    const other = fakeCompass({ options: {}, routes: route25 })
+    const plain = await withDocument(other.document, () => compassPageScript(params('62-2', { difficulty: '1' })))
+    expect(plain.ok).toBe(true)
+    expect(other.store.applied).toEqual([])
   })
 
   it('reports a missing store or action as unexpected page structure', async () => {

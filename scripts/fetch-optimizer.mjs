@@ -3,8 +3,8 @@
 // Downloads with `gh` (the optimizer repo is private, so a GitHub login with
 // access is needed — users never run this; they get the files from npm),
 // verifies every archive and binary against the pinned SHA-256, and places
-// each binary in platforms/<key>/bin and the data in ./data (without kcnav
-// caches). Also checks that optimizer.json, platforms/*/package.json and
+// each binary in platforms/<key>/bin and the data in fcd/optimizer, the
+// game-data package's optimizer part (without kcnav caches). Also checks that optimizer.json, platforms/*/package.json and
 // optionalDependencies agree, and syncs the platform package versions to the
 // main package's. Runs as the main package's prepublishOnly; safe to re-run.
 import { spawnSync } from 'node:child_process'
@@ -75,6 +75,7 @@ const extract = (archive) => {
   rmSync(join(dir, 'data', 'kcnav'), { recursive: true, force: true })
   const target = join(root, manifest.data)
   rmSync(target, { recursive: true, force: true })
+  mkdirSync(dirname(target), { recursive: true })
   renameSync(join(dir, 'data'), target)
   rmSync(dir, { recursive: true, force: true })
   console.log(`data → ${manifest.data}/`)

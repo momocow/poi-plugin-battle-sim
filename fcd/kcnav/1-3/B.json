@@ -1,0 +1,22 @@
+{
+  "fetched_at": "2026-10-11T18:32:01Z",
+  "source": "kcnav",
+  "kcnav_query": {
+    "map": "1-3",
+    "node": "B",
+    "start": "2026-07-13",
+    "end": "2026-10-11",
+    "difficulty": null,
+    "cleared": null,
+    "min_gauge": null,
+    "max_gauge": null,
+    "min_gauge_level": null,
+    "max_gauge_level": null,
+    "min_hq_level": null,
+    "max_hq_level": null
+  },
+  "candidates": [],
+  "total_samples": 0,
+  "label": null,
+  "samples_without_gauge_filter": 0
+}

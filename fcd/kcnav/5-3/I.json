@@ -1,0 +1,107 @@
+{
+  "fetched_at": "2026-10-10T17:14:41Z",
+  "source": "kcnav",
+  "kcnav_query": {
+    "map": "5-3",
+    "node": "I",
+    "start": "2026-07-12",
+    "end": "2026-10-10",
+    "difficulty": null,
+    "cleared": null,
+    "min_gauge": null,
+    "max_gauge": null,
+    "min_gauge_level": null,
+    "max_gauge_level": null,
+    "min_hq_level": null,
+    "max_hq_level": null
+  },
+  "candidates": [
+    {
+      "enemy_ids": [
+        1527,
+        1527,
+        1527,
+        1518,
+        1576,
+        1576
+      ],
+      "enemy_formation": "LineAhead",
+      "weight": 19950.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1527,
+        1527,
+        1522,
+        1518,
+        1576,
+        1576
+      ],
+      "enemy_formation": "LineAhead",
+      "weight": 12191.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1527,
+        1527,
+        1527,
+        1518,
+        1576,
+        1576
+      ],
+      "enemy_formation": "DoubleLine",
+      "weight": 8638.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1527,
+        1522,
+        1522,
+        1518,
+        1576,
+        1576
+      ],
+      "enemy_formation": "LineAhead",
+      "weight": 6172.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1527,
+        1527,
+        1522,
+        1518,
+        1576,
+        1576
+      ],
+      "enemy_formation": "DoubleLine",
+      "weight": 5918.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1527,
+        1522,
+        1522,
+        1518,
+        1576,
+        1576
+      ],
+      "enemy_formation": "DoubleLine",
+      "weight": 5869.0,
+      "engagement": null,
+      "ships_escort": null
+    }
+  ],
+  "total_samples": 58738,
+  "label": null,
+  "samples_without_gauge_filter": 58738
+}

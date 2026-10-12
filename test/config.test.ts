@@ -66,4 +66,18 @@ describe('simulateToml', () => {
     expect(simulateToml(input)).not.toContain('special_attacks_fired')
     expect(simulateToml({ ...input, specialAttacksFired: [] })).not.toContain('special_attacks_fired')
   })
+
+  it('always tells the optimizer not to fetch kcnav itself, and applies the map bonus when asked', () => {
+    expect(simulateToml(input)).toContain('route = ["G", "L", "O"]\nkcnav_offline = true\n\n')
+    expect(simulateToml(input)).not.toContain('bonus_map')
+    expect(simulateToml({ ...input, map: '5-6', bonusMap: true })).toContain('kcnav_offline = true\nbonus_map = "5-6"\n')
+  })
+
+  it("writes an event map's variant after [route]", () => {
+    const variant = { name: 'd4-g2-c0-L1_4800', difficulty: 4 as const, gauge: 2, cleared: 0 as const, hpMin: 1, hpMax: 4800 }
+    expect(simulateToml({ ...input, map: '62-3', variant })).toContain(
+      'kcnav_offline = true\n\n[route.kcnav]\ndifficulty = 4\ncleared = 0\ngauge = 2\ngauge_level_min = 1\ngauge_level_max = 4800\n\n[tactics',
+    )
+    expect(simulateToml(input)).not.toContain('[route.kcnav]')
+  })
 })

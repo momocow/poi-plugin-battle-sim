@@ -1,14 +1,18 @@
 /**
- * Player-chosen branches and map phases on normal maps, as compass models them.
+ * Player-chosen branches and map phases, as compass models them, from the
+ * map-choices part of the game-data package version in use, so a new map's
+ * choices arrive with a data update.
  *
  * Compass keeps one fixed choice per choosable node in `options[map]` (its
- * defaults are the `default` values below) and `phase` where a map has phases.
- * It does not expose which targets a node can take, and its routing simply
- * follows whatever value is set — so the targets here come from compass's map
- * edge table (bundle of 2026-10-10): each choosable node's outgoing edges.
- * The injected script checks these keys against `options[map]` at run time,
- * which catches compass changing its set of choices.
+ * defaults are the package's `default` values) and `phase` where a map has
+ * phases. It does not expose which targets a node can take, and its routing
+ * simply follows whatever value is set — so the targets come from compass's
+ * map edge table: each choosable node's outgoing edges. The injected script
+ * checks these keys against `options[map]` at run time, which catches compass
+ * changing its set of choices.
  */
+import { gameData } from '../gameData/store'
+
 
 export interface BranchChoice {
   node: string
@@ -30,39 +34,10 @@ export interface MapChoices {
 /** Values to apply: node letter → target, plus `phase` where the map has one. */
 export type ChoiceValues = Record<string, string>
 
-const branch = (node: string, targets: string[], dflt: string): BranchChoice => ({
-  node,
-  targets,
-  default: dflt,
-})
-
-export const MAP_CHOICES: Record<string, MapChoices> = {
-  '4-5': { branches: [branch('A', ['B', 'D'], 'D'), branch('C', ['D', 'F'], 'F'), branch('I', ['G', 'J'], 'J')] },
-  '5-3': { branches: [branch('O', ['K', 'P'], 'K')] },
-  '5-5': { branches: [branch('F', ['D', 'J'], 'D')] },
-  '5-6': {
-    branches: [branch('I', ['J', 'O'], 'J'), branch('O', ['P', 'Q'], 'P')],
-    phases: [
-      { value: '1', label: 'At the start' },
-      { value: '2', label: 'After boss N appears' },
-      { value: '3', label: 'After boss Z appears' },
-    ],
-  },
-  '6-3': { branches: [branch('A', ['B', 'C'], 'B')] },
-  '7-3': {
-    branches: [],
-    phases: [
-      { value: '1', label: 'Before the second boss appears' },
-      { value: '2', label: 'After the second boss appears' },
-    ],
-  },
-  '7-4': { branches: [branch('F', ['H', 'J'], 'H')] },
-  '7-5': { branches: [branch('F', ['G', 'J'], 'G'), branch('H', ['I', 'K'], 'I'), branch('O', ['P', 'Q'], 'P')] },
-}
-
 const NONE: MapChoices = { branches: [] }
 
-export const choicesFor = (map: string): MapChoices => MAP_CHOICES[map] ?? NONE
+/** The map's choices; none for a map the data doesn't list, or without usable data. */
+export const choicesFor = (map: string): MapChoices => gameData()?.mapChoices[map] ?? NONE
 
 /** The keys compass's `options[map]` must have, sorted. */
 export function choiceKeys(map: string): string[] {

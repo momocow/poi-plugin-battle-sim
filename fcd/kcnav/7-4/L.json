@@ -1,0 +1,114 @@
+{
+  "fetched_at": "2026-10-11T17:05:12Z",
+  "source": "kcnav",
+  "kcnav_query": {
+    "map": "7-4",
+    "node": "L",
+    "start": "2026-07-13",
+    "end": "2026-10-11",
+    "difficulty": null,
+    "cleared": null,
+    "min_gauge": null,
+    "max_gauge": null,
+    "min_gauge_level": null,
+    "max_gauge_level": null,
+    "min_hq_level": null,
+    "max_hq_level": null
+  },
+  "candidates": [
+    {
+      "enemy_ids": [
+        1575,
+        1575,
+        1501,
+        1572,
+        1572
+      ],
+      "enemy_formation": "LineAhead",
+      "weight": 1366.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1575,
+        1575,
+        1501,
+        1572,
+        1572
+      ],
+      "enemy_formation": "Echelon",
+      "weight": 1122.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1575,
+        1575,
+        1501,
+        1572,
+        1572
+      ],
+      "enemy_formation": "DoubleLine",
+      "weight": 782.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1575,
+        1501,
+        1501,
+        1572,
+        1571
+      ],
+      "enemy_formation": "LineAhead",
+      "weight": 101.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1575,
+        1501,
+        1501,
+        1571,
+        1571
+      ],
+      "enemy_formation": "Echelon",
+      "weight": 86.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1575,
+        1501,
+        1501,
+        1572,
+        1571
+      ],
+      "enemy_formation": "DoubleLine",
+      "weight": 38.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1575,
+        1501,
+        1501,
+        1571,
+        1571
+      ],
+      "enemy_formation": "LineAhead",
+      "weight": 1.0,
+      "engagement": null,
+      "ships_escort": null
+    }
+  ],
+  "total_samples": 3496,
+  "label": null,
+  "samples_without_gauge_filter": 3496
+}

@@ -10,12 +10,20 @@
  * finished route also gets, per battle node, the formation fought in and the special attack that can fire there, for
  * the route cards' tooltips. Each step also goes to the developer log when it is on.
  *
+ * The run takes the game-data package version in use when it starts (its
+ * optimizer data, map choices, event gauges and kcnav snapshot) and keeps it.
+ * An event map runs one event state, which picks the kcnav variant of its
+ * enemy data; one the game lets only combined fleets sortie on, or without a
+ * difficulty, fails before any prediction.
+ *
  * The optimizer is resolved before compass is loaded, so a missing or corrupt
- * binary fails before any network use. The map's shared kcnav fetch starts
- * right after, overlapping prediction; a cancel stops only this run's wait for
- * it. Every failure ends in `failed` and a cancel in `cancelled`, so the panel
+ * binary fails before any network use. Enemy data the package covers is read
+ * from it; otherwise the map's (or variant's) shared kcnav fetch starts right
+ * after, overlapping prediction; a cancel stops only this run's wait for it.
+ * Every failure ends in `failed` and a cancel in `cancelled`, so the panel
  * never stays in a running state.
  */
+import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 
@@ -28,11 +36,15 @@ import { toDeckbuilder } from '../fleet/toDeckbuilder'
 import type { PoiState } from '../fleet/types'
 import { simulateToml } from '../optimizer/config'
 import { simulateRoutes } from '../optimizer/orchestrate'
-import { ensureMapFetched, isNormalMap, prefetchMaps, untilAborted } from '../optimizer/prefetch'
+import { kcnavDirFor, packageCovers } from '../gameData/kcnav'
+import type { GameData } from '../gameData/manifest'
+import { gameData } from '../gameData/store'
+import { ensureMapFetched, untilAborted } from '../optimizer/prefetch'
 import { resolveOptimizer, type OptimizerManifest, type ResolvedOptimizer } from '../optimizer/resolve'
-import { atNodeTarget, Cancelled, checkRoute, kcnavDir, runSimulate } from '../optimizer/run'
+import { atNodeTarget, Cancelled, checkRoute, runSimulate } from '../optimizer/run'
 import { findPackageRoot, workDir } from '../paths'
 import { applyTarget, bossLettersFor, loadBossLetters } from '../routes/boss'
+import { allowsSingleFleet, isEventMap, kcnavVariant, mapIdOf, thresholdOf, variantFetchArgs } from '../routes/eventState'
 import { runCompass } from '../routes/compass'
 import { mapFormations, nodeNightBattle, type Formation } from '../routes/formation'
 import { createPredictor, type PredictedRoute } from '../routes/predict'
@@ -44,33 +56,17 @@ import { routeNodeInfo, sortRoutes, targetRouteIndexes, type NodeInfo, type Rout
 /** One predictor for the poi session, so its cache lives as long as poi; the panel reads its node options. */
 export const predictor = createPredictor(runCompass)
 
-/** The optimizer pinned in `optimizer.json`, or the development override; for runs and map fetches alike. */
-export async function resolveBundledOptimizer(): Promise<ResolvedOptimizer> {
+/** The optimizer pinned in `optimizer.json`, or the development override, with the game data's optimizer part. */
+export async function resolveBundledOptimizer(data: GameData): Promise<ResolvedOptimizer> {
   const packageRoot = findPackageRoot()
   const manifest = JSON.parse(await readFile(join(packageRoot, 'optimizer.json'), 'utf8')) as OptimizerManifest
   return resolveOptimizer({
     packageRoot,
     manifest,
+    dataDir: data.dataDir,
     override: loadOptimizerOverride(),
     platform: process.platform,
     arch: process.arch,
-  })
-}
-
-/**
- * Start a queue of normal-map fetches: every normal map in the bundled data,
- * or `maps` for a retry. Resolves once the queue has started, without waiting
- * for it; rejects only when the optimizer, its data or the app data path can't
- * be found. The queue does nothing if another one is running.
- */
-export async function fetchNormalMaps(opts: { force?: boolean; maps?: string[] } = {}): Promise<void> {
-  const optimizer = await resolveBundledOptimizer()
-  const maps = opts.maps ?? Object.keys(await loadBossLetters(optimizer.dataDir)).filter(isNormalMap)
-  void prefetchMaps(maps, {
-    binPath: optimizer.binPath,
-    dataDir: optimizer.dataDir,
-    workDir: workDir(),
-    force: opts.force,
   })
 }
 
@@ -86,12 +82,29 @@ export async function runSimulation(
     dispatch({ type: 'start', input, snapshot })
     devLog('run.start', { input, snapshot })
 
-    const optimizer = await resolveBundledOptimizer()
+    const data = gameData()
+    if (!data) throw new SimError('GAME_DATA_MISSING', 'The game data package could not be read.')
+    // An event map: one the game lets a single fleet sortie on, at a chosen difficulty.
+    let variant: ReturnType<typeof kcnavVariant>
+    if (isEventMap(input.map)) {
+      if (!allowsSingleFleet(state?.const?.$maps?.[mapIdOf(input.map)])) {
+        throw new SimError('EVENT_COMBINED_ONLY', `${input.map} can only be sortied with a combined fleet.`)
+      }
+      const event = input.event
+      variant = event && kcnavVariant(event, thresholdOf(data.eventGauges, input.map, event.difficulty, event.gauge))
+      if (!variant) throw new SimError('EVENT_DIFFICULTY_UNSET', `No difficulty is chosen for ${input.map}.`)
+      devLog('run.event', { map: input.map, event, variant: variant.name })
+    }
+
+    const optimizer = await resolveBundledOptimizer(data)
     const bossLetters = bossLettersFor(await loadBossLetters(optimizer.dataDir), input.map)
     const cwd = workDir()
+    // The package's snapshot when it covers the map (and variant), else the plugin's own fetch.
+    const covered = packageCovers(data, input.map, variant?.name)
+    const kcnavDir = kcnavDirFor(data, cwd, input.map, variant?.name)
     if (input.target !== undefined) {
       // The panel offers only battle nodes, and only once the topology is there; this catches a stale pick.
-      const battles = await readTopology(kcnavDir(cwd), input.map).then(battleNodes, () => undefined)
+      const battles = await readTopology(kcnavDir, input.map).then(battleNodes, () => undefined)
       if (battles && !battles.has(input.target)) {
         throw new SimError('TARGET_NOT_BATTLE', `Node ${input.target} on ${input.map} has no battle.`, [
           `battle nodes: ${[...battles].sort().join(', ')}`,
@@ -101,23 +114,26 @@ export async function runSimulation(
     if (signal.aborted) throw new Cancelled()
 
     // Not awaited here: the fetch overlaps prediction and outlives a cancel.
-    let enemyDataReady = false
-    const enemyData = ensureMapFetched(input.map, {
-      binPath: optimizer.binPath,
-      dataDir: optimizer.dataDir,
-      workDir: cwd,
-    }).finally(() => {
-      enemyDataReady = true
-    })
+    let enemyDataReady = covered
+    const enemyData = covered
+      ? Promise.resolve(true)
+      : ensureMapFetched(input.map, {
+          binPath: optimizer.binPath,
+          dataDir: optimizer.dataDir,
+          workDir: cwd,
+          variant: variant && { name: variant.name, args: variantFetchArgs(variant) },
+        }).finally(() => {
+          enemyDataReady = true
+        })
 
     // Mid-sortie, the visited letters come first: a branch the fleet has passed is predicted as taken.
     let letters: string[] | undefined
     if (input.sortie) {
       const sortie = { map: input.map, cells: input.sortie.cells }
       // The topology is written first by the map's kcnav fetch; wait for it only when it isn't there yet.
-      letters = await cellLetters(kcnavDir(cwd), sortie).catch(async () => {
+      letters = await cellLetters(kcnavDir, sortie).catch(async () => {
         await untilAborted(enemyData, signal)
-        return cellLetters(kcnavDir(cwd), sortie)
+        return cellLetters(kcnavDir, sortie)
       })
       if (signal.aborted) throw new Cancelled()
     }
@@ -126,7 +142,8 @@ export async function runSimulation(
     const candidates = await predictor.predict({
       deck: toDeckbuilder(snapshot),
       map: input.map,
-      choices,
+      // Compass routes some event maps by difficulty too; it is part of the prediction's cache key with the choices.
+      choices: variant ? { ...choices, difficulty: String(variant.difficulty) } : choices,
       bossLetters,
     })
     if (signal.aborted) throw new Cancelled()
@@ -170,12 +187,13 @@ export async function runSimulation(
     }
     // Read after the enemy data, for the submarine rules. Without a topology no node is known to have a battle,
     // so none gets a formation and the optimizer uses its own default.
-    const topology = await readTopology(kcnavDir(cwd), input.map).catch(() => undefined)
+    const topology = await readTopology(kcnavDir, input.map).catch(() => undefined)
     if (signal.aborted) throw new Cancelled()
     const formations = topology
       ? mapFormations({
-          kcnavDir: kcnavDir(cwd),
+          kcnavDir,
           map: input.map,
+          variant: variant?.name,
           topology,
           $ships: state?.const?.$ships,
           user: input.formations,
@@ -198,6 +216,7 @@ export async function runSimulation(
     const shipGates = await loadShipGateData(optimizer.dataDir)
     if (signal.aborted) throw new Cancelled()
     const fired = specials?.observed ? specials.fired : []
+    const bonusMap = existsSync(join(optimizer.dataDir, 'bonuses', `${input.map}.json`))
     const nodeInfoFor = (nodes: string[]): Record<string, NodeInfo> =>
       routeNodeInfo({ nodes, formations, colors, nightBattles: nightBattlesFor(nodes), snapshot, fired }, shipGates)
     const targets = indexes.map((i) => rows[i]!).map((row) => row.nodes.slice(row.from ?? 1))
@@ -228,6 +247,8 @@ export async function runSimulation(
           perNode: input.target !== undefined,
           specialAttacksFired: specials?.observed ? specials.fired : undefined,
           formations: routeFormations,
+          bonusMap,
+          variant,
         })
         devLog('route.config', {
           nightBattles: routeNightBattles,
@@ -248,6 +269,7 @@ export async function runSimulation(
               binPath: optimizer.binPath,
               dataDir: optimizer.dataDir,
               workDir: cwd,
+              kcnavDir,
               logName: `route-${rowIndex}.log`,
               toml,
               signal: routeSignal,

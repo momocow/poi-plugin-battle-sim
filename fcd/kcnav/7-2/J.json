@@ -1,0 +1,37 @@
+{
+  "fetched_at": "2026-10-12T04:40:19Z",
+  "source": "kcnav",
+  "kcnav_query": {
+    "map": "7-2",
+    "node": "J",
+    "start": "2026-07-14",
+    "end": "2026-10-12",
+    "difficulty": null,
+    "cleared": null,
+    "min_gauge": null,
+    "max_gauge": null,
+    "min_gauge_level": null,
+    "max_gauge_level": null,
+    "min_hq_level": null,
+    "max_hq_level": null
+  },
+  "candidates": [
+    {
+      "enemy_ids": [
+        1529,
+        1554,
+        1558,
+        1558,
+        1576,
+        1576
+      ],
+      "enemy_formation": "LineAhead",
+      "weight": 1.0,
+      "engagement": null,
+      "ships_escort": null
+    }
+  ],
+  "total_samples": 1,
+  "label": null,
+  "samples_without_gauge_filter": 1
+}

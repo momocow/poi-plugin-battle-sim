@@ -7,8 +7,7 @@
     "index.ts",
     "src",
     "i18n",
-    "optimizer.json",
-    "data"
+    "optimizer.json"
   ],
   "license": "MIT",
   "keywords": [
@@ -34,13 +33,14 @@
     "prepublishOnly": "npm run fetch-optimizer"
   },
   "dependencies": {
-    "lz-string": "^1.5.0"
+    "lz-string": "^1.5.0",
+    "poi-plugin-battle-sim-data": "^1.0.0"
   },
   "optionalDependencies": {
     "poi-plugin-battle-sim-darwin-arm64": "0.3.1",
     "poi-plugin-battle-sim-darwin-x64": "0.3.1",
-    "poi-plugin-battle-sim-linux-x64": "0.3.1",
     "poi-plugin-battle-sim-linux-arm64": "0.3.1",
+    "poi-plugin-battle-sim-linux-x64": "0.3.1",
     "poi-plugin-battle-sim-win32-x64": "0.3.1"
   },
   "devDependencies": {

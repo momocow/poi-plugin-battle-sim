@@ -1,0 +1,107 @@
+{
+  "fetched_at": "2026-10-10T14:06:00Z",
+  "source": "kcnav",
+  "kcnav_query": {
+    "map": "4-2",
+    "node": "L",
+    "start": "2026-07-12",
+    "end": "2026-10-10",
+    "difficulty": null,
+    "cleared": null,
+    "min_gauge": null,
+    "max_gauge": null,
+    "min_gauge_level": null,
+    "max_gauge_level": null,
+    "min_hq_level": null,
+    "max_hq_level": null
+  },
+  "candidates": [
+    {
+      "enemy_ids": [
+        1543,
+        1528,
+        1526,
+        1526,
+        1577,
+        1577
+      ],
+      "enemy_formation": "LineAhead",
+      "weight": 5135.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1543,
+        1528,
+        1558,
+        1558,
+        1577,
+        1577
+      ],
+      "enemy_formation": "LineAhead",
+      "weight": 4029.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1543,
+        1525,
+        1513,
+        1513,
+        1577,
+        1577
+      ],
+      "enemy_formation": "LineAhead",
+      "weight": 3092.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1543,
+        1528,
+        1558,
+        1558,
+        1577,
+        1577
+      ],
+      "enemy_formation": "DoubleLine",
+      "weight": 3013.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1543,
+        1528,
+        1526,
+        1526,
+        1577,
+        1577
+      ],
+      "enemy_formation": "DoubleLine",
+      "weight": 2955.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1543,
+        1525,
+        1513,
+        1513,
+        1577,
+        1577
+      ],
+      "enemy_formation": "DoubleLine",
+      "weight": 2050.0,
+      "engagement": null,
+      "ships_escort": null
+    }
+  ],
+  "total_samples": 20274,
+  "label": null,
+  "samples_without_gauge_filter": 20274
+}

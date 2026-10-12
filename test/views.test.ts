@@ -11,6 +11,7 @@ import {
   type RunState,
 } from '../src/ui/state'
 import {
+  describeEvent,
   formatRoute,
   isAutoPaused,
   isStale,
@@ -23,6 +24,7 @@ import {
   rowCells,
   sortForCards,
   summaryCells,
+  takeAutoOpen,
   targetLabels,
 } from '../src/ui/views'
 import { SimError } from '../src/errors'
@@ -293,6 +295,19 @@ describe('result footer', () => {
     expect(isStale(input, { ...input, choices: { ...input.choices, H: 'K' } })).toBe(true)
   })
 
+  it("is stale when an event map's state changes, from the game or by an override", () => {
+    const event = { ...input, map: '62-3', choices: {}, event: { difficulty: 4 as const, gauge: 2, gaugeState: 'last' as const } }
+    expect(isStale(event, { ...event, event: { ...event.event } })).toBe(false)
+    expect(isStale(event, { ...event, event: { ...event.event, gauge: 3 } })).toBe(true)
+    expect(isStale(event, { ...event, event: { ...event.event, difficulty: 1 } })).toBe(true)
+  })
+
+  it("names an event map's state, leaving out what doesn't apply", () => {
+    expect(describeEvent({ difficulty: 4, gauge: 2, gaugeState: 'last' })).toBe('甲 Gauge 2 Last dance')
+    expect(describeEvent({ difficulty: 3, gauge: 1, gaugeState: 'cleared' })).toBe('乙 Cleared')
+    expect(describeEvent({ difficulty: 1, gauge: 1 })).toBe('丁 Gauge 1')
+  })
+
   it('shows a target the fleet has passed as reached, with nothing simulated and no rates', () => {
     const passed: RouteRow = {
       nodes: ['1', 'C', 'E'],
@@ -429,5 +444,16 @@ describe('isAutoPaused', () => {
     expect(paused(state)).toBe(false)
     expect(isAutoPaused(true, undefined, undefined)).toBe(false)
     expect(isAutoPaused(true, fleetLoadout(undefined, [1]), 6)).toBe(false)
+  })
+})
+
+describe('data update prompt', () => {
+  it('opens by itself once per version, only when it can, and again for a newer version', () => {
+    const opened = new Set<string>()
+    expect(takeAutoOpen('1.4.0', false, opened)).toBe(false)
+    expect(takeAutoOpen('1.4.0', true, opened)).toBe(true)
+    expect(takeAutoOpen('1.4.0', true, opened)).toBe(false)
+    expect(takeAutoOpen('1.5.0', true, opened)).toBe(true)
+    expect(takeAutoOpen(undefined, true, opened)).toBe(false)
   })
 })

@@ -13,6 +13,7 @@ import { possibleSpecial, type ShipGateTable, type SpecialAttack } from '../flee
 import { allowedFormation, type Formation, type FormationReason, type NightBattle, type NodeFormation } from '../routes/formation'
 import { AIR_RAID_COLOR } from '../routes/topology'
 import type { ChoiceValues } from '../routes/choices'
+import type { EventState } from '../routes/eventState'
 import type { RouteCandidate } from '../routes/predict'
 
 export type Phase = 'idle' | 'predicting' | 'simulating' | 'done' | 'error'
@@ -30,6 +31,8 @@ export interface RunInput {
   nightBattles: Record<string, NightBattle>
   /** Set while the fleet is on a sortie of `map`: the cells visited, the current one last. */
   sortie?: { cells: number[] }
+  /** An event map's event state: the game's, with the user's overrides. */
+  event?: EventState
 }
 
 /** A battle node's type: its default formation's reason, with an air raid told apart from an air battle. */

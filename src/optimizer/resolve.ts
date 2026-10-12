@@ -4,10 +4,12 @@
  * `optimizer.json` pins the optimizer version and, per `<platform>-<arch>`,
  * the npm package that carries that platform's binary (an optional dependency
  * of this plugin, installed only on matching machines), the binary's path in
- * it and its SHA-256. The game data ships in this package. The binary is hashed
- * once per poi session before first use. A development override (a local
- * binary and optionally its data directory, see `ui/inputs.ts`) replaces the
- * pinned asset; the hash check is skipped for it and the result says so.
+ * it and its SHA-256. The game data is the optimizer part of the game-data
+ * package version in use (see `gameData/store.ts`), passed in as `dataDir`.
+ * The binary is hashed once per poi session before first use. A development
+ * override (a local binary and optionally its data directory, see
+ * `ui/inputs.ts`) replaces the pinned asset, and its data directory, when set,
+ * the package's; the hash check is skipped for it and the result says so.
  */
 import { createHash } from 'node:crypto'
 import { createReadStream } from 'node:fs'
@@ -19,8 +21,6 @@ import { SimError } from '../errors'
 
 export interface OptimizerManifest {
   version: string
-  /** Game-data directory, relative to the package root. */
-  data: string
   /** Per `<platform>-<arch>`: the platform package, the binary's path inside it, and its SHA-256. */
   assets: Record<string, { package: string; path: string; sha256: string }>
 }
@@ -36,6 +36,8 @@ export interface ResolvedOptimizer {
 export interface ResolveInput {
   packageRoot: string
   manifest: OptimizerManifest
+  /** The optimizer data of the game-data package version in use. */
+  dataDir: string
   /** Development override; an empty `bin` means none. */
   override?: { bin?: string; data?: string }
   platform: string
@@ -61,7 +63,7 @@ export async function resolveOptimizer(input: ResolveInput): Promise<ResolvedOpt
     await ensureExists(binPath)
     return {
       binPath,
-      dataDir: abs(override?.data || manifest.data),
+      dataDir: override?.data ? abs(override.data) : input.dataDir,
       version: 'dev',
       dev: true,
     }
@@ -88,7 +90,7 @@ export async function resolveOptimizer(input: ResolveInput): Promise<ResolvedOpt
   }
   await check
 
-  return { binPath, dataDir: abs(manifest.data), version: manifest.version, dev: false }
+  return { binPath, dataDir: input.dataDir, version: manifest.version, dev: false }
 }
 
 /** The installed platform package's directory, resolved as Node would from this plugin. */

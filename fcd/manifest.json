@@ -1,0 +1,9 @@
+{
+  "parts": {
+    "optimizer": { "format": 1, "path": "optimizer" },
+    "mapChoices": { "format": 1, "path": "map-choices.json" },
+    "nodeDistances": { "format": 1, "path": "node-distances.json" },
+    "eventGauges": { "format": 1, "path": "event-gauges.json" },
+    "kcnav": { "format": 1, "path": "kcnav" }
+  }
+}

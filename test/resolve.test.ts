@@ -18,45 +18,44 @@ const setup = () => {
   chmodSync(join(platformDir, 'bin', 'opt'), 0o755)
   const manifest: OptimizerManifest = {
     version: '1.2.3',
-    data: 'data',
     assets: { 'darwin-arm64': { package: 'poi-plugin-battle-sim-darwin-arm64', path: 'bin/opt', sha256: 'abc' } },
   }
-  return { root, manifest, binPath: join(platformDir, 'bin', 'opt') }
+  return { root, manifest, dataDir: '/pkg/optimizer', binPath: join(platformDir, 'bin', 'opt') }
 }
 
 describe('resolveOptimizer', () => {
   beforeEach(() => resetVerifiedForTests())
 
   it('uses the pinned asset and checks its hash once per session', async () => {
-    const { root, manifest, binPath } = setup()
+    const { root, manifest, dataDir, binPath } = setup()
     const sha256 = vi.fn(async () => 'ABC')
-    const input = { packageRoot: root, manifest, platform: 'darwin', arch: 'arm64', sha256 }
+    const input = { packageRoot: root, manifest, dataDir, platform: 'darwin', arch: 'arm64', sha256 }
     const first = await resolveOptimizer(input)
     await resolveOptimizer(input)
-    expect(first).toEqual({ binPath, dataDir: join(root, 'data'), version: '1.2.3', dev: false })
+    expect(first).toEqual({ binPath, dataDir: '/pkg/optimizer', version: '1.2.3', dev: false })
     expect(sha256).toHaveBeenCalledTimes(1)
   })
 
   it('refuses a binary whose checksum does not match', async () => {
-    const { root, manifest } = setup()
+    const { root, manifest, dataDir } = setup()
     const err = await resolveOptimizer({
-      packageRoot: root, manifest, platform: 'darwin', arch: 'arm64', sha256: async () => 'def',
+      packageRoot: root, manifest, dataDir, platform: 'darwin', arch: 'arm64', sha256: async () => 'def',
     }).catch((e: unknown) => e)
     expect((err as SimError).code).toBe('BINARY_CORRUPT')
   })
 
   it('reports a platform with no bundled build', async () => {
-    const { root, manifest } = setup()
-    const err = await resolveOptimizer({ packageRoot: root, manifest, platform: 'win32', arch: 'x64' }).catch(
+    const { root, manifest, dataDir } = setup()
+    const err = await resolveOptimizer({ packageRoot: root, manifest, dataDir, platform: 'win32', arch: 'x64' }).catch(
       (e: unknown) => e,
     )
     expect((err as SimError).code).toBe('BINARY_UNSUPPORTED_PLATFORM')
   })
 
   it('reports a platform package that is not installed', async () => {
-    const { root, manifest } = setup()
+    const { root, manifest, dataDir } = setup()
     manifest.assets['darwin-arm64'] = { package: 'poi-plugin-battle-sim-nope', path: 'bin/opt', sha256: 'abc' }
-    const err = await resolveOptimizer({ packageRoot: root, manifest, platform: 'darwin', arch: 'arm64' }).catch(
+    const err = await resolveOptimizer({ packageRoot: root, manifest, dataDir, platform: 'darwin', arch: 'arm64' }).catch(
       (e: unknown) => e,
     )
     expect((err as SimError).code).toBe('BINARY_MISSING')
@@ -64,20 +63,21 @@ describe('resolveOptimizer', () => {
   })
 
   it('reports a missing binary', async () => {
-    const { root, manifest } = setup()
+    const { root, manifest, dataDir } = setup()
     manifest.assets['darwin-arm64']!.path = 'bin/nope'
-    const err = await resolveOptimizer({ packageRoot: root, manifest, platform: 'darwin', arch: 'arm64' }).catch(
+    const err = await resolveOptimizer({ packageRoot: root, manifest, dataDir, platform: 'darwin', arch: 'arm64' }).catch(
       (e: unknown) => e,
     )
     expect((err as SimError).code).toBe('BINARY_MISSING')
   })
 
   it('uses the development override and skips the hash check', async () => {
-    const { root, manifest, binPath } = setup()
+    const { root, manifest, dataDir, binPath } = setup()
     const sha256 = vi.fn(async () => 'zzz')
     const resolved = await resolveOptimizer({
       packageRoot: root,
       manifest,
+      dataDir,
       override: { bin: binPath, data: '/dev/data' },
       platform: 'linux',
       arch: 'x64',
@@ -85,5 +85,10 @@ describe('resolveOptimizer', () => {
     })
     expect(resolved).toMatchObject({ binPath, dataDir: '/dev/data', dev: true })
     expect(sha256).not.toHaveBeenCalled()
+  })
+  it("uses the package's data with a development binary and no data directory", async () => {
+    const { root, manifest, dataDir, binPath } = setup()
+    const resolved = await resolveOptimizer({ packageRoot: root, manifest, dataDir, override: { bin: binPath }, platform: 'linux', arch: 'x64' })
+    expect(resolved).toMatchObject({ dataDir: '/pkg/optimizer', dev: true })
   })
 })

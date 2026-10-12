@@ -12,9 +12,16 @@
  * the flagship-sunk rate at that node.
  * `special_attacks_fired` lists the once-per-sortie specials already fired,
  * so the optimizer won't fire them again in the rest of a sortie.
+ *
+ * `kcnav_offline` is always on: the plugin decides every kcnav request (see
+ * `optimizer/prefetch.ts`), so a node the data lacks fails the route instead
+ * of the optimizer fetching it. `bonus_map` applies the map's bonuses when the
+ * optimizer data has them; an event map's `[route.kcnav]` names the variant
+ * of its enemy data to read (see `routes/eventState.ts`).
  */
 import { fleetShipsToml } from '../fleet/toToml'
 import type { FleetSnapshot } from '../fleet/types'
+import { variantTomlLines, type KcnavVariant } from '../routes/eventState'
 import type { Formation } from '../routes/formation'
 
 const str = (s: string) => JSON.stringify(s)
@@ -33,6 +40,10 @@ export function simulateToml(input: {
   specialAttacksFired?: number[]
   /** The player formation at each battle node of `nodes`, by letter. */
   formations: Record<string, Formation>
+  /** Whether the optimizer data has bonuses for the map. */
+  bonusMap?: boolean
+  /** An event map's kcnav variant. */
+  variant?: KcnavVariant
 }): string {
   const { formations, nightBattles } = input
   // One table per node, in route order (a node a route passes twice takes one).
@@ -51,7 +62,10 @@ export function simulateToml(input: {
     '[route]',
     `map = ${str(input.map)}`,
     `route = [${input.nodes.map(str).join(', ')}]`,
+    'kcnav_offline = true',
+    ...(input.bonusMap ? [`bonus_map = ${str(input.map)}`] : []),
     '',
+    ...(input.variant ? [...variantTomlLines(input.variant), ''] : []),
     ...tactics,
     '[run]',
     `trials = ${input.trials}`,

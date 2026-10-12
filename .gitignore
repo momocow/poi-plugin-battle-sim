@@ -1,6 +1,6 @@
 node_modules/
 dist/
-/data/
+/fcd/optimizer/
 platforms/*/bin/
 *.log
 .DS_Store

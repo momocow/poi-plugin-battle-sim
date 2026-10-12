@@ -1,0 +1,143 @@
+{
+  "fetched_at": "2026-10-11T17:04:44Z",
+  "source": "kcnav",
+  "kcnav_query": {
+    "map": "7-4",
+    "node": "B",
+    "start": "2026-07-13",
+    "end": "2026-10-11",
+    "difficulty": null,
+    "cleared": null,
+    "min_gauge": null,
+    "max_gauge": null,
+    "min_gauge_level": null,
+    "max_gauge_level": null,
+    "min_hq_level": null,
+    "max_hq_level": null
+  },
+  "candidates": [
+    {
+      "enemy_ids": [
+        1534,
+        1532,
+        1532,
+        1532,
+        1532
+      ],
+      "enemy_formation": "Echelon",
+      "weight": 960.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1534,
+        1532,
+        1532,
+        1532
+      ],
+      "enemy_formation": "Echelon",
+      "weight": 714.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1534,
+        1534,
+        1532,
+        1532,
+        1532
+      ],
+      "enemy_formation": "Echelon",
+      "weight": 608.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1534,
+        1532,
+        1532,
+        1532,
+        1532
+      ],
+      "enemy_formation": "LineAbreast",
+      "weight": 477.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1534,
+        1532,
+        1532,
+        1532
+      ],
+      "enemy_formation": "LineAbreast",
+      "weight": 376.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1534,
+        1534,
+        1532,
+        1532,
+        1532
+      ],
+      "enemy_formation": "LineAbreast",
+      "weight": 353.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1534,
+        1532,
+        1532
+      ],
+      "enemy_formation": "Echelon",
+      "weight": 238.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1534,
+        1532,
+        1532
+      ],
+      "enemy_formation": "LineAbreast",
+      "weight": 155.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1532,
+        1532,
+        1532
+      ],
+      "enemy_formation": "Echelon",
+      "weight": 17.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1532,
+        1532,
+        1532
+      ],
+      "enemy_formation": "LineAbreast",
+      "weight": 11.0,
+      "engagement": null,
+      "ships_escort": null
+    }
+  ],
+  "total_samples": 3909,
+  "label": null,
+  "samples_without_gauge_filter": 3909
+}

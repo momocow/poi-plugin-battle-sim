@@ -1,0 +1,121 @@
+{
+  "fetched_at": "2026-10-11T17:05:15Z",
+  "source": "kcnav",
+  "kcnav_query": {
+    "map": "7-4",
+    "node": "M",
+    "start": "2026-07-13",
+    "end": "2026-10-11",
+    "difficulty": null,
+    "cleared": null,
+    "min_gauge": null,
+    "max_gauge": null,
+    "min_gauge_level": null,
+    "max_gauge_level": null,
+    "min_hq_level": null,
+    "max_hq_level": null
+  },
+  "candidates": [
+    {
+      "enemy_ids": [
+        2060,
+        1765,
+        1765,
+        1591,
+        1575,
+        1575
+      ],
+      "enemy_formation": "Diamond",
+      "weight": 22145.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        2060,
+        1765,
+        1776,
+        1575,
+        1575,
+        1571
+      ],
+      "enemy_formation": "Diamond",
+      "weight": 18007.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        2059,
+        1765,
+        1776,
+        1591,
+        1575,
+        1575
+      ],
+      "enemy_formation": "Diamond",
+      "weight": 1417.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        2059,
+        1776,
+        1776,
+        1575,
+        1575,
+        1571
+      ],
+      "enemy_formation": "Diamond",
+      "weight": 1094.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        2062,
+        1765,
+        1765,
+        1592,
+        1622,
+        1622
+      ],
+      "enemy_formation": "Diamond",
+      "weight": 2.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        2059,
+        1776,
+        1776,
+        1591,
+        1575,
+        1575
+      ],
+      "enemy_formation": "Diamond",
+      "weight": 1.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        2061,
+        1765,
+        1765,
+        1592,
+        1575,
+        1575
+      ],
+      "enemy_formation": "Diamond",
+      "weight": 1.0,
+      "engagement": null,
+      "ships_escort": null
+    }
+  ],
+  "total_samples": 42667,
+  "label": null,
+  "samples_without_gauge_filter": 42667
+}

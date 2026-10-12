@@ -1,0 +1,87 @@
+{
+  "fetched_at": "2026-10-12T04:37:25Z",
+  "source": "kcnav",
+  "kcnav_query": {
+    "map": "6-4",
+    "node": "M",
+    "start": "2026-07-14",
+    "end": "2026-10-12",
+    "difficulty": null,
+    "cleared": null,
+    "min_gauge": null,
+    "max_gauge": null,
+    "min_gauge_level": null,
+    "max_gauge_level": null,
+    "min_hq_level": null,
+    "max_hq_level": null
+  },
+  "candidates": [
+    {
+      "enemy_ids": [
+        1572,
+        1571,
+        1570,
+        1570,
+        1570
+      ],
+      "enemy_formation": "Echelon",
+      "weight": 1820.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1572,
+        1571,
+        1571,
+        1570,
+        1570
+      ],
+      "enemy_formation": "Echelon",
+      "weight": 1744.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1572,
+        1571,
+        1571,
+        1570,
+        1570
+      ],
+      "enemy_formation": "LineAbreast",
+      "weight": 1700.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1572,
+        1571,
+        1570,
+        1570,
+        1570
+      ],
+      "enemy_formation": "LineAbreast",
+      "weight": 640.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1572,
+        1571,
+        1570,
+        1570
+      ],
+      "enemy_formation": "Echelon",
+      "weight": 65.0,
+      "engagement": null,
+      "ships_escort": null
+    }
+  ],
+  "total_samples": 5969,
+  "label": null,
+  "samples_without_gauge_filter": 5969
+}

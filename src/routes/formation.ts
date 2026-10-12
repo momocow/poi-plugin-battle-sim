@@ -8,8 +8,9 @@
  * 4. an air battle or air raid (colour 7 or 10) → 輪形陣;
  * 5. any other node → 単縦陣.
  *
- * The compositions come from the node's kcnav cache, `<kcnavDir>/<map>/<letter>.json`,
- * which the map's shared enemy-data fetch writes; without it, the submarine
+ * The compositions come from the node's kcnav data, `<kcnavDir>/<map>/<letter>.json`, or
+ * `<kcnavDir>/<map>/<variant>/<letter>.json` for an event map's variant (the
+ * game-data package's snapshot, or the plugin's own fetch); without it, the submarine
  * rules don't apply. Submarines are the ship types 潜水艦 (13) and 潜水空母
  * (14) in poi's master data. The colours come from the topology's vote.
  *
@@ -78,12 +79,12 @@ export const submarineCheck =
 const ids = (value: unknown): number[] =>
   Array.isArray(value) ? value.filter((id): id is number => typeof id === 'number') : []
 
-/** Compositions read so far, by path, with the file's mtime: a refresh fetch rewrites the file. */
+/** Compositions read so far, by path, with the file's mtime: a fetch may rewrite the file. */
 const enemyCache = new Map<string, { mtimeMs: number; compositions: EnemyComposition[] }>()
 
 /** The node's enemy compositions from the kcnav cache; undefined when the file is missing or unreadable. */
-export function nodeEnemies(kcnavDir: string, map: string, letter: string): EnemyComposition[] | undefined {
-  const path = join(kcnavDir, map, `${letter}.json`)
+export function nodeEnemies(kcnavDir: string, map: string, letter: string, variant?: string): EnemyComposition[] | undefined {
+  const path = join(kcnavDir, map, ...(variant ? [variant] : []), `${letter}.json`)
   try {
     const { mtimeMs } = statSync(path)
     const cached = enemyCache.get(path)
@@ -135,6 +136,8 @@ export function nodeFormations(input: {
 export const mapFormations = (input: {
   kcnavDir: string
   map: string
+  /** An event map's kcnav variant. */
+  variant?: string
   topology: RouteTable
   $ships: Record<string, MstShip> | undefined
   user: Record<string, Formation>
@@ -142,7 +145,7 @@ export const mapFormations = (input: {
   nodeFormations({
     battles: battleNodes(input.topology),
     colors: nodeColors(input.topology),
-    enemiesOf: (letter) => nodeEnemies(input.kcnavDir, input.map, letter),
+    enemiesOf: (letter) => nodeEnemies(input.kcnavDir, input.map, letter, input.variant),
     isSubmarine: submarineCheck(input.$ships),
     user: input.user,
   })

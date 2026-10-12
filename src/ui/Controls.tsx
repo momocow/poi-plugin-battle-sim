@@ -11,17 +11,29 @@
  * sortie mode the fleet and map can't be changed (the map shown is the
  * sortie's) and Reset is off, and a branch the fleet has already passed shows
  * the branch taken and can't be changed either. After Reset, the fleet and map selects show an empty choice that can't be picked.
- * The target row shows once the map's topology is cached (a map's first run
- * fetches it), offering Boss and the predicted battle nodes; it stays
- * editable in sortie mode. Each of the two middle rows is left out when it
- * would be empty.
+ * The target row shows once the map's topology is there (in the game-data
+ * package, or fetched by a map's first run), offering Boss and the predicted
+ * battle nodes; it stays editable in sortie mode. On an event map the same row
+ * starts with the event state — difficulty, gauge and gauge state — each From
+ * game unless overridden, and locked to the game's in sortie mode. Event maps
+ * are listed with their in-game number, as "62-3 (E-3) …". Each of the two
+ * middle rows is left out when it would be empty.
  */
 import { Button, HTMLSelect, Switch, Tag, Tooltip } from '@blueprintjs/core'
 import React, { type ReactNode } from 'react'
 
 import { gameName, t } from '../i18n'
 import { choicesFor, type ChoiceValues, type MapChoices } from '../routes/choices'
+import {
+  DIFFICULTIES,
+  GAUGE_STATES,
+  isEventMap,
+  type EventOverride,
+  type EventState,
+  type GaugeState,
+} from '../routes/eventState'
 import type { MapGroup } from './inputs'
+import { difficultyName, GAUGE_STATE_NAMES } from './views'
 
 export interface ControlsProps {
   /** Null when cleared by Reset. */
@@ -44,6 +56,16 @@ export interface ControlsProps {
   }
   /** The Node settings button, after the Target dropdown on its row. */
   nodeSettings?: ReactNode
+  /** On an event map: the state run, the game's, the user's overrides, the map's gauges, and whether it is locked. */
+  event?: {
+    state: EventState
+    fromGame: EventState
+    override: EventOverride
+    /** The gauge numbers to offer; empty when the data doesn't list them. */
+    gauges: number[]
+    locked: boolean
+  }
+  onEvent: (override: EventOverride) => void
   /** Branches the fleet has already passed in a sortie of this map: shown as taken, and locked. */
   decided: ChoiceValues
   /** The selected fleet is on a sortie: runs follow it, and the fleet and map are locked. */
@@ -76,7 +98,9 @@ function fleetOptionLabel(id: number, fleetNames: (string | undefined)[]): strin
 }
 
 function mapOptionLabel(map: string, name: string | undefined): string {
-  return name ? `${map} ${gameName(name)}` : map
+  // An event map also shows its in-game number, E-3 for 62-3.
+  const label = isEventMap(map) ? `${map} (E-${map.split('-')[1]})` : map
+  return name ? `${label} ${gameName(name)}` : label
 }
 
 type CheckEvent = { currentTarget: { checked: boolean } }
@@ -200,9 +224,10 @@ export function Controls(p: ControlsProps) {
           ))}
         </div>
       )}
-      {p.target && (
+      {(p.target || p.event) && (
         <div className="battle-sim-control-row">
-          <TargetControls {...p.target} running={p.running} nodeSettings={p.nodeSettings} onTarget={p.onTarget} />
+          {p.event && <EventControls {...p.event} running={p.running} onEvent={p.onEvent} />}
+          {p.target && <TargetControls {...p.target} running={p.running} nodeSettings={p.nodeSettings} onTarget={p.onTarget} />}
         </div>
       )}
       <div className="battle-sim-control-row battle-sim-actions">
@@ -300,5 +325,74 @@ function TargetControls({
       </label>
       {nodeSettings}
     </span>
+  )
+}
+
+/** The selects' value for From game. */
+const FROM_GAME = ''
+
+/** The event state's three selects; each starts with From game, naming the game's value. */
+function EventControls({
+  fromGame,
+  override,
+  gauges,
+  locked,
+  running,
+  onEvent,
+}: NonNullable<ControlsProps['event']> & Pick<ControlsProps, 'running' | 'onEvent'>) {
+  const set = (patch: EventOverride) => {
+    const next = { ...override, ...patch }
+    for (const k of Object.keys(next) as (keyof EventOverride)[]) if (next[k] === undefined) delete next[k]
+    onEvent(next)
+  }
+  const fromGameLabel = (value: string) => t('From game ({value})', { value })
+  const stateName = (g: GaugeState | undefined) => (g ? t(GAUGE_STATE_NAMES[g]) : t('Unknown'))
+  // The game's gauge and any chosen one are always offered, even when the data lists no gauges.
+  const gaugeOptions = [...new Set([...gauges, fromGame.gauge, ...(override.gauge ? [override.gauge] : [])])].sort((a, b) => a - b)
+  const disabled = running || locked
+  return (
+    <Tooltip content={t('Set by the game during a sortie')} disabled={!locked} placement="top" targetTagName="span" targetProps={{ className: 'battle-sim-event' }}>
+      <span className="battle-sim-event">
+        <label>
+          {t('Difficulty')}{' '}
+          <HTMLSelect
+            className={!locked && override.difficulty ? 'battle-sim-setting-set' : undefined}
+            value={locked ? FROM_GAME : (override.difficulty ?? FROM_GAME)}
+            disabled={disabled}
+            onChange={(e: ChangeEvent) => set({ difficulty: e.currentTarget.value === FROM_GAME ? undefined : (Number(e.currentTarget.value) as EventOverride['difficulty']) })}
+            options={[
+              { value: FROM_GAME, label: fromGameLabel(fromGame.difficulty !== undefined ? difficultyName(fromGame.difficulty) : '—') },
+              ...DIFFICULTIES.map((d) => ({ value: String(d), label: difficultyName(d) })),
+            ]}
+          />
+        </label>
+        <label>
+          {t('Gauge')}{' '}
+          <HTMLSelect
+            className={!locked && override.gauge ? 'battle-sim-setting-set' : undefined}
+            value={locked ? FROM_GAME : (override.gauge !== undefined ? String(override.gauge) : FROM_GAME)}
+            disabled={disabled}
+            onChange={(e: ChangeEvent) => set({ gauge: e.currentTarget.value === FROM_GAME ? undefined : Number(e.currentTarget.value) })}
+            options={[
+              { value: FROM_GAME, label: fromGameLabel(String(fromGame.gauge)) },
+              ...gaugeOptions.map((g) => ({ value: String(g), label: String(g) })),
+            ]}
+          />
+        </label>
+        <label>
+          {t('Gauge state')}{' '}
+          <HTMLSelect
+            className={!locked && override.gaugeState ? 'battle-sim-setting-set' : undefined}
+            value={locked ? FROM_GAME : (override.gaugeState ?? FROM_GAME)}
+            disabled={disabled}
+            onChange={(e: ChangeEvent) => set({ gaugeState: e.currentTarget.value === FROM_GAME ? undefined : (e.currentTarget.value as GaugeState) })}
+            options={[
+              { value: FROM_GAME, label: fromGameLabel(stateName(fromGame.gaugeState)) },
+              ...GAUGE_STATES.map((g) => ({ value: g, label: stateName(g) })),
+            ]}
+          />
+        </label>
+      </span>
+    </Tooltip>
   )
 }

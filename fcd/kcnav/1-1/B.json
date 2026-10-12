@@ -1,0 +1,53 @@
+{
+  "fetched_at": "2026-10-11T18:31:43Z",
+  "source": "kcnav",
+  "kcnav_query": {
+    "map": "1-1",
+    "node": "B",
+    "start": "2026-07-13",
+    "end": "2026-10-11",
+    "difficulty": null,
+    "cleared": null,
+    "min_gauge": null,
+    "max_gauge": null,
+    "min_gauge_level": null,
+    "max_gauge_level": null,
+    "min_hq_level": null,
+    "max_hq_level": null
+  },
+  "candidates": [
+    {
+      "enemy_ids": [
+        1501,
+        1501
+      ],
+      "enemy_formation": "LineAhead",
+      "weight": 16812.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1502,
+        1502
+      ],
+      "enemy_formation": "LineAhead",
+      "weight": 14486.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1503,
+        1503
+      ],
+      "enemy_formation": "LineAhead",
+      "weight": 10210.0,
+      "engagement": null,
+      "ships_escort": null
+    }
+  ],
+  "total_samples": 41508,
+  "label": null,
+  "samples_without_gauge_filter": 41508
+}

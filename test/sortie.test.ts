@@ -31,8 +31,10 @@ describe('sortieOf', () => {
     expect(sortieOf({ sortie: { ...out(1).sortie, sortieStatus: [true, true, false, false] } }, 1)?.map).toBe('2-5')
   })
 
-  it('leaves event maps to the selected map', () => {
-    expect(sortieOf(out(1, { sortieMapId: '601' }), 1)).toBeUndefined()
+  it('reads an event map, but not an area between the normal and event ones', () => {
+    expect(sortieOf(out(1, { sortieMapId: '623' }), 1)).toEqual({ map: '62-3', cells: [0, 3, 5] })
+    expect(sortieOf(out(1, { sortieMapId: 601 }), 1)?.map).toBe('60-1')
+    expect(sortieOf(out(1, { sortieMapId: '91' }), 1)).toBeUndefined()
   })
 })
 
