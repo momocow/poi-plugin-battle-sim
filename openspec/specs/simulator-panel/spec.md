@@ -19,13 +19,13 @@ The trial count SHALL be a poi config setting. A count that matches a preset SHA
 
 When the selected map has player-selected branches or a phase, the panel SHALL show one control per choice, labeled with the node and an arrow (for example "F →"), its targets listed in the dropdown, or as "Phase". Each control starts at compass's default choice. The choices SHALL be remembered per map between poi sessions. Maps without such choices SHALL show no extra controls. Choices SHALL NOT be editable while a run is in progress.
 
-The panel SHALL have a **Target** dropdown that sets the node the sortie being planned ends at (see route-prediction, Target reach). Its first option is **Boss**, the default. Once compass has predicted the map in this poi session, the Boss option SHALL name the boss node, for example "Q (Boss)": the boss letters that the predicted candidates end at (narrowed to the sortie's path in sortie mode), or, when none ends at a boss, all of the map's boss letters, joined by "/". After it come the node letters on the candidates that compass last predicted for the map in this poi session, before any narrowing or cut, each once and in alphabetical order. The start node, the map's boss letters, and nodes without a battle are not listed. Whether a node has a battle SHALL be read from the map's topology data in the kcnav cache, as the optimizer reads it: a maelstrom, or a node that every route into it marks as a resource, empty or other pass-through node, has no battle; any other node, air raids included, has one. Before compass has predicted the map in this poi session, Boss is the only option. A remembered target that is not among the options SHALL still be shown and selected. There SHALL be one target, not one per map, and it SHALL be remembered between poi sessions. Selecting another map SHALL set it back to Boss and turn the Night battle switch back on. Entering or leaving sortie mode, which changes the map shown but not the map selected, SHALL NOT change the selected map's target or switch.
+The panel SHALL have a **Target** dropdown that sets the node the sortie being planned ends at (see route-prediction, Target reach). Its first option is **Boss**, the default. Once compass has predicted the map in this poi session, the Boss option SHALL name the boss node, for example "Q (Boss)": the boss letters that the predicted candidates end at (narrowed to the sortie's path in sortie mode), or, when none ends at a boss, all of the map's boss letters, joined by "/". After it come the node letters on the candidates that compass last predicted for the map in this poi session, before any narrowing or cut, each once and in alphabetical order. The start node, the map's boss letters, and nodes without a battle are not listed. Whether a node has a battle SHALL be read from the map's topology data in the kcnav cache, as the optimizer reads it: a maelstrom, or a node that every route into it marks as a resource, empty or other pass-through node, has no battle; any other node, air raids included, has one. Before compass has predicted the map in this poi session, Boss is the only option. A remembered target that is not among the options SHALL still be shown and selected. There SHALL be one target, not one per map, and it SHALL be remembered between poi sessions. Selecting another map SHALL set it back to Boss. Entering or leaving sortie mode, which changes the map shown but not the map selected, SHALL NOT change the selected map's target.
 
-The Target dropdown and the Night battle switch SHALL be shown only once the shown map's topology data is in the kcnav cache, which the map's shared enemy-data fetch writes (see battle-simulation). Until then, runs SHALL use the Boss target with night battle on, whatever target and switch are remembered, as when the panel had no target. The row SHALL appear without a new run or reopening the panel once the fetch has written the data. On a map's first run that happens during the run, while the row is not editable, so the first run of a map simulates the boss, and the user can change the target once its result is shown.
+The Target dropdown SHALL be shown only once the shown map's topology data is in the kcnav cache, which the map's shared enemy-data fetch writes (see battle-simulation). Until then, runs SHALL use the Boss target with the default node settings, whatever target is remembered, as when the panel had no target. The row SHALL appear without a new run or reopening the panel once the fetch has written the data. On a map's first run that happens during the run, while the row is not editable, so the first run of a map simulates the boss, and the user can change the target once its result is shown.
 
-Next to the Target dropdown, the panel SHALL have a **Night battle** switch that sets whether the fleet pursues night battle at the target. It SHALL be on by default and SHALL be remembered between poi sessions. It applies to every map. When the target is a night-battle node, where the battle is a night battle only (read from the map's topology data as the optimizer reads it: most edges into the node have color 11), the fleet fights a night battle there whatever the switch says. The switch SHALL then show on and SHALL NOT be editable, with a tooltip saying that the node is always a night battle, and runs SHALL count as pursuing night battle. The remembered switch SHALL stay as it was, and apply again once the target is another node.
+Whether the fleet pursues night battle is set per node, in the Node settings popup (see Node settings), not next to the Target dropdown.
 
-The Target dropdown and the Night battle switch SHALL NOT be editable while a run is in progress. In sortie mode they SHALL stay editable, and they show and set the sortie's target and switch (see Mid-sortie runs). In sortie mode the Target dropdown SHALL list only the nodes the fleet can still reach: those on the candidates narrowed to the sortie's path so far, from the node the fleet is at on. Nodes already passed, and nodes on routes the fleet can no longer take, are not listed.
+The Target dropdown SHALL NOT be editable while a run is in progress. In sortie mode it SHALL stay editable, and it shows and sets the sortie's target (see Mid-sortie runs). In sortie mode the Target dropdown SHALL list only the nodes the fleet can still reach: those on the candidates narrowed to the sortie's path so far, from the node the fleet is at on. Nodes already passed, and nodes on routes the fleet can no longer take, are not listed.
 
 #### Scenario: Target options after a prediction
 - **WHEN** the selected map is 2-5, whose boss is O, and the last prediction this session gave `1-C-D`, `1-C-E-G-L-N` and `1-C-E-G-L-O`
@@ -41,35 +41,35 @@ The Target dropdown and the Night battle switch SHALL NOT be editable while a ru
 
 #### Scenario: First time on a map
 - **WHEN** the user selects a map whose topology data is not in the kcnav cache yet, and a run starts
-- **THEN** no Target dropdown or Night battle switch is shown at first, and the run uses the Boss target with night battle on; once its result is shown, the user can pick a target and switch night battle
+- **THEN** no Target dropdown is shown at first, and the run uses the Boss target with the default node settings; once its result is shown, the user can pick a target
 
 #### Scenario: Remembered target restored
 - **WHEN** the user set the target to E on 2-5, closes poi, and opens it again
 - **THEN** with 2-5 selected the Target dropdown shows E, even before the map is predicted, as the map's topology data is still in the kcnav cache
 
 #### Scenario: Map change resets the target
-- **WHEN** the user sets the target to E and turns Night battle off on 2-5, and then selects 1-1
-- **THEN** the target is Boss and Night battle is on, and selecting 2-5 again keeps them so
+- **WHEN** the user sets the target to E on 2-5, and then selects 1-1
+- **THEN** the target is Boss, and selecting 2-5 again keeps it so
 
 #### Scenario: Target kept into a sortie
-- **WHEN** the selected map is 2-5 with the target E and Night battle off, and the selected fleet sorties to 2-5
-- **THEN** the target stays E and Night battle off in sortie mode, and after the fleet returns to port
+- **WHEN** the selected map is 2-5 with the target E, and the selected fleet sorties to 2-5
+- **THEN** the target stays E in sortie mode, and after the fleet returns to port
 
 #### Scenario: Target in a sortie on another map
-- **WHEN** the selected map is 1-5 with the target E and Night battle off, and the selected fleet sorties to 2-5
-- **THEN** sortie mode starts at Boss with Night battle on, and after the fleet returns to port 1-5's target is E and Night battle off again
+- **WHEN** the selected map is 1-5 with the target E, and the selected fleet sorties to 2-5
+- **THEN** sortie mode starts at Boss, and after the fleet returns to port 1-5's target is E again
 
 #### Scenario: Night-battle node target
 - **WHEN** the target on 5-3 is P, a night-battle node
-- **THEN** the Night battle switch shows on and can't be changed, hovering over it says that P is always a night battle, and the footer does not say "No night battle"; with the switch remembered off, picking a target that is not a night-battle node shows it off again
+- **THEN** the footer of a run does not say "No night battle", whatever P's night battle setting
 
 #### Scenario: Target options mid-sortie
 - **WHEN** the fleet is at E on 2-5 after passing C, and the last prediction gave `1-C-D`, `1-C-E-G-L-N` and `1-C-E-G-L-O`
 - **THEN** the Target dropdown offers Boss, E and L: C has been passed, D can no longer be reached, and G and N have no battle
 
 #### Scenario: Night battle switch restored
-- **WHEN** the user turned Night battle off, closes poi, and opens it again
-- **THEN** the switch is off
+- **WHEN** a user who had turned the Night battle switch off opens the panel after updating
+- **THEN** no Night battle switch is shown next to the Target dropdown; night battle is set per node in Node settings
 
 #### Scenario: Branch controls for 7-5
 - **WHEN** the user selects 7-5
@@ -178,7 +178,6 @@ The panel SHALL start a run by itself, as if Simulate were clicked, when any of 
 - the selected map;
 - a branch or phase choice of the selected map;
 - the target;
-- the Night battle switch;
 - the trial count;
 - the node the selected fleet is at during a sortie, when it advances to another one, with or without a battle there;
 - the current fuel, ammo or planes of a ship in the selected fleet: for example resupplying, supplies used in a sortie, or planes lost;
@@ -217,8 +216,8 @@ Apart from coming into view as above, opening the panel and the game data loadin
 - **THEN** a run starts with target E, and compass is not loaded again for it
 
 #### Scenario: Night battle switched
-- **WHEN** the selected fleet has every main slot filled and the user turns Night battle off
-- **THEN** a run starts without night battle at the target
+- **WHEN** the user sets 2-5's O to Never in Node settings and closes the popup, with Auto on
+- **THEN** one run starts at once without night battle at O, and no automatic run follows for the change
 
 #### Scenario: Fleet switched
 - **WHEN** the user switches from fleet 1 to fleet 2, and every ship in fleet 2 has all main slots filled
@@ -339,7 +338,7 @@ Apart from coming into view as above, opening the panel and the game data loadin
 ### Requirement: Mid-sortie runs
 While the selected fleet is on a sortie, a run SHALL simulate the sortie's map, with the branch and phase choices remembered for that map, whatever map is selected in the panel. This is sortie mode; otherwise the panel is in plan mode. A round tag with an icon, floating right on the controls' fleet row (see Narrow, top-down layout), SHALL name the mode: a grey Plan mode (規劃模式) tag with a map icon in plan mode, a red Sortie mode (出擊模式) tag with a flag icon in sortie mode. Hovering over the tag SHALL show a tooltip naming the mode and saying what it means: in plan mode, that runs use the fleet and map selected in the panel; in sortie mode, that runs use the sortie's fleet and map, following its progress. In sortie mode, the fleet and map selects SHALL be disabled, and the map select SHALL show the sortie's map, with that map's branch and phase controls. The selected map SHALL stay remembered unchanged.
 
-The sortie's target and Night battle switch SHALL be the panel's own when the sortie's map is the selected map: sortie mode uses them, and a change in sortie mode changes them. When the sortie's map is another map, the sortie SHALL have its own target and switch, starting at Boss and on, and changes in sortie mode SHALL apply to that sortie only. They SHALL NOT be remembered after the sortie ends, nor between poi sessions, and the selected map's target and switch SHALL be unchanged when the fleet is back in port. Once the fleet is back in port, the tag SHALL show Plan mode again, the selects SHALL be enabled and show the selected map again, and runs SHALL use it. The run SHALL narrow the routes to the sortie's path so far (see route-prediction) and simulate them from the node the fleet is at (see battle-simulation). When the fleets are combined and the combined fleet is selected, the sortie is the combined fleet's.
+The sortie's target SHALL be the panel's own when the sortie's map is the selected map: sortie mode uses it, and a change in sortie mode changes it. When the sortie's map is another map, the sortie SHALL have its own target, starting at Boss, and changes in sortie mode SHALL apply to that sortie only. It SHALL NOT be remembered after the sortie ends, nor between poi sessions, and the selected map's target SHALL be unchanged when the fleet is back in port. Node settings are the sortie map's own in either case (see Node settings). Once the fleet is back in port, the tag SHALL show Plan mode again, the selects SHALL be enabled and show the selected map again, and runs SHALL use it. The run SHALL narrow the routes to the sortie's path so far (see route-prediction) and simulate them from the node the fleet is at (see battle-simulation). When the fleets are combined and the combined fleet is selected, the sortie is the combined fleet's.
 
 While the selected map is the sortie's map, each branch control whose node the fleet has passed SHALL show the branch taken and SHALL NOT be changeable until the fleet is back in port. The choice remembered for the map SHALL NOT change. Branches not passed yet stay changeable, and runs use them.
 
@@ -527,16 +526,16 @@ The panel SHALL have a footer, fixed at the bottom of the plugin area, with the 
 - the run's margin of error: ±(98 / √trials)%, to one decimal place, which is the worst-case 95% interval for a single route's rate;
 - any branch and phase choices used, for example "F→J, H→I, O→P";
 - the target, when it is a node, for example "Target E";
-- "No night battle", when the Night battle switch was off.
+- "No night battle", when the fleet did not pursue night battle at the target (see Node settings).
 
-When the selected fleet, map, choices, target, Night battle switch, or trial count no longer match the run's, the footer's result line, summary, and route cards SHALL be dimmed. The footer's result line SHALL then end with a marker whose tooltip says that the settings have changed since this result. The marker SHALL NOT take a line of its own, so the result line keeps its place whether or not the result is stale.
+When the selected fleet, map, choices, target, node settings, or trial count no longer match the run's, the footer's result line, summary, and route cards SHALL be dimmed. The footer's result line SHALL then end with a marker whose tooltip says that the settings have changed since this result. The marker SHALL NOT take a line of its own, so the result line keeps its place whether or not the result is stale.
 
 #### Scenario: Footer after a run
-- **WHEN** fleet 1 finished a run on 7-5 with 2000 trials and choices F→J, H→I, O→P, target Boss, and Night battle on
+- **WHEN** fleet 1 finished a run on 7-5 with 2000 trials and choices F→J, H→I, O→P, target Boss, and the boss's 夜戰 at its default
 - **THEN** the footer shows 7-5, fleet 1, the snapshot time, 2000 trials, ±2.2%, and "F→J, H→I, O→P", and names neither a target nor night battle
 
 #### Scenario: Footer with a node target
-- **WHEN** fleet 1 finished a run on 2-5 with target E and Night battle off
+- **WHEN** fleet 1 finished a run on 2-5 with target E, whose 夜戰 is set to 絕不
 - **THEN** the footer also shows "Target E" and "No night battle"
 
 #### Scenario: Stale result
@@ -642,7 +641,7 @@ poi's plugin area is narrow and tall, so the panel SHALL use a single column tha
 The controls SHALL have these rows, each wrapping within the panel's width when it doesn't fit:
 1. on the left, the Fleet dropdown, the Map dropdown, and the Phase dropdown on maps that have one; the Plan mode / Sortie mode tag (see Mid-sortie runs) floating right. The Fleet dropdown's width SHALL be capped, a long fleet name cut short, so the row doesn't wrap for a long fleet name;
 2. on the left, the branch choices after an "Active branching" (能動分歧) label. The row SHALL be shown only on maps that have branch choices;
-3. on the left, the Target dropdown, the Night battle switch and the Formations button (see Node formations), which SHALL wrap together. The row SHALL be shown only once the shown map's topology is cached (see Inputs);
+3. on the left, the Target dropdown and the Node settings button (see Node settings), which SHALL wrap together. The row SHALL be shown only once the shown map's topology is cached (see Inputs);
 4. the action bar, holding:
    - on the left, the Reset button (see Selection reset), a minimal icon-only button, as it is rarely used. Hovering over it, also while it is disabled, SHALL show a tooltip naming it "Reset" and saying what it does;
    - floating right, the Auto switch (see Automatic runs). Hovering over it SHALL show a tooltip naming it "Auto", saying that it simulates when the fleet or the settings change, and that in sortie mode it simulates again at each node the fleet reaches, with the supplies used and the damage taken;
@@ -666,7 +665,7 @@ The panel SHALL fit 400px wide without horizontal scrolling.
 
 #### Scenario: Controls on 7-5
 - **WHEN** 7-5 is selected and its topology is cached
-- **THEN** the first row shows the Fleet and Map dropdowns with the Plan mode tag at the right end; the second row shows "Active branching" with the F →, H → and O → choices from the left; the third row shows the Target dropdown, the Night battle switch and the Formations button from the left; and the last row shows Reset at the left end and Auto and Simulate at the right end
+- **THEN** the first row shows the Fleet and Map dropdowns with the Plan mode tag at the right end; the second row shows "Active branching" with the F →, H → and O → choices from the left; the third row shows the Target dropdown and the Node settings button from the left; and the last row shows Reset at the left end and Auto and Simulate at the right end
 
 #### Scenario: Controls on a map without branch choices
 - **WHEN** 2-5, which has no branch choices, is selected and its topology is cached
@@ -746,7 +745,7 @@ The control bar SHALL have a Reset button that clears the fleet and map selectio
 
 Reset SHALL stop the panel's work: a run in progress is cancelled, a pending automatic run is dropped, and any result, error, or status on screen is cleared, as after Cancel. Reset SHALL stay usable while a run is in progress. It SHALL be disabled when neither a fleet nor a map is selected, and in sortie mode, where the fleet and map are locked to the sortie (see Sortie mode).
 
-Reset SHALL set the target back to Boss and turn the Night battle switch back on. It SHALL NOT change the trial count, the Auto switch, or the remembered branch and phase choices of any map.
+Reset SHALL set the target back to Boss. It SHALL NOT change the trial count, the Auto switch, the remembered branch and phase choices of any map, or any map's node settings.
 
 While the fleet or the map is not selected, unless the selected fleet is on a sortie:
 - Simulate SHALL be disabled.
@@ -797,8 +796,8 @@ A cleared selection SHALL be remembered between poi sessions like any other sele
 - **THEN** the settings page still shows Custom with 3000, the Auto switch is still off, and F → shows J
 
 #### Scenario: Target and night battle cleared
-- **WHEN** the target is H, the Night battle switch is off, and the user clicks Reset and then picks a fleet and 7-5
-- **THEN** the Target dropdown shows Boss and the Night battle switch is on
+- **WHEN** the target is H, and the user clicks Reset and then picks a fleet and 7-5
+- **THEN** the Target dropdown shows Boss
 
 #### Scenario: Cleared selection restored
 - **WHEN** the user clicks Reset, closes poi, and opens it again
@@ -812,15 +811,20 @@ A cleared selection SHALL be remembered between poi sessions like any other sele
 - **WHEN** fleet 1 is selected with no map, the Auto switch is on, and fleet 1 sorties to 2-5 and reaches C
 - **THEN** a run simulates 2-5 from C in sortie mode; once fleet 1 is back in port, the map select is empty again and no run starts
 
-### Requirement: Node formations
-Each battle node of a map SHALL have a player formation, used when the fleet fights there (see battle-simulation, Player formation per node). The formations are the six single-fleet ones: 単縦陣, 複縦陣, 輪形陣, 梯形陣, 単横陣 and 警戒陣. A node's formation is the user's **map formation** for that node when one is set, else its **default** formation (see battle-simulation, Player formation per node). Map formations SHALL be remembered per map and node between poi sessions. Reset SHALL NOT change them.
+### Requirement: Node settings
+Each battle node of a map SHALL have two settings, used when the fleet fights there:
+- a player **formation** (see battle-simulation, Player formation per node), one of the six single-fleet ones: 単縦陣, 複縦陣, 輪形陣, 梯形陣, 単横陣 and 警戒陣. A node's formation is the user's **map formation** for that node when one is set, else its **default** formation;
+- a **night battle** setting (夜戰; see battle-simulation, Night battle per node), one of **If target** (如果為目標點), the default, **Always** (總是) and **Never** (絕不). A node's setting is the user's choice for that node when one is set, else If target.
 
-The panel SHALL have a **Formations** button next to the Night battle switch, shown under the same condition as the Target dropdown: once the shown map's topology data is in the kcnav cache. Clicking it SHALL open the editor as a popup that lists every node of the shown map that has a battle (read from the topology data as for the Target dropdown), sorted by node letter, with the boss nodes marked. A predicted route is not needed. Each row SHALL show:
+The user's formations and night battle settings SHALL be remembered per map and node between poi sessions. Reset SHALL NOT change them. A night battle setting saved before this version, the single Night battle switch, SHALL NOT be carried over.
+
+The panel SHALL have a **Node settings** button (逐點設定) next to the Target dropdown, shown under the same condition as it: once the shown map's topology data is in the kcnav cache. Clicking it SHALL open the editor as a popup that lists every node of the shown map that has a battle (read from the topology data as for the Target dropdown), sorted by node letter, with the boss nodes marked. A predicted route is not needed. Each row SHALL show:
 - the node letter;
 - the reason for the node's default (normal battle, night battle, air battle, submarines only or submarines mixed);
-- a select holding the node's formation. Its first option is **Default**, naming the default formation, for example "Default (輪形陣)", followed by the six formations. A map formation is shown as set by the user.
+- a select holding the node's formation. Its first option is **Default**, naming the default formation, for example "Default (輪形陣)", followed by the six formations. A map formation is shown as set by the user;
+- a select holding the node's night battle setting: If target, Always and Never, with a choice other than If target shown as set by the user. At a night-battle node (see battle-simulation, Night battle per node) it SHALL show Always and SHALL NOT be changeable, with a tooltip saying that the node is always a night battle; at an air raid node it SHALL show Never and SHALL NOT be changeable, with a tooltip saying that an air raid has no night battle.
 
-In the editor, picking a formation sets the node's map formation, and picking Default clears it. Below the rows, a **Reset all to default** button SHALL clear the map formations of every node of the map, as picking Default on each would; it SHALL be disabled when no node of the map has one. These edits SHALL take effect when the popup closes, however it is closed, and not before: while it is open they start no run and do not dim the result as stale. If, on closing, any node's formation differs from when the popup opened, the panel SHALL save the map formations and start one run at once, as if Simulate were clicked, whatever the Auto switch says. No further run SHALL start for the same change after the auto-run delay. If nothing differs, closing SHALL start no run. When Simulate is disabled (see Selection reset), closing saves the changes but starts no run.
+In the editor, picking a formation sets the node's map formation, and picking Default clears it; picking a night battle setting sets it, If target being the default. Below the rows, a **Reset all to default** button SHALL set every node of the map back to its default formation and to If target; it SHALL be disabled when every node already is. These edits SHALL take effect when the popup closes, however it is closed, and not before: while it is open they start no run and do not dim the result as stale. If, on closing, any node's formation or night battle setting differs from when the popup opened, the panel SHALL save them and start one run at once, as if Simulate were clicked, whatever the Auto switch says. No further run SHALL start for the same change after the auto-run delay. If nothing differs, closing SHALL start no run. When Simulate is disabled (see Selection reset), closing saves the changes but starts no run.
 
 The editor SHALL grey out, and SHALL NOT let the user pick, any formation that the selected fleet's ship count does not allow. Under the game's rule, which the optimizer applies:
 - with fewer than 4 ships, only 単縦陣 is allowed;
@@ -828,10 +832,10 @@ The editor SHALL grey out, and SHALL NOT let the user pick, any formation that t
 
 When a node's default or its map formation is not allowed, its row SHALL keep the choice and also say which formation the fleet gets, for example "輪形陣 → 複縦陣 (4 ships)". A map formation SHALL NOT be cleared because the current fleet can't use it.
 
-The Formations button SHALL be disabled while a run is in progress. In sortie mode it SHALL stay editable, and it shows and sets the formations of the sortie's map. Before the shown map's topology data is in the kcnav cache, the button SHALL NOT be shown, and runs use the default formations.
+The Node settings button SHALL be disabled while a run is in progress. In sortie mode it SHALL stay editable, and it shows and sets the node settings of the sortie's map. Before the shown map's topology data is in the kcnav cache, the button SHALL NOT be shown, and runs use the default settings.
 
 #### Scenario: Editor for 5-2
-- **WHEN** the selected map is 5-2, its topology data is cached, and the user clicks Formations
+- **WHEN** the selected map is 5-2, its topology data is cached, and the user clicks Node settings
 - **THEN** the editor lists the 5-2 battle nodes. C and L show "Default (輪形陣)" with the reason air raid, I shows "Default (輪形陣)" with the reason air battle, D shows "Default (梯形陣)" with the reason submarines mixed (one of its enemy compositions has submarines), E shows "Default (単縦陣)" with the reason normal battle, and O is marked as the boss
 
 #### Scenario: Map formation remembered
@@ -868,8 +872,28 @@ The Formations button SHALL be disabled while a run is in progress. In sortie mo
 
 #### Scenario: Locked while running
 - **WHEN** a run is in progress
-- **THEN** the Formations button is disabled
+- **THEN** the Node settings button is disabled
 
 #### Scenario: Before the topology is cached
 - **WHEN** the user selects a map whose topology data is not in the kcnav cache yet
-- **THEN** no Formations button is shown
+- **THEN** no Node settings button is shown
+
+#### Scenario: Night battle defaults
+- **WHEN** the user opens Node settings on 5-3
+- **THEN** every row's 夜戰 shows If target, except P, a night-battle node, which shows Always and can't be changed
+
+#### Scenario: Air raid has no night battle
+- **WHEN** the user opens Node settings on 5-2
+- **THEN** C and L, air raid nodes, show Never for 夜戰 and can't be changed
+
+#### Scenario: Night battle before the target
+- **WHEN** the target on 2-5 is the boss O, and the user sets E's 夜戰 to Always and closes the popup
+- **THEN** a run starts that pursues night battle at E and at O
+
+#### Scenario: Night battle remembered per map
+- **WHEN** the user sets 2-5's O to Never, closes poi and opens it again
+- **THEN** O on 2-5 still shows Never, and O on another map is not affected
+
+#### Scenario: Old switch not carried over
+- **WHEN** a user who had the Night battle switch off updates to this version
+- **THEN** every node shows If target, and runs pursue night battle at the target

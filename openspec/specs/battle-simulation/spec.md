@@ -9,7 +9,7 @@ Runs the optimizer's Monte Carlo battle simulation for each route the fleet can 
 ### Requirement: Simulate every candidate that reaches the target
 For each route candidate that reaches the target (see route-prediction), the system SHALL run one optimizer `simulate` with the fleet snapshot, the map, and that candidate's nodes. The last node is the target. Candidates that do not reach the target SHALL NOT be simulated, and they count as "target not reached". Mid-sortie, a candidate that has passed the target (see route-prediction) SHALL NOT be simulated either: it counts as reaching the target in all its trials, and its rank and flagship-sunk rates are unknown, so the overall rank and flagship-sunk rates are reported as undefined.
 
-The fleet SHALL pursue night battle at the target node when the Night battle switch is on, and SHALL NOT when it is off. This applies to the Boss target as well as to a node target. A night-battle node is the exception: its battle is a night battle only, so the switch has no effect there.
+Whether the fleet pursues night battle at each node, the target included, SHALL follow the node's night battle setting (see Night battle per node). This applies to the Boss target as well as to a node target.
 
 With a node target, the target node SHALL have a battle, as read from the map's topology data (see simulator-panel, Inputs). When it has none (for example a remembered target on a map whose data has changed), the run SHALL fail before any simulation with an error that names the node and says to pick a battle node.
 
@@ -26,7 +26,7 @@ With a node target, the target node SHALL have a battle, as read from the map's 
 - **THEN** no simulation runs; the chance of reaching the target is 1, and the rank and flagship-sunk rates are undefined
 
 #### Scenario: Night battle off
-- **WHEN** the Night battle switch is off
+- **WHEN** the target's night battle setting is Never
 - **THEN** each simulation runs without night battle at the target node
 
 #### Scenario: Target without a battle
@@ -274,7 +274,7 @@ Each simulation SHALL set the player formation at every node with a battle on th
 A node's **default** formation SHALL follow the first rule that applies, in this order:
 1. **Submarines only**: every enemy composition at the node, in the node's enemy data in the kcnav cache, is a single fleet made only of submarines → 単横陣.
 2. **Submarines mixed**: at least one enemy composition at the node has a submarine → 梯形陣.
-3. **Night battle**: the node is a night-battle node (most edges into it have color 11 in the map's topology data, as for the Night battle switch) → 梯形陣.
+3. **Night battle**: the node is a night-battle node (most edges into it have color 11 in the map's topology data; see Night battle per node) → 梯形陣.
 4. **Air battle**: most edges into the node have color 7 (air battle) or 10 (air raid), counted as for night-battle nodes → 輪形陣.
 5. **Normal battle**: any other node → 単縦陣.
 
@@ -327,3 +327,35 @@ The defaults are for a single fleet. Formations of a combined fleet are not cove
 #### Scenario: Enemy data fetched during the run
 - **WHEN** the first run of 1-5 starts before the map's enemy data is in the kcnav cache
 - **THEN** the simulations, which wait for the fetch, use 単横陣 at the submarine-only nodes
+
+### Requirement: Night battle per node
+Each simulation SHALL tell the optimizer, for every node with a battle on the simulated part of its route, whether the fleet pursues night battle there, from the node's night battle setting (see simulator-panel, Node settings):
+- **If target**, the default: night battle only when the node is the run's target;
+- **Always**: night battle;
+- **Never**: no night battle.
+
+Two kinds of node override the setting, read from the map's topology data as the optimizer reads it (the majority color of the edges into the node):
+- a **night-battle node** (color 11) has a night battle only, so the fleet fights one there whatever the setting;
+- an **air raid node** (color 10) has no night phase, so no night battle is sent for it.
+
+A run SHALL use the settings in effect when it starts. Before the map's topology data is in the kcnav cache, only the target's night battle SHALL be sent, as If target: night battle at the boss.
+
+#### Scenario: Default at the target only
+- **WHEN** a route on 2-5 is C-E-G-L-O with the Boss target O and no node set
+- **THEN** the simulation pursues night battle at O and not at C, E or L
+
+#### Scenario: Always before the target
+- **WHEN** 2-5's E is set to Always and the target is O
+- **THEN** the simulation pursues night battle at E and at O
+
+#### Scenario: Never at the target
+- **WHEN** 2-5's O is set to Never and the target is O
+- **THEN** the simulation runs without night battle at O
+
+#### Scenario: Night-battle node
+- **WHEN** a route on 5-3 passes P, a night-battle node, set to Never
+- **THEN** the simulation still fights a night battle at P
+
+#### Scenario: Air raid node
+- **WHEN** a route on 5-2 passes C, an air raid node, as its target
+- **THEN** no night battle is sent for C
