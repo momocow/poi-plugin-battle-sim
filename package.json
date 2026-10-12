@@ -1,6 +1,6 @@
 {
   "name": "poi-plugin-battle-sim",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Simulate a fleet's odds on a map: routes from compass, battles from kancolle-fleet-optimizer",
   "main": "index.ts",
   "files": [
@@ -30,13 +30,18 @@
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "fetch-optimizer": "node scripts/fetch-optimizer.mjs",
+    "release": "node scripts/release.mjs",
     "prepublishOnly": "npm run fetch-optimizer"
   },
   "dependencies": {
     "lz-string": "^1.5.0"
   },
   "optionalDependencies": {
-    "poi-plugin-battle-sim-darwin-arm64": "0.3.0"
+    "poi-plugin-battle-sim-darwin-arm64": "0.3.1",
+    "poi-plugin-battle-sim-darwin-x64": "0.3.1",
+    "poi-plugin-battle-sim-linux-x64": "0.3.1",
+    "poi-plugin-battle-sim-linux-arm64": "0.3.1",
+    "poi-plugin-battle-sim-win32-x64": "0.3.1"
   },
   "devDependencies": {
     "@types/node": "^24.10.1",
