@@ -12,10 +12,10 @@
  * raids share `eventId` 4 with normal battles. The optimizer rejects tactics on
  * a node without a battle, so the plugin must not send one as a target.
  *
- * Night-battle nodes copy its colour vote (`node_colors`): the majority
- * `colorNo` over the edges into the node, spawn edges and invalid values not
- * counted, ties to the smaller code; 11 means the battle there is a night
- * battle only, so `do_night_battle` has no effect.
+ * Node kinds copy its colour vote (`node_colors`): the majority `colorNo`
+ * over the edges into the node, spawn edges and invalid values not counted,
+ * ties to the smaller code. 11 means the battle there is a night battle only,
+ * so `do_night_battle` has no effect; 7 is an air battle, 10 an air raid and 5 a boss.
  */
 import { readFileSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
@@ -71,10 +71,13 @@ export function battleNodes(route: RouteTable): Set<string> {
   return new Set([...nodes].filter((letter) => !maelstrom.has(letter) && pass.get(letter) !== true))
 }
 
-const NIGHT_BATTLE_COLOR = 11
+export const BOSS_COLOR = 5
+export const NIGHT_BATTLE_COLOR = 11
+/** 航空戦 and 空襲戦 (air raid). */
+export const AIR_BATTLE_COLORS = [7, 10]
 
-/** The letters of the night-battle nodes, where the battle is a night battle whatever `do_night_battle` says. */
-export function nightOnlyNodes(route: RouteTable): Set<string> {
+/** Per node, the majority colour of the edges into it, as the optimizer votes (`node_colors`). */
+export function nodeColors(route: RouteTable): Map<string, number> {
   const votes = new Map<string, number[]>()
   for (const edge of Object.values(route)) {
     if (!Array.isArray(edge)) continue
@@ -88,5 +91,10 @@ export function nightOnlyNodes(route: RouteTable): Set<string> {
     for (const c of colors) tally.set(c, (tally.get(c) ?? 0) + 1)
     return [...tally].sort(([a, na], [b, nb]) => nb - na || a - b)[0]![0]
   }
-  return new Set([...votes].filter(([, colors]) => majority(colors) === NIGHT_BATTLE_COLOR).map(([letter]) => letter))
+  return new Map([...votes].map(([letter, colors]) => [letter, majority(colors)]))
+}
+
+/** The letters of the night-battle nodes, where the battle is a night battle whatever `do_night_battle` says. */
+export function nightOnlyNodes(route: RouteTable): Set<string> {
+  return new Set([...nodeColors(route)].filter(([, color]) => color === NIGHT_BATTLE_COLOR).map(([letter]) => letter))
 }

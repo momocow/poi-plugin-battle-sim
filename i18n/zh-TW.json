@@ -113,5 +113,19 @@
   "Downloads the enemy data of every normal map again from kcnav, one map at a time": "從 kcnav 逐一重新下載所有常設海域的敵方資料",
   "Next {map}": "下一個 {map}",
   "{count} maps not fetched": "{count} 個海域未下載",
-  "Stopped at {map}; kcnav may be refusing requests for now": "於 {map} 停止；kcnav 可能暫時拒絕請求"
+  "Stopped at {map}; kcnav may be refusing requests for now": "於 {map} 停止；kcnav 可能暫時拒絕請求",
+  "Formations": "陣形",
+  "Default ({formation})": "預設（{formation}）",
+  "{formation} → {gets} ({count} ships)": "{formation} → {gets}（{count} 艦）",
+  "Line ahead": "單縱陣",
+  "Double line": "複縱陣",
+  "Diamond": "輪型陣",
+  "Echelon": "梯形陣",
+  "Line abreast": "單橫陣",
+  "Vanguard": "警戒陣",
+  "Submarines only": "全潛艇",
+  "Submarines mixed": "混有潛艇",
+  "Air battle": "航空戰",
+  "Normal battle": "一般戰鬥",
+  "Reset all to default": "全部恢復預設"
 }

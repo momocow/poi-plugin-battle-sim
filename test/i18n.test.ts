@@ -8,7 +8,7 @@ const sources = (dir: string): string[] =>
     e.isDirectory() ? sources(join(dir, e.name)) : /\.tsx?$/.test(e.name) ? [join(dir, e.name)] : [],
   )
 
-/** Every string the panel passes through `t()`, the error summaries, and the phase labels. */
+/** Every string the panel passes through `t()`, the error summaries, the phase labels, and the formation names and reasons. */
 function usedKeys(): Set<string> {
   const keys = new Set<string>(['Battle Sim', "Simulate your fleet's odds on a map"])
   for (const file of sources('src')) {
@@ -16,6 +16,8 @@ function usedKeys(): Set<string> {
     for (const m of text.matchAll(/\bt\('((?:[^'\\]|\\.)*)'/g)) keys.add(m[1]!)
     if (file.endsWith('ErrorView.tsx')) for (const m of text.matchAll(/^\s+[A-Z_]+: '([^']*)',/gm)) keys.add(m[1]!)
     if (file.endsWith('choices.ts')) for (const m of text.matchAll(/label: '([^']*)'/g)) keys.add(m[1]!)
+    // Formation names and default reasons, looked up from records.
+    if (file.endsWith('FormationEditor.tsx')) for (const m of text.matchAll(/^\s+\w+: '([^']*)',/gm)) keys.add(m[1]!)
   }
   return keys
 }

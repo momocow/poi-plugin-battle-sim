@@ -9,6 +9,7 @@
 import type { SimError } from '../errors'
 import type { FleetSnapshot } from '../fleet/types'
 import type { SimulateDiag } from '../optimizer/run'
+import type { Formation } from '../routes/formation'
 import type { ChoiceValues } from '../routes/choices'
 import type { RouteCandidate } from '../routes/predict'
 
@@ -23,6 +24,8 @@ export interface RunInput {
   target?: string
   /** Pursue night battle at the target. */
   nightBattle: boolean
+  /** The user's formations for the map, by node letter; other battle nodes use their default. */
+  formations: Record<string, Formation>
   /** Set while the fleet is on a sortie of `map`: the cells visited, the current one last. */
   sortie?: { cells: number[] }
 }

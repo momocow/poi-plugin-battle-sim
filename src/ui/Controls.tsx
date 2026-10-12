@@ -11,10 +11,11 @@
  * The target and switch show once the map's topology is cached (a map's first
  * run fetches it), offering Boss and the predicted battle nodes; they stay
  * editable in sortie mode. At a night-battle target the Night battle switch
- * shows on and is locked, with a tooltip saying why.
+ * shows on and is locked, with a tooltip saying why. The Formations button
+ * follows them, under the same condition.
  */
 import { Button, HTMLSelect, Switch, Tag, Tooltip } from '@blueprintjs/core'
-import React from 'react'
+import React, { type ReactNode } from 'react'
 
 import { gameName, t } from '../i18n'
 import { choicesFor, type ChoiceValues, type MapChoices } from '../routes/choices'
@@ -42,6 +43,8 @@ export interface ControlsProps {
     /** The target is a night-battle node: always a night battle, so the switch shows on and is locked. */
     nightOnly: boolean
   }
+  /** The Formations button, after the Night battle switch; shown with the target row. */
+  formations?: ReactNode
   /** Branches the fleet has already passed in a sortie of this map: shown as taken, and locked. */
   decided: ChoiceValues
   /** The selected fleet is on a sortie: runs follow it, and the fleet and map are locked. */
@@ -198,6 +201,7 @@ export function Controls(p: ControlsProps) {
           {p.target && (
             <TargetControls {...p.target} running={p.running} onTarget={p.onTarget} onNightBattle={p.onNightBattle} />
           )}
+          {p.target && p.formations}
         </div>
       )}
       <div className="battle-sim-control-row battle-sim-actions">

@@ -113,5 +113,19 @@
   "Downloads the enemy data of every normal map again from kcnav, one map at a time": "Downloads the enemy data of every normal map again from kcnav, one map at a time",
   "Next {map}": "Next {map}",
   "{count} maps not fetched": "{count} maps not fetched",
-  "Stopped at {map}; kcnav may be refusing requests for now": "Stopped at {map}; kcnav may be refusing requests for now"
+  "Stopped at {map}; kcnav may be refusing requests for now": "Stopped at {map}; kcnav may be refusing requests for now",
+  "Formations": "Formations",
+  "Default ({formation})": "Default ({formation})",
+  "{formation} → {gets} ({count} ships)": "{formation} → {gets} ({count} ships)",
+  "Line ahead": "Line ahead",
+  "Double line": "Double line",
+  "Diamond": "Diamond",
+  "Echelon": "Echelon",
+  "Line abreast": "Line abreast",
+  "Vanguard": "Vanguard",
+  "Submarines only": "Submarines only",
+  "Submarines mixed": "Submarines mixed",
+  "Air battle": "Air battle",
+  "Normal battle": "Normal battle",
+  "Reset all to default": "Reset all to default"
 }

@@ -113,5 +113,19 @@
   "Downloads the enemy data of every normal map again from kcnav, one map at a time": "すべての通常海域の敵データを kcnav から 1 海域ずつ再取得します",
   "Next {map}": "次の海域 {map}",
   "{count} maps not fetched": "{count} 海域が未取得です",
-  "Stopped at {map}; kcnav may be refusing requests for now": "{map} で停止しました。kcnav が一時的にリクエストを拒否している可能性があります"
+  "Stopped at {map}; kcnav may be refusing requests for now": "{map} で停止しました。kcnav が一時的にリクエストを拒否している可能性があります",
+  "Formations": "陣形",
+  "Default ({formation})": "デフォルト（{formation}）",
+  "{formation} → {gets} ({count} ships)": "{formation} → {gets}（{count}隻）",
+  "Line ahead": "単縦陣",
+  "Double line": "複縦陣",
+  "Diamond": "輪形陣",
+  "Echelon": "梯形陣",
+  "Line abreast": "単横陣",
+  "Vanguard": "警戒陣",
+  "Submarines only": "潜水艦のみ",
+  "Submarines mixed": "潜水艦混在",
+  "Air battle": "航空戦",
+  "Normal battle": "通常戦闘",
+  "Reset all to default": "すべてデフォルトに戻す"
 }

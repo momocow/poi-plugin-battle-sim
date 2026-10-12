@@ -12,6 +12,7 @@ describe('simulateToml', () => {
     trials: 100,
     nightBattle: true,
     perNode: false,
+    formations: {},
   }
 
   it('writes special_attacks_fired under [fleet] when some fired', () => {
@@ -34,6 +35,25 @@ describe('simulateToml', () => {
     const toml = simulateToml({ ...input, nodes: ['G', 'L'], perNode: true })
     expect(toml).toContain('[tactics.nodes.L]\ndo_night_battle = true\n')
     expect(toml).toContain('fields = ["ranks", "ranks-per-node", "node-outcomes"]\n')
+  })
+
+  it('writes each battle node its formation, the target with night battle too', () => {
+    const toml = simulateToml({ ...input, formations: { G: 'Diamond', O: 'Echelon' } })
+    expect(toml).toContain(
+      '[tactics.nodes.G]\nformation = "Diamond"\n\n[tactics.nodes.O]\nformation = "Echelon"\ndo_night_battle = true\n\n[run]',
+    )
+    expect(toml).not.toContain('[tactics.nodes.L]')
+  })
+
+  it('still writes the target its night battle when it has no formation', () => {
+    expect(simulateToml({ ...input, formations: { L: 'LineAbreast' } })).toContain(
+      '[tactics.nodes.L]\nformation = "LineAbreast"\n\n[tactics.nodes.O]\ndo_night_battle = true\n',
+    )
+  })
+
+  it('writes one table for a node a route passes twice', () => {
+    const toml = simulateToml({ ...input, nodes: ['G', 'L', 'G', 'O'], formations: { G: 'Vanguard' } })
+    expect(toml.match(/\[tactics\.nodes\.G\]/g)).toHaveLength(1)
   })
 
   it('leaves it out when none fired', () => {

@@ -32,8 +32,13 @@
  * runs use Boss and night battle, as before targets; the topology also tells
  * which predicted nodes have a battle, the only ones offered.
  *
+ * Each battle node of the shown map has a formation: the user's, set in the
+ * Formations popup and remembered per map, else its default. Closing the
+ * popup after a change saves it and starts a run at once, as Simulate does,
+ * whatever the automatic-run switch says; no automatic run follows for it.
+ *
  * Reset clears the fleet and map: it stops any run, drops a pending automatic
- * run and clears the result, and until both are picked again nothing runs,
+ * run and clears the result (formations stay), and until both are picked again nothing runs,
  * by hand or by itself. A selected fleet that sorties still runs in sortie
  * mode, which never uses the selected map.
  */
@@ -51,10 +56,12 @@ import { t } from '../i18n'
 import { kcnavDir } from '../optimizer/run'
 import { workDir } from '../paths'
 import { getStoreState } from '../poi'
+import { mapFormations, type Formation } from '../routes/formation'
 import { cellLettersNow, sortieOf, takenBranches, type Sortie } from '../routes/sortie'
-import { battleNodes, nightOnlyNodes, topologyNow, type RouteTable } from '../routes/topology'
+import { battleNodes, BOSS_COLOR, nightOnlyNodes, nodeColors, topologyNow, type RouteTable } from '../routes/topology'
 import { Controls } from './Controls'
 import { errorSummary, ErrorView } from './ErrorView'
+import { FormationsButton } from './FormationEditor'
 import { setShownFleet } from './focus'
 import {
   choicesForMap,
@@ -194,10 +201,19 @@ export function Panel() {
             trials,
             target,
             nightBattle,
+            formations: inputs.formations[sortie.map] ?? {},
             sortie: { cells: sortie.cells },
           }
         : inputs.map !== null
-          ? { fleetId, map: inputs.map, choices: choicesForMap(inputs, inputs.map), trials, target, nightBattle }
+          ? {
+              fleetId,
+              map: inputs.map,
+              choices: choicesForMap(inputs, inputs.map),
+              trials,
+              target,
+              nightBattle,
+              formations: inputs.formations[inputs.map] ?? {},
+            }
           : undefined
   const simulate = () => current && start(current)
 
@@ -224,6 +240,37 @@ export function Panel() {
     lastAutoKey.current = autoKey
     if (changed && current && inputs.auto && loadout?.complete) scheduleAuto('change')
   }, [autoKey, inputs.auto])
+
+  // The shown map's battle nodes for the Formations popup. Recomputed as the run moves on too, since a map's first
+  // run fetches the enemy data the submarine rules read.
+  const savedFormations = shownMap !== null ? inputs.formations[shownMap] : undefined
+  const nodes = useMemo(
+    () =>
+      shownMap !== null && topology
+        ? mapFormations({
+            kcnavDir: kcnavDir(workDir()),
+            map: shownMap,
+            topology,
+            $ships: live.const?.$ships,
+            user: savedFormations ?? {},
+          })
+        : undefined,
+    [shownMap, topology, live.const?.$ships, savedFormations, run.phase],
+  )
+  const shipCount =
+    fleetId !== null ? live.info?.fleets?.find((f) => f.api_id === fleetId)?.api_ship.filter((id) => id > 0).length : undefined
+  // Saved, then run at once with them; the key is recorded first, so the auto-run effect sees no change to run for.
+  const applyFormations = (formations: Record<string, Formation>) => {
+    if (shownMap === null) return
+    const { [shownMap]: _, ...others } = inputs.formations
+    update({ formations: Object.keys(formations).length > 0 ? { ...others, [shownMap]: formations } : others })
+    devLog('formations.applied', { map: shownMap, formations })
+    if (!current) return
+    const input = { ...current, formations }
+    clearTimeout(autoTimer.current)
+    if (loadout) lastAutoKey.current = JSON.stringify([loadout.key, input])
+    start(input)
+  }
 
   // What poi's auto switch compares a game response with (see focus.ts).
   useEffect(() => {
@@ -298,6 +345,18 @@ export function Panel() {
                 nightOnly,
               }
             : undefined
+        }
+        formations={
+          shownMap !== null && nodes && (
+            <FormationsButton
+              nodes={nodes}
+              saved={savedFormations ?? {}}
+              boss={[...nodeColors(topology!)].filter(([, color]) => color === BOSS_COLOR).map(([letter]) => letter)}
+              shipCount={shipCount}
+              disabled={running}
+              onClose={applyFormations}
+            />
+          )
         }
         decided={taken}
         sortieMode={sortie !== undefined}

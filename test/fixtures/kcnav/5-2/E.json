@@ -1,0 +1,107 @@
+{
+  "fetched_at": "2026-10-10T08:45:00Z",
+  "source": "kcnav",
+  "kcnav_query": {
+    "map": "5-2",
+    "node": "E",
+    "start": "2026-07-12",
+    "end": "2026-10-10",
+    "difficulty": null,
+    "cleared": null,
+    "min_gauge": null,
+    "max_gauge": null,
+    "min_gauge_level": null,
+    "max_gauge_level": null,
+    "min_hq_level": null,
+    "max_hq_level": null
+  },
+  "candidates": [
+    {
+      "enemy_ids": [
+        1579,
+        1543,
+        1555,
+        1592,
+        1576,
+        1576
+      ],
+      "enemy_formation": "Diamond",
+      "weight": 543.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1579,
+        1543,
+        1519,
+        1592,
+        1576,
+        1576
+      ],
+      "enemy_formation": "Diamond",
+      "weight": 293.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1579,
+        1542,
+        1519,
+        1592,
+        1576,
+        1576
+      ],
+      "enemy_formation": "Diamond",
+      "weight": 247.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1579,
+        1542,
+        1519,
+        1592,
+        1576,
+        1576
+      ],
+      "enemy_formation": "DoubleLine",
+      "weight": 139.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1579,
+        1543,
+        1555,
+        1592,
+        1576,
+        1576
+      ],
+      "enemy_formation": "DoubleLine",
+      "weight": 135.0,
+      "engagement": null,
+      "ships_escort": null
+    },
+    {
+      "enemy_ids": [
+        1579,
+        1543,
+        1519,
+        1592,
+        1576,
+        1576
+      ],
+      "enemy_formation": "DoubleLine",
+      "weight": 134.0,
+      "engagement": null,
+      "ships_escort": null
+    }
+  ],
+  "total_samples": 1491,
+  "label": "auto-fetch",
+  "samples_without_gauge_filter": 1491
+}

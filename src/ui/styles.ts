@@ -75,6 +75,14 @@ export const PANEL_CSS = `
 .battle-sim-fleet-summary { display: flex; flex-wrap: wrap; gap: 2px 12px; margin: 2px 0; }
 .battle-sim-hover { text-decoration: underline dotted; cursor: help; }
 .battle-sim-popover { padding: 8px 10px; }
+/* The Formations popup: one row per battle node, scrolling on large maps; a node the user set is in bold. */
+.battle-sim-formations { max-height: 60vh; overflow-y: auto; padding: 6px 8px; font-size: 12px; }
+.battle-sim-formations table { border-collapse: collapse; margin-bottom: 4px; }
+.battle-sim-formations th, .battle-sim-formations td { padding: 2px 6px; text-align: left; vertical-align: middle; white-space: nowrap; }
+.battle-sim-formations .bp6-html-select select { height: 24px; line-height: 24px; }
+.battle-sim-formations .bp6-html-select .bp6-icon { top: 4px; }
+.battle-sim-formation-set th, .battle-sim-formation-set select { font-weight: bold; }
+.battle-sim-formation-note { font-size: 11px; color: #d9822b; }
 /* One grid for all ships, so name, HP and equipment line up from row to row. */
 .battle-sim-ships { display: grid; grid-template-columns: minmax(80px, 1fr) minmax(80px, 1fr) 30px auto; align-items: end; gap: 4px 10px; margin-top: 4px; }
 .battle-sim-ship { display: contents; }

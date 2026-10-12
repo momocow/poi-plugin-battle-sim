@@ -5,8 +5,9 @@
  * are narrowed to the sortie's path so far and simulated from the node the
  * fleet is at, with the special attacks already fired. The target applies
  * after narrowing: a node target cuts the routes there and reads the rates at
- * that node; one without a battle fails before any simulation. Each step also goes to the developer log
- * when it is on.
+ * that node; one without a battle fails before any simulation. Once the map's enemy data is in, each
+ * battle node gets its formation: the user's for the node, else its default (see routes/formation). Each
+ * step also goes to the developer log when it is on.
  *
  * The optimizer is resolved before compass is loaded, so a missing or corrupt
  * binary fails before any network use. The map's shared kcnav fetch starts
@@ -31,6 +32,7 @@ import { atNodeTarget, Cancelled, checkRoute, kcnavDir, runSimulate } from '../o
 import { findPackageRoot, workDir } from '../paths'
 import { applyTarget, bossLettersFor, loadBossLetters } from '../routes/boss'
 import { runCompass } from '../routes/compass'
+import { mapFormations, type Formation } from '../routes/formation'
 import { createPredictor, type PredictedRoute } from '../routes/predict'
 import { cellLetters, narrowToPath, takenBranches } from '../routes/sortie'
 import { battleNodes, readTopology } from '../routes/topology'
@@ -164,6 +166,19 @@ export async function runSimulation(
       await untilAborted(enemyData, signal)
       dispatch({ type: 'enemyDataReady' })
     }
+    // Read after the enemy data, for the submarine rules. Without a topology no node is known to have a battle,
+    // so none gets a formation and the optimizer uses its own default.
+    const topology = await readTopology(kcnavDir(cwd), input.map).catch(() => undefined)
+    if (signal.aborted) throw new Cancelled()
+    const formations = topology
+      ? mapFormations({
+          kcnavDir: kcnavDir(cwd),
+          map: input.map,
+          topology,
+          $ships: state?.const?.$ships,
+          user: input.formations,
+        })
+      : {}
 
     await simulateRoutes({
       routes: indexes,
@@ -171,6 +186,9 @@ export async function runSimulation(
       run: async (rowIndex, _i, routeSignal) => {
         const row = rows[rowIndex]!
         const nodes = row.nodes.slice(row.from ?? 1)
+        const routeFormations: Record<string, Formation> = Object.fromEntries(
+          nodes.filter((node) => node in formations).map((node) => [node, formations[node]!.formation]),
+        )
         const toml = simulateToml({
           snapshot,
           map: input.map,
@@ -179,8 +197,20 @@ export async function runSimulation(
           nightBattle: input.nightBattle,
           perNode: input.target !== undefined,
           specialAttacksFired: specials?.observed ? specials.fired : undefined,
+          formations: routeFormations,
         })
-        devLog('route.config', { row: rowIndex, nodes: nodes.join('-'), toml })
+        devLog('route.config', {
+          row: rowIndex,
+          nodes: nodes.join('-'),
+          // Where each formation comes from: the user, or the default's reason.
+          formations: Object.fromEntries(
+            Object.keys(routeFormations).map((node) => {
+              const f = formations[node]!
+              return [node, `${f.formation} (${f.isDefault ? f.reason : 'user'})`]
+            }),
+          ),
+          toml,
+        })
         try {
           const checked = checkRoute(
             await runSimulate({
