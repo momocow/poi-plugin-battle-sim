@@ -14,17 +14,42 @@ export const PANEL_CSS = `
 .battle-sim-section { flex: none; padding: 6px 8px; border-bottom: 1px solid rgba(128, 128, 128, 0.3); }
 .battle-sim-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-x: hidden; display: flex; flex-direction: column; gap: 10px; padding: 8px; }
 .battle-sim-muted { opacity: 0.65; }
-.battle-sim-controls, .battle-sim-control-row { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; }
-.battle-sim-controls { flex: none; flex-direction: column; align-items: stretch; padding: 8px 8px 6px; border-bottom: 1px solid rgba(128, 128, 128, 0.3); }
+/*
+ * The controls: wrapping rows — fleet, map and phase; then routes, target and
+ * night battle, when the map has any; then the action bar, Reset at its left
+ * and the run controls at its right. The mode tag and the run controls float
+ * right; everything else keeps to the left.
+ */
+.battle-sim-controls { flex: none; display: flex; flex-direction: column; gap: 6px; padding: 8px 8px 6px; border-bottom: 1px solid rgba(128, 128, 128, 0.3); }
+.battle-sim-control-row { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; }
+/* Label text centered on its select, also inside a tooltip's wrapper, so "路線" and "F →" line up. */
+.battle-sim-control-row > .bp6-popover-target, .battle-sim-target > .bp6-popover-target, .battle-sim-run > .bp6-popover-target { display: flex; align-items: center; }
+/* Target and Night battle wrap as one, so neither is left alone on a line. */
+.battle-sim-target { display: inline-flex; flex-wrap: nowrap; align-items: center; gap: 10px; }
+.battle-sim-controls label:not(.bp6-control) { display: inline-flex; align-items: center; gap: 4px; }
+/* The controls' buttons and dropdowns are 24px, 20% under Blueprint's 30px, as Blueprint's small size. */
+.battle-sim-controls .bp6-button { min-height: 24px; height: 24px; padding-top: 0; padding-bottom: 0; }
+.battle-sim-controls .bp6-html-select select { height: 24px; line-height: 24px; }
+.battle-sim-controls .bp6-html-select .bp6-icon { top: 4px; }
+.battle-sim-float-right { margin-left: auto; }
+.battle-sim-actions { flex-wrap: nowrap; }
+.battle-sim-run { display: flex; align-items: center; gap: 8px; }
+.battle-sim-reset .bp6-button:disabled { pointer-events: none; }
+.battle-sim-run-label { display: grid; }
+.battle-sim-run-label > * { grid-area: 1 / 1; }
+.battle-sim-hidden { visibility: hidden; }
 .battle-sim-auto { margin: 0; }
 /* A branch already taken in a sortie: its tooltip's target carries the not-allowed cursor. */
 .battle-sim-decided { cursor: not-allowed; }
 .battle-sim-decided select, .battle-sim-decided .bp6-control { pointer-events: none; }
-/* The mode tag (plan or sortie): pushed to the right end of the first control row. */
-.battle-sim-mode { margin-left: auto; font-weight: bold; }
+/* The mode tag (plan or sortie), floating right on the fleet row. */
+.battle-sim-mode { font-weight: bold; }
 /* Fixed, so the long map names in the list do not widen the closed select. */
 .battle-sim-map-select { width: 5.5em; }
 .battle-sim-map-select select { min-width: 0; }
+/* Capped, so a long fleet name does not push the mode tag onto a line of its own. */
+.battle-sim-fleet-select { max-width: 9em; }
+.battle-sim-fleet-select select { min-width: 0; width: 100%; text-overflow: ellipsis; }
 /*
  * The status sits at the right of the footer, the result line taking the rest;
  * the normal-map fetch marker, when there is one, comes last, at the far right.

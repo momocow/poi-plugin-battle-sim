@@ -1,14 +1,15 @@
 /**
- * Fleet, map, target and night battle, branch and phase choices, the
- * automatic-run switch, the Simulate / Cancel button and Reset, with the
- * panel's mode as a tag at the right of the first row: plan mode in port,
- * sortie mode while the selected
- * fleet is on a sortie. In sortie mode the fleet and map can't be changed (the
- * map shown is the sortie's) and Reset is off, and a branch the fleet has
- * already passed shows the branch taken and can't be changed either. After
- * Reset, the fleet and map selects show an empty choice that can't be picked.
- * The target row shows once the map's topology is cached (a map's first run
- * fetches it), offering Boss and the predicted battle nodes; it stays
+ * The panel's controls, in rows. The fleet, the map and its phase, with the
+ * panel's mode as a tag floating right — plan mode in port, sortie mode while
+ * the selected fleet is on a sortie. Then, on maps that have them, the branch
+ * choices labeled Route, the target and the Night battle switch, wrapping as
+ * needed. Then the action bar: Reset, an icon, at the left; the automatic-run
+ * switch and Simulate / Cancel, primary unless Auto is on, at the right. In
+ * sortie mode the fleet and map can't be changed (the map shown is the
+ * sortie's) and Reset is off, and a branch the fleet has already passed shows
+ * the branch taken and can't be changed either. After Reset, the fleet and map selects show an empty choice that can't be picked.
+ * The target and switch show once the map's topology is cached (a map's first
+ * run fetches it), offering Boss and the predicted battle nodes; they stay
  * editable in sortie mode. At a night-battle target the Night battle switch
  * shows on and is locked, with a tooltip saying why.
  */
@@ -80,6 +81,7 @@ export function Controls(p: ControlsProps) {
         <label>
           {t('Fleet')}{' '}
           <HTMLSelect
+            className="battle-sim-fleet-select"
             value={p.fleetId ?? ''}
             disabled={p.running || p.sortieMode}
             onChange={(e: ChangeEvent) => p.onFleet(Number(e.currentTarget.value))}
@@ -118,48 +120,47 @@ export function Controls(p: ControlsProps) {
             ))}
           </HTMLSelect>
         </label>
-        {p.running ? (
-          <Button onClick={p.onCancel}>{t('Cancel')}</Button>
-        ) : (
-          <Button intent="primary" disabled={!p.canSimulate} onClick={p.onSimulate}>
-            {t('Simulate')}
-          </Button>
+        {mapChoices.phases && (
+          <label>
+            {t('Phase')}{' '}
+            <HTMLSelect
+              value={p.choices.phase}
+              disabled={p.running}
+              onChange={(e: ChangeEvent) => p.onChoice('phase', e.currentTarget.value)}
+              options={mapChoices.phases.map((ph) => ({
+                value: ph.value,
+                label: `${ph.value}: ${t(ph.label)}`,
+              }))}
+            />
+          </label>
         )}
-        {/* An icon only: the first row has no room for another label before the mode tag wraps. */}
-        <Button
-          minimal
-          icon="reset"
-          aria-label={t('Reset')}
-          disabled={p.sortieMode || (p.fleetId === null && p.map === null)}
-          title={t('Clear the fleet and map, so nothing runs until you pick them again')}
-          onClick={p.onReset}
-        />
-        <Switch
-          className="battle-sim-auto"
-          checked={p.auto}
-          label={t('Auto')}
-          title={t('Simulate when the fleet or these settings change')}
-          onChange={(e: CheckEvent) => p.onAuto(e.currentTarget.checked)}
-        />
-        {p.sortieMode ? (
-          <Tag
-            className="battle-sim-mode"
-            round
-            icon="flag"
-            intent="danger"
-            title={t('The fleet is on a sortie; runs follow it')}
+        <div className="battle-sim-float-right">
+          <Tooltip
+            content={
+              <>
+                <strong>{t(p.sortieMode ? 'Sortie mode' : 'Plan mode')}</strong>
+                <br />
+                {p.sortieMode ? t('Runs use the fleet and map of the sortie, following its progress') : t('Runs use the fleet and map selected here')}
+              </>
+            }
+            placement="bottom"
+            targetTagName="span"
           >
-            {t('Sortie mode')}
-          </Tag>
-        ) : (
-          <Tag className="battle-sim-mode" round icon="map" intent="none" title={t('Runs use the fleet and map selected here')}>
-            {t('Plan mode')}
-          </Tag>
-        )}
+            {p.sortieMode ? (
+              <Tag className="battle-sim-mode" round icon="flag" intent="danger">
+                {t('Sortie mode')}
+              </Tag>
+            ) : (
+              <Tag className="battle-sim-mode" round icon="map" intent="none">
+                {t('Plan mode')}
+              </Tag>
+            )}
+          </Tooltip>
+        </div>
       </div>
-      {p.target && <TargetRow {...p.target} running={p.running} onTarget={p.onTarget} onNightBattle={p.onNightBattle} />}
-      {(mapChoices.branches.length > 0 || mapChoices.phases) && (
+      {(mapChoices.branches.length > 0 || p.target) && (
         <div className="battle-sim-control-row">
+          {mapChoices.branches.length > 0 && <span>{t('Route')}</span>}
           {mapChoices.branches.map((b) => (
             // A disabled select gets no mouse events, so a taken branch lets the pointer through to the tooltip's target.
             <Tooltip
@@ -181,27 +182,75 @@ export function Controls(p: ControlsProps) {
               </label>
             </Tooltip>
           ))}
-          {mapChoices.phases && (
-            <label>
-              {t('Phase')}{' '}
-              <HTMLSelect
-                value={p.choices.phase}
-                disabled={p.running}
-                onChange={(e: ChangeEvent) => p.onChoice('phase', e.currentTarget.value)}
-                options={mapChoices.phases.map((ph) => ({
-                  value: ph.value,
-                  label: `${ph.value}: ${t(ph.label)}`,
-                }))}
-              />
-            </label>
+          {p.target && (
+            <TargetControls {...p.target} running={p.running} onTarget={p.onTarget} onNightBattle={p.onNightBattle} />
           )}
         </div>
       )}
+      <div className="battle-sim-control-row battle-sim-actions">
+        {/* Rarely used, so only an icon; a disabled button gets no mouse events, so the tooltip's target is a span. */}
+        <Tooltip
+          content={
+            <>
+              <strong>{t('Reset')}</strong>
+              <br />
+              {t('Clear the fleet and map, so nothing runs until you pick them again')}
+            </>
+          }
+          placement="top"
+          targetTagName="span"
+          targetProps={{ className: 'battle-sim-reset' }}
+        >
+          <Button
+            variant="minimal"
+            icon="reset"
+            aria-label={t('Reset')}
+            disabled={p.sortieMode || (p.fleetId === null && p.map === null)}
+            onClick={p.onReset}
+          />
+        </Tooltip>
+        <div className="battle-sim-float-right battle-sim-run">
+          {/* What keeps a sortie's prediction current, so its tooltip says so. */}
+          <Tooltip
+            content={
+              <>
+                <strong>{t('Auto')}</strong>
+                <br />
+                {t('Simulate when the fleet or these settings change')}
+                <br />
+                {t('In sortie mode, it simulates again at each node the fleet reaches, with the supplies used and the damage taken')}
+              </>
+            }
+            placement="top"
+            targetTagName="span"
+          >
+            <Switch
+              className="battle-sim-auto"
+              checked={p.auto}
+              label={t('Auto')}
+              onChange={(e: CheckEvent) => p.onAuto(e.currentTarget.checked)}
+            />
+          </Tooltip>
+          {/* Primary only when it is the way to run: with Auto on, runs start by themselves. */}
+          <Button
+            intent={p.running || p.auto ? 'none' : 'primary'}
+            disabled={!p.running && !p.canSimulate}
+            onClick={p.running ? p.onCancel : p.onSimulate}
+          >
+            {/* Both labels take the same cell, so the button keeps its width when Simulate becomes Cancel. */}
+            <span className="battle-sim-run-label">
+              <span className={p.running ? 'battle-sim-hidden' : undefined}>{t('Simulate')}</span>
+              <span className={p.running ? undefined : 'battle-sim-hidden'}>{t('Cancel')}</span>
+            </span>
+          </Button>
+        </div>
+      </div>
     </div>
   )
 }
 
-function TargetRow({
+/** The Target dropdown and the Night battle switch, after the branch choices; they wrap together. */
+function TargetControls({
   value,
   options,
   boss,
@@ -214,7 +263,7 @@ function TargetRow({
   // A remembered target that is not offered (not predicted yet this session) still shows.
   const letters = value === undefined || options.includes(value) ? options : [...options, value].sort()
   return (
-    <div className="battle-sim-control-row">
+    <span className="battle-sim-target">
       <label>
         {t('Target')}{' '}
         <HTMLSelect
@@ -243,6 +292,6 @@ function TargetRow({
           onChange={(e: CheckEvent) => onNightBattle(e.currentTarget.checked)}
         />
       </Tooltip>
-    </div>
+    </span>
   )
 }
