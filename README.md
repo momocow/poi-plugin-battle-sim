@@ -47,7 +47,7 @@
 
 - 尚未支援聯合艦隊（見 `openspec/changes/add-combined-fleet-support`）。
 - 不提供活動海域。
-- 內附的 optimizer 執行檔目前僅針對 Apple silicon 的 macOS（`darwin-arm64`）建置。
+- 內附的 optimizer 執行檔支援 macOS（`darwin-arm64`、`darwin-x64`）、Windows（`win32-x64`）與 Linux（`linux-x64`、`linux-arm64`，需 glibc 2.35 以上）。
 - 路線預測需要能連線到 compass。第一次在某張地圖上執行時，也會下載該地圖的敵方資料。
 
 ## 開發
