@@ -15,16 +15,17 @@ export const PANEL_CSS = `
 .battle-sim-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-x: hidden; display: flex; flex-direction: column; gap: 10px; padding: 8px; }
 .battle-sim-muted { opacity: 0.65; }
 /*
- * The controls: wrapping rows — fleet, map and phase; then routes, target and
- * night battle, when the map has any; then the action bar, Reset at its left
- * and the run controls at its right. The mode tag and the run controls float
+ * The controls: wrapping rows — fleet, map and phase; then the branch choices,
+ * on maps that have them; then target, night battle and formations, once the
+ * map's topology is cached; then the action bar, Reset at its left and the
+ * run controls at its right. The mode tag and the run controls float
  * right; everything else keeps to the left.
  */
 .battle-sim-controls { flex: none; display: flex; flex-direction: column; gap: 6px; padding: 8px 8px 6px; border-bottom: 1px solid rgba(128, 128, 128, 0.3); }
 .battle-sim-control-row { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; }
 /* Label text centered on its select, also inside a tooltip's wrapper, so "能動分歧" and "F →" line up. */
 .battle-sim-control-row > .bp6-popover-target, .battle-sim-target > .bp6-popover-target, .battle-sim-run > .bp6-popover-target { display: flex; align-items: center; }
-/* Target and Night battle wrap as one, so neither is left alone on a line. */
+/* Target, Night battle and Formations wrap as one, so none is left alone on a line. */
 .battle-sim-target { display: inline-flex; flex-wrap: nowrap; align-items: center; gap: 10px; }
 /* No bottom margin from poi's global label style or Blueprint's control style, which would lift them above the row's plain text. */
 .battle-sim-controls label:not(.bp6-control) { display: inline-flex; align-items: center; gap: 4px; margin: 0; }

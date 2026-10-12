@@ -2,17 +2,18 @@
  * The panel's controls, in rows. The fleet, the map and its phase, with the
  * panel's mode as a tag floating right — plan mode in port, sortie mode while
  * the selected fleet is on a sortie. Then, on maps that have them, the branch
- * choices labeled Route, the target and the Night battle switch, wrapping as
- * needed. Then the action bar: Reset, an icon, at the left; the automatic-run
+ * choices after the 能動分歧 label. Then, on a row of its own, the target, the
+ * Night battle switch and the Formations button, wrapping as one. Then the
+ * action bar: Reset, an icon, at the left; the automatic-run
  * switch and Simulate / Cancel, primary unless Auto is on, at the right. In
  * sortie mode the fleet and map can't be changed (the map shown is the
  * sortie's) and Reset is off, and a branch the fleet has already passed shows
  * the branch taken and can't be changed either. After Reset, the fleet and map selects show an empty choice that can't be picked.
- * The target and switch show once the map's topology is cached (a map's first
- * run fetches it), offering Boss and the predicted battle nodes; they stay
+ * The target row shows once the map's topology is cached (a map's first run
+ * fetches it), offering Boss and the predicted battle nodes; it stays
  * editable in sortie mode. At a night-battle target the Night battle switch
- * shows on and is locked, with a tooltip saying why. The Formations button
- * follows them, under the same condition.
+ * shows on and is locked, with a tooltip saying why. Each of the two middle
+ * rows is left out when it would be empty.
  */
 import { Button, HTMLSelect, Switch, Tag, Tooltip } from '@blueprintjs/core'
 import React, { type ReactNode } from 'react'
@@ -43,7 +44,7 @@ export interface ControlsProps {
     /** The target is a night-battle node: always a night battle, so the switch shows on and is locked. */
     nightOnly: boolean
   }
-  /** The Formations button, after the Night battle switch; shown with the target row. */
+  /** The Formations button, after the Night battle switch on the target row. */
   formations?: ReactNode
   /** Branches the fleet has already passed in a sortie of this map: shown as taken, and locked. */
   decided: ChoiceValues
@@ -174,9 +175,9 @@ export function Controls(p: ControlsProps) {
           </Tooltip>
         </div>
       </div>
-      {(mapChoices.branches.length > 0 || p.target) && (
+      {mapChoices.branches.length > 0 && (
         <div className="battle-sim-control-row">
-          {mapChoices.branches.length > 0 && <span>{t('Active branching')}</span>}
+          <span>{t('Active branching')}</span>
           {mapChoices.branches.map((b) => (
             // A disabled select gets no mouse events, so a taken branch lets the pointer through to the tooltip's target.
             <Tooltip
@@ -198,10 +199,17 @@ export function Controls(p: ControlsProps) {
               </label>
             </Tooltip>
           ))}
-          {p.target && (
-            <TargetControls {...p.target} running={p.running} onTarget={p.onTarget} onNightBattle={p.onNightBattle} />
-          )}
-          {p.target && p.formations}
+        </div>
+      )}
+      {p.target && (
+        <div className="battle-sim-control-row">
+          <TargetControls
+            {...p.target}
+            running={p.running}
+            formations={p.formations}
+            onTarget={p.onTarget}
+            onNightBattle={p.onNightBattle}
+          />
         </div>
       )}
       <div className="battle-sim-control-row battle-sim-actions">
@@ -265,7 +273,7 @@ export function Controls(p: ControlsProps) {
   )
 }
 
-/** The Target dropdown and the Night battle switch, after the branch choices; they wrap together. */
+/** The Target dropdown, the Night battle switch and the Formations button, on their own row; they wrap together. */
 function TargetControls({
   value,
   options,
@@ -273,9 +281,10 @@ function TargetControls({
   nightBattle,
   nightOnly,
   running,
+  formations,
   onTarget,
   onNightBattle,
-}: NonNullable<ControlsProps['target']> & Pick<ControlsProps, 'running' | 'onTarget' | 'onNightBattle'>) {
+}: NonNullable<ControlsProps['target']> & Pick<ControlsProps, 'running' | 'formations' | 'onTarget' | 'onNightBattle'>) {
   // A remembered target that is not offered (not predicted yet this session) still shows.
   const letters = value === undefined || options.includes(value) ? options : [...options, value].sort()
   return (
@@ -308,6 +317,7 @@ function TargetControls({
           onChange={(e: CheckEvent) => onNightBattle(e.currentTarget.checked)}
         />
       </Tooltip>
+      {formations}
     </span>
   )
 }
