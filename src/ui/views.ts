@@ -7,6 +7,7 @@
  * rank on its own or cumulative, as the rank display setting says. Every rate
  * is at the run's target: the boss, or the node the routes were cut at.
  */
+import type { Loadout } from '../fleet/snapshot'
 import { t } from '../i18n'
 import { aggregate, aOrBetter, bOrBetter, type Aggregate } from '../optimizer/aggregate'
 import type { RankRates, SimulateDiag } from '../optimizer/run'
@@ -176,6 +177,14 @@ export const retreats = (reach: NodeRate[]): NodeRate[] =>
 
 /** The worst-case (p = 0.5) 95% interval of one route's rate, as a fraction: 0.98 / √trials. */
 export const marginOfError = (trials: number): number => 0.98 / Math.sqrt(trials)
+
+/**
+ * Whether Auto is on but held back by the fleet: loaded, with ships, and one of them has an empty main slot. Not
+ * before the game data loads, with no fleet selected, or for an empty fleet.
+ */
+export function isAutoPaused(auto: boolean, loadout: Loadout | undefined, shipCount: number | undefined): boolean {
+  return auto && loadout !== undefined && !loadout.complete && (shipCount ?? 0) > 0
+}
 
 /**
  * Whether `current` would run something other than `run`: another fleet, map, trial count, choice, target,

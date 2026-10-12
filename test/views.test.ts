@@ -12,6 +12,7 @@ import {
 } from '../src/ui/state'
 import {
   formatRoute,
+  isAutoPaused,
   isStale,
   marginOfError,
   pct,
@@ -23,7 +24,9 @@ import {
   targetLabels,
 } from '../src/ui/views'
 import { SimError } from '../src/errors'
-import type { FleetSnapshot } from '../src/fleet/types'
+import { fleetLoadout } from '../src/fleet/snapshot'
+import type { FleetSnapshot, PoiState } from '../src/fleet/types'
+import { loadStore } from './helpers'
 
 const ranks = (S: number, A = 0, B = 0): RankRates => ({ S, A, B, C: 0, D: 0, E: 0 })
 const diag = (reach: number, s: number, a = 0, b = 0, extra: Partial<SimulateDiag> = {}): SimulateDiag => ({
@@ -316,5 +319,42 @@ describe('run state machine', () => {
   it('ignores a late result after a cancel', () => {
     const s = runReducer(initialRunState, { type: 'routeDone', index: 0, diag: diag(1, 1) })
     expect(s).toEqual(initialRunState)
+  })
+})
+
+describe('isAutoPaused', () => {
+  /** Auto paused for fleet 1 of `state`, its ship count read as the panel does. */
+  const paused = (state: PoiState, auto = true) => {
+    const count = state.info!.fleets![0]!.api_ship.filter((id) => id > 0).length
+    return isAutoPaused(auto, fleetLoadout(state, [1]), count)
+  }
+  /** Fleet 1 as its flagship (鳳翔改二), whose items are all in place. */
+  const flagshipOnly = () => {
+    const state = loadStore()
+    state.info!.fleets![0]!.api_ship = [545, -1, -1, -1, -1, -1]
+    return state
+  }
+
+  it('is paused with Auto on and an empty main slot', () => {
+    const state = flagshipOnly()
+    const flagship = state.info!.ships!['545']!
+    flagship.api_slot = [flagship.api_slot[0]!, -1, ...flagship.api_slot.slice(2)]
+    expect(paused(state)).toBe(true)
+    expect(paused(state, false)).toBe(false)
+  })
+
+  it('is not paused with every main slot filled, even with the expansion slot empty', () => {
+    const state = flagshipOnly()
+    expect(paused(state)).toBe(false)
+    state.info!.ships!['545']!.api_slot_ex = -1
+    expect(paused(state)).toBe(false)
+  })
+
+  it('is not paused for an empty fleet, with no fleet selected, or before the game data loads', () => {
+    const state = loadStore()
+    state.info!.fleets![0]!.api_ship = [-1, -1, -1, -1, -1, -1]
+    expect(paused(state)).toBe(false)
+    expect(isAutoPaused(true, undefined, undefined)).toBe(false)
+    expect(isAutoPaused(true, fleetLoadout(undefined, [1]), 6)).toBe(false)
   })
 })

@@ -78,6 +78,7 @@
   "Auto": "Auto",
   "Simulate when the fleet or these settings change": "Simulate when the fleet or these settings change",
   "In sortie mode, it simulates again at each node the fleet reaches, with the supplies used and the damage taken": "In sortie mode, it simulates again at each node the fleet reaches, with the supplies used and the damage taken",
+  "Paused until every ship has all its main slots filled (the expansion slot does not count)": "Paused until every ship has all its main slots filled (the expansion slot does not count)",
   "Automatic run delay (ms)": "Automatic run delay (ms)",
   "Trials per route, more being more precise but slower; Custom accepts 1–100000, default {n}": "Trials per route, more being more precise but slower; Custom accepts 1–100000, default {n}",
   "How long the fleet and inputs must stay unchanged before a run starts by itself; 0–60000, default {ms}": "How long the fleet and inputs must stay unchanged before a run starts by itself; 0–60000, default {ms}",

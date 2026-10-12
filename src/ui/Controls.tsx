@@ -5,7 +5,9 @@
  * choices after the 能動分歧 label. Then, on a row of its own, the target and
  * the Node settings button (formation and night battle per node), wrapping as
  * one. Then the action bar: Reset, an icon, at the left; the automatic-run
- * switch and Simulate / Cancel, primary unless Auto is on, at the right. In
+ * switch and Simulate / Cancel, primary unless Auto is on, at the right. While
+ * a ship has an empty main slot, Auto is paused: its switch turns the warning
+ * colour, its tooltip says why, and Simulate is primary again. In
  * sortie mode the fleet and map can't be changed (the map shown is the
  * sortie's) and Reset is off, and a branch the fleet has already passed shows
  * the branch taken and can't be changed either. After Reset, the fleet and map selects show an empty choice that can't be picked.
@@ -47,6 +49,8 @@ export interface ControlsProps {
   /** The selected fleet is on a sortie: runs follow it, and the fleet and map are locked. */
   sortieMode: boolean
   auto: boolean
+  /** Auto is on, but a ship of the fleet has an empty main slot, so nothing runs by itself. */
+  autoPaused: boolean
   running: boolean
   /** There is something to run: a fleet and a map, or the selected fleet's sortie. */
   canSimulate: boolean
@@ -233,20 +237,27 @@ export function Controls(p: ControlsProps) {
                 {t('Simulate when the fleet or these settings change')}
                 <br />
                 {t('In sortie mode, it simulates again at each node the fleet reaches, with the supplies used and the damage taken')}
+                {p.autoPaused && (
+                  <>
+                    <br />
+                    {t('Paused until every ship has all its main slots filled (the expansion slot does not count)')}
+                  </>
+                )}
               </>
             }
             placement="top"
             targetTagName="span"
           >
             <Switch
+              className={p.autoPaused ? 'battle-sim-auto-paused' : undefined}
               checked={p.auto}
               label={t('Auto')}
               onChange={(e: CheckEvent) => p.onAuto(e.currentTarget.checked)}
             />
           </Tooltip>
-          {/* Primary only when it is the way to run: with Auto on, runs start by themselves. */}
+          {/* Primary only when it is the way to run: with Auto on, runs start by themselves, unless Auto is paused. */}
           <Button
-            intent={p.running || p.auto ? 'none' : 'primary'}
+            intent={p.running || (p.auto && !p.autoPaused) ? 'none' : 'primary'}
             disabled={!p.running && !p.canSimulate}
             onClick={p.running ? p.onCancel : p.onSimulate}
           >

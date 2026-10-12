@@ -90,7 +90,7 @@ import { initialRunState, isRunning, runReducer, type RunInput } from './state'
 import { StatusArea } from './StatusArea'
 import { PANEL_CSS } from './styles'
 import { Summary } from './Summary'
-import { atNode, isStale } from './views'
+import { atNode, isAutoPaused, isStale } from './views'
 
 /** The store slices the live fleet display depends on. */
 function useLiveState(): PoiState {
@@ -386,6 +386,7 @@ export function Panel() {
         decided={taken}
         sortieMode={sortie !== undefined}
         auto={inputs.auto}
+        autoPaused={isAutoPaused(inputs.auto, loadout, shipCount)}
         running={running}
         canSimulate={current !== undefined}
         onFleet={(fleetId) => update({ fleetId })}

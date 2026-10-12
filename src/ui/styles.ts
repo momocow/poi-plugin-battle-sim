@@ -38,6 +38,11 @@ export const PANEL_CSS = `
 .battle-sim-actions { flex-wrap: nowrap; }
 .battle-sim-run { display: flex; align-items: center; gap: 8px; }
 .battle-sim-reset .bp6-button:disabled { pointer-events: none; }
+/* Auto paused for an empty main slot: the checked track in Blueprint's warning orange, as it styles primary (same in both themes). */
+.battle-sim-run .battle-sim-auto-paused.bp6-control.bp6-switch input:checked ~ .bp6-control-indicator { background: #c87619; }
+.battle-sim-run .battle-sim-auto-paused.bp6-control.bp6-switch:hover input:checked ~ .bp6-control-indicator { background: #935610; }
+.battle-sim-run .battle-sim-auto-paused.bp6-control.bp6-switch input:checked:not(:disabled):active ~ .bp6-control-indicator { background: #77450d; }
+.battle-sim-run .battle-sim-auto-paused.bp6-control.bp6-switch input:checked:disabled ~ .bp6-control-indicator { background: rgba(200, 118, 25, 0.5); }
 .battle-sim-run-label { display: grid; }
 .battle-sim-run-label > * { grid-area: 1 / 1; }
 .battle-sim-hidden { visibility: hidden; }
