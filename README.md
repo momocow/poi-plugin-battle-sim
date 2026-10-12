@@ -64,6 +64,8 @@ npm test            # vitest
 
 **Optimizer 發行版本。** `optimizer.json` 固定了 optimizer 的版本，以及每個壓縮檔與執行檔的 SHA-256。`npm run fetch-optimizer` 會用 `gh` 下載該版本並對照這些雜湊值檢查。這需要 optimizer repo 的存取權限，且也會在 `prepublishOnly` 時執行。各平台執行檔套件及其發布順序請見 [`platforms/README.md`](platforms/README.md)。
 
+**發行。** `npm run release -- <x.y.z> [--notes <檔案>] [--dry-run]` 會一併調升主套件與各平台套件的版本、檢查並發布各平台套件、更新 lockfile、建立 `🔖 Release <x.y.z>` commit 與 `v<x.y.z>` tag、發布主套件並推送。失敗後可直接重新執行，已完成的步驟會略過。`--dry-run` 只調升版本並以 `npm publish --dry-run` 檢查，不會 commit 或發布。
+
 **Commit 風格。** Commit 訊息採用 [gitmoji](https://gitmoji.dev/)：標題以一個 gitmoji 開頭，後面接一句英文的祈使句，例如 `✨ Simulate automatically`、`💄 Keep route cards the same size`、`📝 Add a README`。
 
 ### 目錄結構
