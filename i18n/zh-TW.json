@@ -95,7 +95,6 @@
   "Target": "目標",
   "Boss": "王點",
   "Night battle": "夜戰",
-  "Pursue night battle at the target": "在目標點追夜戰",
   "Reach {node}": "抵達 {node}",
   "{node} flagship sunk": "擊沉 {node} 旗艦",
   "When {node} is reached": "抵達 {node} 點時",
@@ -114,7 +113,6 @@
   "Next {map}": "下一個 {map}",
   "{count} maps not fetched": "{count} 個海域未下載",
   "Stopped at {map}; kcnav may be refusing requests for now": "於 {map} 停止；kcnav 可能暫時拒絕請求",
-  "Formations": "陣形",
   "Default ({formation})": "預設（{formation}）",
   "{formation} → {gets} ({count} ships)": "{formation} → {gets}（{count} 艦）",
   "Line ahead": "單縱陣",
@@ -127,5 +125,11 @@
   "Submarines mixed": "混有潛艇",
   "Air battle": "航空戰",
   "Normal battle": "一般戰鬥",
-  "Reset all to default": "全部恢復預設"
+  "Reset all to default": "全部恢復預設",
+  "Node settings": "逐點設定",
+  "Formation": "陣形",
+  "If target": "如果為目標點",
+  "Always": "總是",
+  "Never": "絕不",
+  "An air raid has no night battle": "空襲戰沒有夜戰"
 }

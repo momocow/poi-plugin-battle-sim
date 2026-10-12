@@ -179,13 +179,17 @@ export const marginOfError = (trials: number): number => 0.98 / Math.sqrt(trials
 
 /**
  * Whether `current` would run something other than `run`: another fleet, map, trial count, choice, target,
- * night battle or formation, or the sortie moved on or ended.
+ * formation or night battle setting, or the sortie moved on or ended.
  */
 export function isStale(run: RunInput, current: RunInput): boolean {
   if (run.fleetId !== current.fleetId || run.map !== current.map || run.trials !== current.trials) return true
-  if (run.target !== current.target || run.nightBattle !== current.nightBattle) return true
+  if (run.target !== current.target) return true
   if (String(run.sortie?.cells) !== String(current.sortie?.cells)) return true
-  return differ(run.choices, current.choices) || differ(run.formations, current.formations)
+  return (
+    differ(run.choices, current.choices) ||
+    differ(run.formations, current.formations) ||
+    differ(run.nightBattles, current.nightBattles)
+  )
 }
 
 /** Whether two records differ in any key. */

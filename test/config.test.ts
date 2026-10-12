@@ -10,7 +10,7 @@ describe('simulateToml', () => {
     map: '2-5',
     nodes: ['G', 'L', 'O'],
     trials: 100,
-    nightBattle: true,
+    nightBattles: { O: true },
     perNode: false,
     formations: {},
   }
@@ -27,12 +27,12 @@ describe('simulateToml', () => {
     )
   })
 
-  it('writes night battle off at the last node', () => {
-    expect(simulateToml({ ...input, nightBattle: false })).toContain('[tactics.nodes.O]\ndo_night_battle = false\n')
+  it('writes night battle off where it is off', () => {
+    expect(simulateToml({ ...input, nightBattles: { O: false } })).toContain('[tactics.nodes.O]\ndo_night_battle = false\n')
   })
 
   it('asks for the per-node channels for a node target, which is the last node', () => {
-    const toml = simulateToml({ ...input, nodes: ['G', 'L'], perNode: true })
+    const toml = simulateToml({ ...input, nodes: ['G', 'L'], perNode: true, nightBattles: { L: true } })
     expect(toml).toContain('[tactics.nodes.L]\ndo_night_battle = true\n')
     expect(toml).toContain('fields = ["ranks", "ranks-per-node", "node-outcomes"]\n')
   })
@@ -42,6 +42,12 @@ describe('simulateToml', () => {
     expect(toml).toContain(
       '[tactics.nodes.G]\nformation = "Diamond"\n\n[tactics.nodes.O]\nformation = "Echelon"\ndo_night_battle = true\n\n[run]',
     )
+    expect(toml).not.toContain('[tactics.nodes.L]')
+  })
+
+  it('writes night battle at a node before the target, and no table for a node with neither', () => {
+    const toml = simulateToml({ ...input, nightBattles: { G: true, O: false } })
+    expect(toml).toContain('[tactics.nodes.G]\ndo_night_battle = true\n\n[tactics.nodes.O]\ndo_night_battle = false\n')
     expect(toml).not.toContain('[tactics.nodes.L]')
   })
 

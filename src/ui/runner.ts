@@ -6,7 +6,7 @@
  * fleet is at, with the special attacks already fired. The target applies
  * after narrowing: a node target cuts the routes there and reads the rates at
  * that node; one without a battle fails before any simulation. Once the map's enemy data is in, each
- * battle node gets its formation: the user's for the node, else its default (see routes/formation). Each
+ * battle node gets its formation and night battle: the user's for the node, else the default (see routes/formation). Each
  * step also goes to the developer log when it is on.
  *
  * The optimizer is resolved before compass is loaded, so a missing or corrupt
@@ -32,10 +32,10 @@ import { atNodeTarget, Cancelled, checkRoute, kcnavDir, runSimulate } from '../o
 import { findPackageRoot, workDir } from '../paths'
 import { applyTarget, bossLettersFor, loadBossLetters } from '../routes/boss'
 import { runCompass } from '../routes/compass'
-import { mapFormations, type Formation } from '../routes/formation'
+import { mapFormations, nodeNightBattle, type Formation } from '../routes/formation'
 import { createPredictor, type PredictedRoute } from '../routes/predict'
 import { cellLetters, narrowToPath, takenBranches } from '../routes/sortie'
-import { battleNodes, readTopology } from '../routes/topology'
+import { battleNodes, nodeColors, readTopology } from '../routes/topology'
 import { loadOptimizerOverride } from './inputs'
 import { sortRoutes, targetRouteIndexes, type RouteRow, type RunAction, type RunInput } from './state'
 
@@ -179,6 +179,28 @@ export async function runSimulation(
           user: input.formations,
         })
       : {}
+    // A route's last node is its target. Without a topology, as on a map's first run, only that node is known.
+    const battles = topology && battleNodes(topology)
+    const colors = topology ? nodeColors(topology) : new Map<string, number>()
+    const nightBattlesFor = (nodes: string[]): Record<string, boolean> => {
+      const target = nodes[nodes.length - 1]!
+      if (!battles) return { [target]: true }
+      const out: Record<string, boolean> = {}
+      for (const node of new Set(nodes)) {
+        if (!battles.has(node)) continue
+        const v = nodeNightBattle({ setting: input.nightBattles[node], isTarget: node === target, color: colors.get(node) })
+        if (v !== undefined) out[node] = v
+      }
+      return out
+    }
+    const targets = indexes.map((i) => rows[i]!).map((row) => row.nodes.slice(row.from ?? 1))
+    if (targets.length > 0) {
+      // For the footer: whether any simulated route pursues night battle at its target.
+      dispatch({
+        type: 'nightBattleResolved',
+        atTarget: targets.some((nodes) => nightBattlesFor(nodes)[nodes[nodes.length - 1]!] === true),
+      })
+    }
 
     await simulateRoutes({
       routes: indexes,
@@ -189,17 +211,19 @@ export async function runSimulation(
         const routeFormations: Record<string, Formation> = Object.fromEntries(
           nodes.filter((node) => node in formations).map((node) => [node, formations[node]!.formation]),
         )
+        const routeNightBattles = nightBattlesFor(nodes)
         const toml = simulateToml({
           snapshot,
           map: input.map,
           nodes,
           trials: input.trials,
-          nightBattle: input.nightBattle,
+          nightBattles: routeNightBattles,
           perNode: input.target !== undefined,
           specialAttacksFired: specials?.observed ? specials.fired : undefined,
           formations: routeFormations,
         })
         devLog('route.config', {
+          nightBattles: routeNightBattles,
           row: rowIndex,
           nodes: nodes.join('-'),
           // Where each formation comes from: the user, or the default's reason.

@@ -13,6 +13,9 @@
  * rules don't apply. Submarines are the ship types 潜水艦 (13) and 潜水空母
  * (14) in poi's master data. The colours come from the topology's vote.
  *
+ * Night battle is set per node too (`nodeNightBattle`): by default only at the
+ * target, always at a night-battle node, never sent for an air raid.
+ *
  * `allowedFormation` mirrors the optimizer's single-fleet downgrade, so the
  * panel can show what a fleet of a given size actually gets; the simulation
  * sends the chosen formation and lets the optimizer downgrade it.
@@ -21,7 +24,7 @@ import { readFileSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 
 import type { MstShip } from '../fleet/types'
-import { AIR_BATTLE_COLORS, battleNodes, NIGHT_BATTLE_COLOR, nodeColors, type RouteTable } from './topology'
+import { AIR_BATTLE_COLORS, AIR_RAID_COLOR, battleNodes, NIGHT_BATTLE_COLOR, nodeColors, type RouteTable } from './topology'
 
 /** The optimizer's names for the single-fleet formations, in the game's order. */
 export const FORMATIONS = ['LineAhead', 'DoubleLine', 'Diamond', 'Echelon', 'LineAbreast', 'Vanguard'] as const
@@ -143,3 +146,26 @@ export const mapFormations = (input: {
     isSubmarine: submarineCheck(input.$ships),
     user: input.user,
   })
+
+/**
+ * A node's night battle setting when the user set one; with none, the fleet pursues night battle only
+ * when the node is the target.
+ */
+export type NightBattle = 'always' | 'never'
+
+export const isNightBattle = (value: unknown): value is NightBattle => value === 'always' || value === 'never'
+
+/**
+ * Whether the fleet pursues night battle at a node: true or false, or undefined when nothing is sent. A
+ * night-battle node always has one; an air raid has no night phase, so the optimizer only warns about it.
+ */
+export function nodeNightBattle(input: {
+  setting: NightBattle | undefined
+  isTarget: boolean
+  /** The node's majority colour; undefined when no edge into it votes. */
+  color: number | undefined
+}): boolean | undefined {
+  if (input.color === AIR_RAID_COLOR) return undefined
+  if (input.color === NIGHT_BATTLE_COLOR) return true
+  return input.setting === undefined ? input.isTarget : input.setting === 'always'
+}

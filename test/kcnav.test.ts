@@ -5,7 +5,7 @@ import { initialRunState, runReducer } from '../src/ui/state'
 describe('enemy-data fetching status', () => {
   it('shows until the shared fetch ends, not until the first route finishes', () => {
     const snapshot = { fleetId: 1, capturedAt: 0, hqLevel: 1, ships: [] }
-    let s = runReducer(initialRunState, { type: 'start', input: { fleetId: 1, map: '5-2', choices: {}, trials: 1, nightBattle: true, formations: {} }, snapshot })
+    let s = runReducer(initialRunState, { type: 'start', input: { fleetId: 1, map: '5-2', choices: {}, trials: 1, formations: {}, nightBattles: {} }, snapshot })
     s = runReducer(s, { type: 'predicted', routes: [{ nodes: ['1', 'O'], probability: 1, reachesTarget: true, endsAtBoss: true }], devOptimizer: false, fetchingEnemyData: true })
     expect(s.fetchingEnemyData).toBe(true)
     const diag = { ranks: { S: 1, A: 0, B: 0, C: 0, D: 0, E: 0 }, ranks_marginal: { S: 1, A: 0, B: 0, C: 0, D: 0, E: 0 }, reach_boss_rate: 1, boss_sunk_rate: 1, per_node_reach: [1], route: [{ node: 'O', battleIndex: 0 }] }

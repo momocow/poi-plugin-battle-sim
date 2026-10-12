@@ -16,7 +16,7 @@ import {
   type ScriptParams,
 } from '../src/routes/compass'
 import { createPredictor, predictionKey } from '../src/routes/predict'
-import { battleNodes, nightOnlyNodes, topologyNow } from '../src/routes/topology'
+import { battleNodes, nodeColors, topologyNow } from '../src/routes/topology'
 import { loadStore } from './helpers'
 
 /** A stand-in for compass's Pinia stores, behind the same `#app` lookup path. */
@@ -339,8 +339,10 @@ describe('kcnav topology', () => {
       9: ['1', 'Z', -1, 4],
       10: ['P', 'Z', 11, 4],
     }
-    expect([...nightOnlyNodes(route)].sort()).toEqual(['K', 'P', 'X', 'Z'])
-    expect(nightOnlyNodes(topologyNow(kcnavDir, '2-5')!).size).toBe(0)
+    const nightOnly = (r: Record<string, unknown>) =>
+      [...nodeColors(r)].filter(([, color]) => color === 11).map(([letter]) => letter)
+    expect(nightOnly(route).sort()).toEqual(['K', 'P', 'X', 'Z'])
+    expect(nightOnly(topologyNow(kcnavDir, '2-5')!)).toEqual([])
   })
 })
 

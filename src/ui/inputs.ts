@@ -9,7 +9,7 @@
 import type { MstMap, MstMaparea, PoiState } from '../fleet/types'
 import { readConfig, writeConfig } from '../poi'
 import { normalizeChoices, type ChoiceValues } from '../routes/choices'
-import { isFormation, type Formation } from '../routes/formation'
+import { isFormation, isNightBattle, type Formation, type NightBattle } from '../routes/formation'
 
 const PREFIX = 'plugin.poi_battle_sim'
 export const DEFAULT_TRIALS = 2000
@@ -92,22 +92,22 @@ export interface SavedInputs {
   choices: Record<string, ChoiceValues>
   /** The node the planned sortie ends at, one for every map; undefined for the boss. */
   target?: string
-  /** Pursue night battle at the target. */
-  nightBattle: boolean
   /** The user's formations, per map, by node letter; a node without one uses its default. */
   formations: Record<string, Record<string, Formation>>
+  /** The user's night battle settings, per map, by node letter; a node without one pursues it only as the target. */
+  nightBattles: Record<string, Record<string, NightBattle>>
 }
 
 const isRecord = (v: unknown): v is Record<string, unknown> => v !== null && typeof v === 'object' && !Array.isArray(v)
 
-/** Saved formations with anything that is not a map of node letters to formations dropped. */
-function parseFormations(value: unknown): Record<string, Record<string, Formation>> {
+/** Saved per-node settings with anything that is not a map of node letters to valid values dropped. */
+function parsePerNode<T>(value: unknown, valid: (v: unknown) => v is T): Record<string, Record<string, T>> {
   if (!isRecord(value)) return {}
-  const maps: Record<string, Record<string, Formation>> = {}
+  const maps: Record<string, Record<string, T>> = {}
   for (const [map, nodes] of Object.entries(value)) {
     if (!isRecord(nodes)) continue
-    const valid = Object.entries(nodes).filter((e): e is [string, Formation] => e[0] !== '' && isFormation(e[1]))
-    if (valid.length > 0) maps[map] = Object.fromEntries(valid)
+    const entries = Object.entries(nodes).filter((e): e is [string, T] => e[0] !== '' && valid(e[1]))
+    if (entries.length > 0) maps[map] = Object.fromEntries(entries)
   }
   return maps
 }
@@ -118,16 +118,17 @@ export function loadInputs(): SavedInputs {
   const choices = readConfig<unknown>(`${PREFIX}.choices`, {})
   const auto = readConfig<unknown>(`${PREFIX}.auto`, true)
   const target = readConfig<unknown>(`${PREFIX}.target`, null)
-  const nightBattle = readConfig<unknown>(`${PREFIX}.nightBattle`, true)
+  // The single Night battle switch (`.nightBattle`) of earlier versions is no longer read.
   const formations = readConfig<unknown>(`${PREFIX}.formations`, {})
+  const nightBattles = readConfig<unknown>(`${PREFIX}.nightBattles`, {})
   return {
     fleetId: fleetId === NO_FLEET ? null : typeof fleetId === 'number' && fleetId >= 1 && fleetId <= 4 ? fleetId : 1,
     map: map === NO_MAP ? null : typeof map === 'string' ? map : '1-1',
     auto: auto !== false,
     choices: choices !== null && typeof choices === 'object' ? (choices as Record<string, ChoiceValues>) : {},
     target: typeof target === 'string' && target !== '' ? target : undefined,
-    nightBattle: nightBattle !== false,
-    formations: parseFormations(formations),
+    formations: parsePerNode(formations, isFormation),
+    nightBattles: parsePerNode(nightBattles, isNightBattle),
   }
 }
 
@@ -138,8 +139,8 @@ export function saveInputs(inputs: SavedInputs): void {
   writeConfig(`${PREFIX}.choices`, inputs.choices)
   // poi's config reads a stored null as missing, so the boss is stored as null.
   writeConfig(`${PREFIX}.target`, inputs.target ?? null)
-  writeConfig(`${PREFIX}.nightBattle`, inputs.nightBattle)
   writeConfig(`${PREFIX}.formations`, inputs.formations)
+  writeConfig(`${PREFIX}.nightBattles`, inputs.nightBattles)
 }
 
 export const choicesForMap = (inputs: SavedInputs, map: string): ChoiceValues =>

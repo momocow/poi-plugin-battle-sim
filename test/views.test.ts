@@ -203,7 +203,7 @@ describe('retreats by node', () => {
 })
 
 describe('result footer', () => {
-  const input = { fleetId: 1, map: '7-5', choices: { F: 'J', H: 'I', O: 'P' }, trials: 2000, nightBattle: true, formations: {} }
+  const input = { fleetId: 1, map: '7-5', choices: { F: 'J', H: 'I', O: 'P' }, trials: 2000, formations: {}, nightBattles: {} }
 
   it('gives ±2.2% for 2000 trials', () => {
     expect(pct(marginOfError(2000))).toBe('2.2%')
@@ -239,10 +239,10 @@ describe('result footer', () => {
     ])
   })
 
-  it('is stale when the target, night battle or a formation changes', () => {
+  it('is stale when the target, a formation or a night battle setting changes', () => {
     expect(isStale(input, { ...input, target: 'E' })).toBe(true)
     expect(isStale({ ...input, target: 'E' }, { ...input, target: 'E' })).toBe(false)
-    expect(isStale(input, { ...input, nightBattle: false })).toBe(true)
+    expect(isStale(input, { ...input, nightBattles: { O: 'never' } })).toBe(true)
     expect(isStale(input, { ...input, formations: { K: 'Diamond' } })).toBe(true)
     expect(isStale({ ...input, formations: { K: 'Diamond' } }, { ...input, formations: { K: 'Diamond' } })).toBe(false)
   })
@@ -272,7 +272,7 @@ describe('result footer', () => {
 
 describe('run state machine', () => {
   const snapshot: FleetSnapshot = { fleetId: 1, capturedAt: 0, hqLevel: 120, ships: [] }
-  const input = { fleetId: 1, map: '2-5', choices: {}, trials: 2000, nightBattle: true, formations: {} }
+  const input = { fleetId: 1, map: '2-5', choices: {}, trials: 2000, formations: {}, nightBattles: {} }
   const routes = sortRoutes([
     { nodes: ['1', 'C', 'D'], probability: 0.3, reachesTarget: false, endsAtBoss: false },
     { nodes: ['1', 'O'], probability: 0.7, reachesTarget: true, endsAtBoss: true },

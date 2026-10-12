@@ -24,21 +24,21 @@
  * fleet advancing a node starts a run, and coming home returns to the selected
  * map.
  *
- * The target and night battle belong to the planned sortie, not to a map:
- * picking another map sets them back to Boss and on. A sortie on the selected
- * map uses and changes them; one on another map gets its own pair, Boss and on
- * at first, kept only while that sortie lasts. Until the shown map's kcnav
- * topology is cached (its first run fetches it) the target row is hidden and
- * runs use Boss and night battle, as before targets; the topology also tells
- * which predicted nodes have a battle, the only ones offered.
+ * The target belongs to the planned sortie, not to a map: picking another map
+ * sets it back to Boss. A sortie on the selected map uses and changes it; one
+ * on another map gets its own, Boss at first, kept only while that sortie
+ * lasts. Until the shown map's kcnav topology is cached (its first run fetches
+ * it) the target row is hidden and runs use Boss, as before targets; the
+ * topology also tells which predicted nodes have a battle, the only ones offered.
  *
- * Each battle node of the shown map has a formation: the user's, set in the
- * Formations popup and remembered per map, else its default. Closing the
- * popup after a change saves it and starts a run at once, as Simulate does,
- * whatever the automatic-run switch says; no automatic run follows for it.
+ * Each battle node of the shown map has a formation and a night battle
+ * setting: the user's, set in the Node settings popup and remembered per map,
+ * else the default (night battle only at the target). Closing the popup after
+ * a change saves it and starts a run at once, as Simulate does, whatever the
+ * automatic-run switch says; no automatic run follows for it.
  *
  * Reset clears the fleet and map: it stops any run, drops a pending automatic
- * run and clears the result (formations stay), and until both are picked again nothing runs,
+ * run and clears the result (node settings stay), and until both are picked again nothing runs,
  * by hand or by itself. A selected fleet that sorties still runs in sortie
  * mode, which never uses the selected map.
  */
@@ -56,12 +56,20 @@ import { t } from '../i18n'
 import { kcnavDir } from '../optimizer/run'
 import { workDir } from '../paths'
 import { getStoreState } from '../poi'
-import { mapFormations, type Formation } from '../routes/formation'
+import { mapFormations, type NightBattle } from '../routes/formation'
 import { cellLettersNow, sortieOf, takenBranches, type Sortie } from '../routes/sortie'
-import { battleNodes, BOSS_COLOR, nightOnlyNodes, nodeColors, topologyNow, type RouteTable } from '../routes/topology'
+import {
+  AIR_RAID_COLOR,
+  battleNodes,
+  BOSS_COLOR,
+  NIGHT_BATTLE_COLOR,
+  nodeColors,
+  topologyNow,
+  type RouteTable,
+} from '../routes/topology'
 import { Controls } from './Controls'
 import { errorSummary, ErrorView } from './ErrorView'
-import { FormationsButton } from './FormationEditor'
+import { NodeSettingsButton, type NodeSettings } from './NodeSettings'
 import { setShownFleet } from './focus'
 import {
   choicesForMap,
@@ -114,13 +122,12 @@ function mapTopology(map: string): RouteTable | undefined {
   }
 }
 
-/** A target (undefined for the boss) and whether to pursue night battle there. */
+/** A target; undefined for the boss. */
 interface TargetPair {
   target?: string
-  nightBattle: boolean
 }
 
-const BOSS_PAIR: TargetPair = { target: undefined, nightBattle: true }
+const BOSS_PAIR: TargetPair = { target: undefined }
 
 /** The sortie's visited letters, once its map's topology has been fetched. */
 function sortieLetters(sortie: Sortie): string[] | undefined {
@@ -177,18 +184,16 @@ export function Panel() {
     ? sortiePair?.map === sortie.map
       ? sortiePair
       : BOSS_PAIR
-    : { target: inputs.target, nightBattle: inputs.nightBattle }
+    : { target: inputs.target }
   const setPair = (patch: Partial<TargetPair>) =>
     ownPair ? setSortiePair({ ...pair, ...patch, map: sortie.map }) : update(patch)
   // Sortie mode shows the sortie's map and its choices; the remembered selection stays as it is.
   const shownMap = sortie?.map ?? inputs.map
   const shownChoices = shownMap !== null ? choicesForMap(inputs, shownMap) : {}
-  // Until the map's first run has fetched its topology, runs use the boss with night battle, as before targets.
+  // Until the map's first run has fetched its topology, runs use the boss, as before targets.
   const topology = shownMap !== null ? mapTopology(shownMap) : undefined
   const battles = topology && battleNodes(topology)
-  // A night-battle node is always a night battle: runs say so whatever the switch holds, which stays as saved.
-  const nightOnly = topology !== undefined && pair.target !== undefined && nightOnlyNodes(topology).has(pair.target)
-  const { target, nightBattle } = battles ? { ...pair, nightBattle: pair.nightBattle || nightOnly } : BOSS_PAIR
+  const target = battles ? pair.target : undefined
   // What a run would simulate; undefined while there is nothing to run (cleared by Reset).
   const current: RunInput | undefined =
     fleetId === null
@@ -200,8 +205,8 @@ export function Panel() {
             choices: { ...choicesForMap(inputs, sortie.map), ...taken },
             trials,
             target,
-            nightBattle,
             formations: inputs.formations[sortie.map] ?? {},
+            nightBattles: inputs.nightBattles[sortie.map] ?? {},
             sortie: { cells: sortie.cells },
           }
         : inputs.map !== null
@@ -211,8 +216,8 @@ export function Panel() {
               choices: choicesForMap(inputs, inputs.map),
               trials,
               target,
-              nightBattle,
               formations: inputs.formations[inputs.map] ?? {},
+              nightBattles: inputs.nightBattles[inputs.map] ?? {},
             }
           : undefined
   const simulate = () => current && start(current)
@@ -241,9 +246,22 @@ export function Panel() {
     if (changed && current && inputs.auto && loadout?.complete) scheduleAuto('change')
   }, [autoKey, inputs.auto])
 
-  // The shown map's battle nodes for the Formations popup. Recomputed as the run moves on too, since a map's first
+  // The shown map's battle nodes for the Node settings popup. Recomputed as the run moves on too, since a map's first
   // run fetches the enemy data the submarine rules read.
   const savedFormations = shownMap !== null ? inputs.formations[shownMap] : undefined
+  const savedNightBattles = shownMap !== null ? inputs.nightBattles[shownMap] : undefined
+  // Night battle is fixed at a night-battle node (always) and an air raid (never sent, shown as never).
+  const nightLocks = useMemo(
+    () =>
+      topology
+        ? Object.fromEntries(
+            [...nodeColors(topology)].flatMap(([letter, color]): [string, NightBattle][] =>
+              color === NIGHT_BATTLE_COLOR ? [[letter, 'always']] : color === AIR_RAID_COLOR ? [[letter, 'never']] : [],
+            ),
+          )
+        : {},
+    [topology],
+  )
   const nodes = useMemo(
     () =>
       shownMap !== null && topology
@@ -260,13 +278,20 @@ export function Panel() {
   const shipCount =
     fleetId !== null ? live.info?.fleets?.find((f) => f.api_id === fleetId)?.api_ship.filter((id) => id > 0).length : undefined
   // Saved, then run at once with them; the key is recorded first, so the auto-run effect sees no change to run for.
-  const applyFormations = (formations: Record<string, Formation>) => {
+  const applyNodeSettings = (settings: NodeSettings) => {
     if (shownMap === null) return
-    const { [shownMap]: _, ...others } = inputs.formations
-    update({ formations: Object.keys(formations).length > 0 ? { ...others, [shownMap]: formations } : others })
-    devLog('formations.applied', { map: shownMap, formations })
+    // The shown map's entries replaced; a map left without any is dropped.
+    const put = <T,>(all: Record<string, Record<string, T>>, entries: Record<string, T>) => {
+      const { [shownMap]: _, ...others } = all
+      return Object.keys(entries).length > 0 ? { ...others, [shownMap]: entries } : others
+    }
+    update({
+      formations: put(inputs.formations, settings.formations),
+      nightBattles: put(inputs.nightBattles, settings.nightBattles),
+    })
+    devLog('nodeSettings.applied', { map: shownMap, ...settings })
     if (!current) return
-    const input = { ...current, formations }
+    const input = { ...current, ...settings }
     clearTimeout(autoTimer.current)
     if (loadout) lastAutoKey.current = JSON.stringify([loadout.key, input])
     start(input)
@@ -313,6 +338,7 @@ export function Panel() {
           capturedAt: run.snapshot.capturedAt,
           at: atNode(run.routes),
           sortieUnobserved: run.sortieUnobserved,
+          nightBattleAtTarget: run.nightBattleAtTarget,
         }
       : undefined
   const shownFleetId = run.snapshot?.fleetId ?? fleetId
@@ -341,20 +367,19 @@ export function Panel() {
                 // Mid-sortie, only the nodes still ahead of the fleet.
                 options: predictor.nodesFor(shownMap, letters).filter((node) => battles.has(node)),
                 boss: predictor.bossFor(shownMap, letters),
-                nightBattle: pair.nightBattle,
-                nightOnly,
               }
             : undefined
         }
-        formations={
+        nodeSettings={
           shownMap !== null && nodes && (
-            <FormationsButton
+            <NodeSettingsButton
               nodes={nodes}
-              saved={savedFormations ?? {}}
+              saved={{ formations: savedFormations ?? {}, nightBattles: savedNightBattles ?? {} }}
+              nightLocks={nightLocks}
               boss={[...nodeColors(topology!)].filter(([, color]) => color === BOSS_COLOR).map(([letter]) => letter)}
               shipCount={shipCount}
               disabled={running}
-              onClose={applyFormations}
+              onClose={applyNodeSettings}
             />
           )
         }
@@ -364,13 +389,12 @@ export function Panel() {
         running={running}
         canSimulate={current !== undefined}
         onFleet={(fleetId) => update({ fleetId })}
-        // A target is a node of one map, so another map starts again at the boss, with night battle.
+        // A target is a node of one map, so another map starts again at the boss.
         onMap={(map) => update({ map, ...BOSS_PAIR })}
         onChoice={(key, value) =>
           shownMap !== null && update({ choices: { ...inputs.choices, [shownMap]: { ...shownChoices, [key]: value } } })
         }
         onTarget={(target) => setPair({ target })}
-        onNightBattle={(nightBattle) => setPair({ nightBattle })}
         onAuto={(auto) => {
           update({ auto })
           // Turned back on while the result is dimmed: catch up at once, not after the next change. Started here,

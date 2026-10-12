@@ -1,7 +1,7 @@
 /**
  * The panel's footer: on the left, what a result was run with — map (with the
  * node the fleet was at mid-sortie), fleet, snapshot time, trials and its
- * margin of error, choices, a node target and night battle off — ending with a
+ * margin of error, choices, a node target and night battle off at the target — ending with a
  * marker when a mid-sortie result can't know the special attacks fired earlier
  * and one when the settings have moved on since, so neither adds a line; on the
  * right, the run's status, then the normal-map fetch queue's spinner or
@@ -23,6 +23,8 @@ export interface FooterResult {
   at?: string
   /** Mid-sortie, when the sortie wasn't seen from its start. */
   sortieUnobserved?: boolean
+  /** Whether the run pursues night battle at its target; unknown until the run resolves it. */
+  nightBattleAtTarget?: boolean
 }
 
 export function ResultFooter({
@@ -45,7 +47,14 @@ export function ResultFooter({
   )
 }
 
-function ResultLine({ input, capturedAt, at, sortieUnobserved, stale }: FooterResult & { stale: boolean }) {
+function ResultLine({
+  input,
+  capturedAt,
+  at,
+  sortieUnobserved,
+  nightBattleAtTarget,
+  stale,
+}: FooterResult & { stale: boolean }) {
   const choices = describeChoices(input.map, input.choices, t('Phase'))
   const parts = [
     at ? t('{map} at {node}', { map: input.map, node: at }) : input.map,
@@ -55,7 +64,7 @@ function ResultLine({ input, capturedAt, at, sortieUnobserved, stale }: FooterRe
     `±${pct(marginOfError(input.trials))}`,
     ...(choices ? [choices] : []),
     ...(input.target !== undefined ? [t('Target {node}', { node: input.target })] : []),
-    ...(input.nightBattle ? [] : [t('No night battle')]),
+    ...(nightBattleAtTarget === false ? [t('No night battle')] : []),
   ]
   return (
     <div className="battle-sim-muted">

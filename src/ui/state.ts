@@ -9,7 +9,7 @@
 import type { SimError } from '../errors'
 import type { FleetSnapshot } from '../fleet/types'
 import type { SimulateDiag } from '../optimizer/run'
-import type { Formation } from '../routes/formation'
+import type { Formation, NightBattle } from '../routes/formation'
 import type { ChoiceValues } from '../routes/choices'
 import type { RouteCandidate } from '../routes/predict'
 
@@ -22,10 +22,10 @@ export interface RunInput {
   trials: number
   /** The node a sortie ends at; undefined for the boss. */
   target?: string
-  /** Pursue night battle at the target. */
-  nightBattle: boolean
   /** The user's formations for the map, by node letter; other battle nodes use their default. */
   formations: Record<string, Formation>
+  /** The user's night battle settings for the map, by node letter; other nodes pursue it only as the target. */
+  nightBattles: Record<string, NightBattle>
   /** Set while the fleet is on a sortie of `map`: the cells visited, the current one last. */
   sortie?: { cells: number[] }
 }
@@ -48,6 +48,8 @@ export interface RunState {
   fetchingEnemyData?: boolean
   /** Mid-sortie, when the sortie wasn't seen from its start: earlier special attacks are unknown. */
   sortieUnobserved?: boolean
+  /** Whether the run pursues night battle at its target; set once the run has resolved its node settings. */
+  nightBattleAtTarget?: boolean
   error?: SimError
 }
 
@@ -62,6 +64,7 @@ export type RunAction =
       sortieUnobserved?: boolean
     }
   | { type: 'enemyDataReady' }
+  | { type: 'nightBattleResolved'; atTarget: boolean }
   | { type: 'routeDone'; index: number; diag: SimulateDiag }
   | { type: 'finished' }
   | { type: 'failed'; error: SimError; input?: RunInput }
@@ -89,6 +92,8 @@ export function runReducer(state: RunState, action: RunAction): RunState {
         sortieUnobserved: action.sortieUnobserved,
         routes: action.routes,
       }
+    case 'nightBattleResolved':
+      return state.phase === 'simulating' ? { ...state, nightBattleAtTarget: action.atTarget } : state
     case 'enemyDataReady':
       return state.phase === 'simulating' ? { ...state, fetchingEnemyData: false } : state
     case 'routeDone': {

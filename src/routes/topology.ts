@@ -73,8 +73,10 @@ export function battleNodes(route: RouteTable): Set<string> {
 
 export const BOSS_COLOR = 5
 export const NIGHT_BATTLE_COLOR = 11
+/** 空襲戦: the enemy's air attack only, with no night phase. */
+export const AIR_RAID_COLOR = 10
 /** 航空戦 and 空襲戦 (air raid). */
-export const AIR_BATTLE_COLORS = [7, 10]
+export const AIR_BATTLE_COLORS = [7, AIR_RAID_COLOR]
 
 /** Per node, the majority colour of the edges into it, as the optimizer votes (`node_colors`). */
 export function nodeColors(route: RouteTable): Map<string, number> {
@@ -92,9 +94,4 @@ export function nodeColors(route: RouteTable): Map<string, number> {
     return [...tally].sort(([a, na], [b, nb]) => nb - na || a - b)[0]![0]
   }
   return new Map([...votes].map(([letter, colors]) => [letter, majority(colors)]))
-}
-
-/** The letters of the night-battle nodes, where the battle is a night battle whatever `do_night_battle` says. */
-export function nightOnlyNodes(route: RouteTable): Set<string> {
-  return new Set([...nodeColors(route)].filter(([, color]) => color === NIGHT_BATTLE_COLOR).map(([letter]) => letter))
 }

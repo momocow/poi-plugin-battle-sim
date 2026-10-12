@@ -95,7 +95,6 @@
   "Target": "目標",
   "Boss": "ボス",
   "Night battle": "夜戦",
-  "Pursue night battle at the target": "目標マスで夜戦を行う",
   "Reach {node}": "{node} 到達",
   "{node} flagship sunk": "{node} 旗艦撃沈",
   "When {node} is reached": "{node} 到達時",
@@ -114,7 +113,6 @@
   "Next {map}": "次の海域 {map}",
   "{count} maps not fetched": "{count} 海域が未取得です",
   "Stopped at {map}; kcnav may be refusing requests for now": "{map} で停止しました。kcnav が一時的にリクエストを拒否している可能性があります",
-  "Formations": "陣形",
   "Default ({formation})": "デフォルト（{formation}）",
   "{formation} → {gets} ({count} ships)": "{formation} → {gets}（{count}隻）",
   "Line ahead": "単縦陣",
@@ -127,5 +125,11 @@
   "Submarines mixed": "潜水艦混在",
   "Air battle": "航空戦",
   "Normal battle": "通常戦闘",
-  "Reset all to default": "すべてデフォルトに戻す"
+  "Reset all to default": "すべてデフォルトに戻す",
+  "Node settings": "マス別設定",
+  "Formation": "陣形",
+  "If target": "目標マスなら",
+  "Always": "常に",
+  "Never": "しない",
+  "An air raid has no night battle": "空襲戦には夜戦がありません"
 }

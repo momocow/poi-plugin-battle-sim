@@ -16,8 +16,8 @@ function usedKeys(): Set<string> {
     for (const m of text.matchAll(/\bt\('((?:[^'\\]|\\.)*)'/g)) keys.add(m[1]!)
     if (file.endsWith('ErrorView.tsx')) for (const m of text.matchAll(/^\s+[A-Z_]+: '([^']*)',/gm)) keys.add(m[1]!)
     if (file.endsWith('choices.ts')) for (const m of text.matchAll(/label: '([^']*)'/g)) keys.add(m[1]!)
-    // Formation names and default reasons, looked up from records.
-    if (file.endsWith('FormationEditor.tsx')) for (const m of text.matchAll(/^\s+\w+: '([^']*)',/gm)) keys.add(m[1]!)
+    // Formation names, default reasons and night battle settings, looked up from records.
+    if (file.endsWith('NodeSettings.tsx')) for (const m of text.matchAll(/^\s+\w+: '([^']*)',/gm)) keys.add(m[1]!)
   }
   return keys
 }

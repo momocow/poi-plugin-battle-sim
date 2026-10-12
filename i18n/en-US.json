@@ -95,7 +95,6 @@
   "Target": "Target",
   "Boss": "Boss",
   "Night battle": "Night battle",
-  "Pursue night battle at the target": "Pursue night battle at the target",
   "Reach {node}": "Reach {node}",
   "{node} flagship sunk": "{node} flagship sunk",
   "When {node} is reached": "When {node} is reached",
@@ -114,7 +113,6 @@
   "Next {map}": "Next {map}",
   "{count} maps not fetched": "{count} maps not fetched",
   "Stopped at {map}; kcnav may be refusing requests for now": "Stopped at {map}; kcnav may be refusing requests for now",
-  "Formations": "Formations",
   "Default ({formation})": "Default ({formation})",
   "{formation} → {gets} ({count} ships)": "{formation} → {gets} ({count} ships)",
   "Line ahead": "Line ahead",
@@ -127,5 +125,11 @@
   "Submarines mixed": "Submarines mixed",
   "Air battle": "Air battle",
   "Normal battle": "Normal battle",
-  "Reset all to default": "Reset all to default"
+  "Reset all to default": "Reset all to default",
+  "Node settings": "Node settings",
+  "Formation": "Formation",
+  "If target": "If target",
+  "Always": "Always",
+  "Never": "Never",
+  "An air raid has no night battle": "An air raid has no night battle"
 }

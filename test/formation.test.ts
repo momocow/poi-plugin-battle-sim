@@ -6,9 +6,11 @@ import {
   allowedFormation,
   defaultFormation,
   isFormation,
+  isNightBattle,
   mapFormations,
   nodeEnemies,
   nodeFormations,
+  nodeNightBattle,
   submarineCheck,
   type EnemyComposition,
 } from '../src/routes/formation'
@@ -116,5 +118,36 @@ describe('node formations', () => {
     })
     expect(formations.C).toEqual({ formation: 'LineAhead', isDefault: false, defaultFormation: 'Diamond', reason: 'air' })
     expect(formations.E).toEqual({ formation: 'LineAhead', isDefault: true, defaultFormation: 'LineAhead', reason: 'normal' })
+  })
+})
+
+describe('night battle per node', () => {
+  const at = (setting: 'always' | 'never' | undefined, isTarget: boolean, color: number | undefined) =>
+    nodeNightBattle({ setting, isTarget, color })
+
+  it('pursues night battle at the target only, by default', () => {
+    expect(at(undefined, true, 4)).toBe(true)
+    expect(at(undefined, false, 4)).toBe(false)
+    expect(at(undefined, true, 5)).toBe(true)
+  })
+
+  it('follows always and never wherever the node is', () => {
+    expect(at('always', false, 4)).toBe(true)
+    expect(at('never', true, 5)).toBe(false)
+  })
+
+  it('always fights at night at a night-battle node, even set to never', () => {
+    expect(at('never', false, 11)).toBe(true)
+  })
+
+  it('sends nothing for an air raid, even as the target', () => {
+    expect(at(undefined, true, 10)).toBeUndefined()
+    expect(at('always', false, 10)).toBeUndefined()
+  })
+
+  it('accepts always and never only', () => {
+    expect(isNightBattle('always')).toBe(true)
+    expect(isNightBattle('ifTarget')).toBe(false)
+    expect(isNightBattle(true)).toBe(false)
   })
 })
