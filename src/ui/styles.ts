@@ -44,12 +44,14 @@ export const PANEL_CSS = `
 .battle-sim-decided select, .battle-sim-decided .bp6-control { pointer-events: none; }
 /* The mode tag (plan or sortie), floating right on the fleet row. */
 .battle-sim-mode { font-weight: bold; }
-/* Fixed, so the long map names in the list do not widen the closed select. */
-.battle-sim-map-select { width: 5.5em; }
-.battle-sim-map-select select { min-width: 0; }
+/* Capped, so a long map name does not crowd out the other inputs. */
+.battle-sim-map-select { max-width: 9em; }
+.battle-sim-map-select select { min-width: 0; width: 100%; text-overflow: ellipsis; }
 /* Capped, so a long fleet name does not push the mode tag onto a line of its own. */
 .battle-sim-fleet-select { max-width: 9em; }
 .battle-sim-fleet-select select { min-width: 0; width: 100%; text-overflow: ellipsis; }
+/* A disabled select gets no mouse events, so it lets the pointer through to its tooltip's target. */
+.battle-sim-named select:disabled { pointer-events: none; }
 /*
  * The status sits at the right of the footer, the result line taking the rest;
  * the normal-map fetch marker, when there is one, comes last, at the far right.

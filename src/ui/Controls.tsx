@@ -67,6 +67,15 @@ const EMPTY = { value: '', label: '—', disabled: true }
 /** The Boss option's value: not a node letter. */
 const BOSS = ''
 
+function fleetOptionLabel(id: number, fleetNames: (string | undefined)[]): string {
+  const name = fleetNames[id - 1]
+  return name ? `${id}: ${name}` : String(id)
+}
+
+function mapOptionLabel(map: string, name: string | undefined): string {
+  return name ? `${map} ${gameName(name)}` : map
+}
+
 type CheckEvent = { currentTarget: { checked: boolean } }
 
 type ChangeEvent = { currentTarget: { value: string } }
@@ -75,51 +84,55 @@ export function Controls(p: ControlsProps) {
   const mapChoices: MapChoices = p.map !== null ? choicesFor(p.map) : { branches: [] }
   // A remembered map that is not offered (e.g. before the game data loads) still shows, ungrouped.
   const mapOffered = p.map === null || p.maps.some((g) => g.maps.some((m) => m.map === p.map))
+  const fleetLabel = p.fleetId !== null ? fleetOptionLabel(p.fleetId, p.fleetNames) : null
+  const mapName = p.maps.flatMap((g) => g.maps).find((m) => m.map === p.map)?.name
+  const mapLabel = p.map !== null ? mapOptionLabel(p.map, mapName) : null
   return (
     <div className="battle-sim-controls">
       <div className="battle-sim-control-row">
-        <label>
-          {t('Fleet')}{' '}
-          <HTMLSelect
-            className="battle-sim-fleet-select"
-            value={p.fleetId ?? ''}
-            disabled={p.running || p.sortieMode}
-            onChange={(e: ChangeEvent) => p.onFleet(Number(e.currentTarget.value))}
-            options={[
-              ...(p.fleetId === null ? [EMPTY] : []),
-              ...[1, 2, 3, 4].map((id) => {
-                const name = p.fleetNames[id - 1]
-                return { value: id, label: name ? `${id}: ${name}` : String(id) }
-              }),
-            ]}
-          />
-        </label>
-        <label>
-          {t('Map')}{' '}
-          <HTMLSelect
-            className="battle-sim-map-select"
-            value={p.map ?? ''}
-            disabled={p.running || p.sortieMode}
-            onChange={(e: ChangeEvent) => p.onMap(e.currentTarget.value)}
-          >
-            {p.map === null && (
-              <option value={EMPTY.value} disabled>
-                {EMPTY.label}
-              </option>
-            )}
-            {!mapOffered && <option value={p.map!}>{p.map}</option>}
-            {p.maps.map((g) => (
-              <optgroup key={g.area} label={g.name ? `${g.area}: ${gameName(g.name)}` : String(g.area)}>
-                {g.maps.map(({ map, name }) => (
-                  // The closed select shows the selected option's label, so that one stays short.
-                  <option key={map} value={map}>
-                    {name && map !== p.map ? `${map} ${gameName(name)}` : map}
-                  </option>
-                ))}
-              </optgroup>
-            ))}
-          </HTMLSelect>
-        </label>
+        {/* The selects are width-capped, so a tooltip shows the selection's full name. */}
+        <Tooltip content={fleetLabel} disabled={fleetLabel === null} placement="bottom" targetTagName="span" targetProps={{ className: 'battle-sim-named' }}>
+          <label>
+            {t('Fleet')}{' '}
+            <HTMLSelect
+              className="battle-sim-fleet-select"
+              value={p.fleetId ?? ''}
+              disabled={p.running || p.sortieMode}
+              onChange={(e: ChangeEvent) => p.onFleet(Number(e.currentTarget.value))}
+              options={[
+                ...(p.fleetId === null ? [EMPTY] : []),
+                ...[1, 2, 3, 4].map((id) => ({ value: id, label: fleetOptionLabel(id, p.fleetNames) })),
+              ]}
+            />
+          </label>
+        </Tooltip>
+        <Tooltip content={mapLabel} disabled={mapLabel === null} placement="bottom" targetTagName="span" targetProps={{ className: 'battle-sim-named' }}>
+          <label>
+            {t('Map')}{' '}
+            <HTMLSelect
+              className="battle-sim-map-select"
+              value={p.map ?? ''}
+              disabled={p.running || p.sortieMode}
+              onChange={(e: ChangeEvent) => p.onMap(e.currentTarget.value)}
+            >
+              {p.map === null && (
+                <option value={EMPTY.value} disabled>
+                  {EMPTY.label}
+                </option>
+              )}
+              {!mapOffered && <option value={p.map!}>{p.map}</option>}
+              {p.maps.map((g) => (
+                <optgroup key={g.area} label={g.name ? `${g.area}: ${gameName(g.name)}` : String(g.area)}>
+                  {g.maps.map(({ map, name }) => (
+                    <option key={map} value={map}>
+                      {mapOptionLabel(map, name)}
+                    </option>
+                  ))}
+                </optgroup>
+              ))}
+            </HTMLSelect>
+          </label>
+        </Tooltip>
         {mapChoices.phases && (
           <label>
             {t('Phase')}{' '}
