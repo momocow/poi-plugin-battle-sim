@@ -1,15 +1,19 @@
 /**
  * poi plugin entry point: one panel. Every run starts from the panel, by its
- * Simulate button or a change to the fleet or map; the only work that
- * outlives a run is a map's shared kcnav fetch, which is killed when poi
- * unloads the plugin, and the record of special attacks fired in the sortie
- * in progress, which listens to game responses while the plugin is loaded.
+ * Simulate button or a change to the fleet or map. The work that outlives a
+ * run is the kcnav fetches — a map's shared fetch, and the queue that fetches
+ * the normal maps not fetched yet, started when the plugin loads — which are
+ * killed when poi unloads the plugin, and the record of special attacks fired
+ * in the sortie in progress, which listens to game responses while the plugin
+ * is loaded.
  */
+import { devLog } from './src/devlog'
 import { startRecordingSpecials, stopRecordingSpecials } from './src/fleet/specials'
 import { stopPrefetch } from './src/optimizer/prefetch'
 import { getStoreState } from './src/poi'
 import { selectedFleetChanged } from './src/ui/focus'
 import { Panel } from './src/ui/Panel'
+import { fetchNormalMaps } from './src/ui/runner'
 
 export const windowMode = false
 
@@ -50,7 +54,11 @@ export const switchPluginPath = [
   '/kcsapi/api_req_kousyou/remodel_slot',
 ].map((path) => ({ path, valid }))
 
-export const pluginDidLoad = (): void => startRecordingSpecials()
+export const pluginDidLoad = (): void => {
+  startRecordingSpecials()
+  // A missing optimizer is reported by the first run; at load it only goes to the developer log.
+  fetchNormalMaps().catch((err: unknown) => devLog('prefetch.unavailable', { error: String(err) }))
+}
 
 export const pluginWillUnload = (): void => {
   stopPrefetch()

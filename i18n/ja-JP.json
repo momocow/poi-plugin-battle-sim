@@ -103,5 +103,13 @@
   "The target node has no battle — pick a battle node as the target": "目標マスに戦闘がありません — 戦闘マスを目標に選んでください",
   "{node} is always a night battle": "{node} は常に夜戦",
   "Target reached": "目標到達済み",
-  "{node} (Boss)": "{node}（ボス）"
+  "{node} (Boss)": "{node}（ボス）",
+  "Fetching enemy data for normal maps {done} / {total}": "通常海域の敵データを取得中 {done} / {total}",
+  "Refreshing enemy data for normal maps {done} / {total}": "通常海域の敵データを更新中 {done} / {total}",
+  "Now fetching {map}": "取得中の海域 {map}",
+  "Refresh enemy data of normal maps": "通常海域の敵データを更新",
+  "Downloads the enemy data of every normal map again from kcnav, one map at a time": "すべての通常海域の敵データを kcnav から 1 海域ずつ再取得します",
+  "Next {map}": "次の海域 {map}",
+  "{count} maps not fetched": "{count} 海域が未取得です",
+  "Stopped at {map}; kcnav may be refusing requests for now": "{map} で停止しました。kcnav が一時的にリクエストを拒否している可能性があります"
 }

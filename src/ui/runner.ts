@@ -25,8 +25,8 @@ import { toDeckbuilder } from '../fleet/toDeckbuilder'
 import type { PoiState } from '../fleet/types'
 import { simulateToml } from '../optimizer/config'
 import { simulateRoutes } from '../optimizer/orchestrate'
-import { ensureMapFetched, untilAborted } from '../optimizer/prefetch'
-import { resolveOptimizer, type OptimizerManifest } from '../optimizer/resolve'
+import { ensureMapFetched, isNormalMap, prefetchMaps, untilAborted } from '../optimizer/prefetch'
+import { resolveOptimizer, type OptimizerManifest, type ResolvedOptimizer } from '../optimizer/resolve'
 import { atNodeTarget, Cancelled, checkRoute, kcnavDir, runSimulate } from '../optimizer/run'
 import { findPackageRoot, workDir } from '../paths'
 import { applyTarget, bossLettersFor, loadBossLetters } from '../routes/boss'
@@ -40,6 +40,36 @@ import { sortRoutes, targetRouteIndexes, type RouteRow, type RunAction, type Run
 /** One predictor for the poi session, so its cache lives as long as poi; the panel reads its node options. */
 export const predictor = createPredictor(runCompass)
 
+/** The optimizer pinned in `optimizer.json`, or the development override; for runs and map fetches alike. */
+export async function resolveBundledOptimizer(): Promise<ResolvedOptimizer> {
+  const packageRoot = findPackageRoot()
+  const manifest = JSON.parse(await readFile(join(packageRoot, 'optimizer.json'), 'utf8')) as OptimizerManifest
+  return resolveOptimizer({
+    packageRoot,
+    manifest,
+    override: loadOptimizerOverride(),
+    platform: process.platform,
+    arch: process.arch,
+  })
+}
+
+/**
+ * Start a queue of normal-map fetches: every normal map in the bundled data,
+ * or `maps` for a retry. Resolves once the queue has started, without waiting
+ * for it; rejects only when the optimizer, its data or the app data path can't
+ * be found. The queue does nothing if another one is running.
+ */
+export async function fetchNormalMaps(opts: { force?: boolean; maps?: string[] } = {}): Promise<void> {
+  const optimizer = await resolveBundledOptimizer()
+  const maps = opts.maps ?? Object.keys(await loadBossLetters(optimizer.dataDir)).filter(isNormalMap)
+  void prefetchMaps(maps, {
+    binPath: optimizer.binPath,
+    dataDir: optimizer.dataDir,
+    workDir: workDir(),
+    force: opts.force,
+  })
+}
+
 export async function runSimulation(
   input: RunInput,
   state: PoiState | undefined,
@@ -52,15 +82,7 @@ export async function runSimulation(
     dispatch({ type: 'start', input, snapshot })
     devLog('run.start', { input, snapshot })
 
-    const packageRoot = findPackageRoot()
-    const manifest = JSON.parse(await readFile(join(packageRoot, 'optimizer.json'), 'utf8')) as OptimizerManifest
-    const optimizer = await resolveOptimizer({
-      packageRoot,
-      manifest,
-      override: loadOptimizerOverride(),
-      platform: process.platform,
-      arch: process.arch,
-    })
+    const optimizer = await resolveBundledOptimizer()
     const bossLetters = bossLettersFor(await loadBossLetters(optimizer.dataDir), input.map)
     const cwd = workDir()
     if (input.target !== undefined) {

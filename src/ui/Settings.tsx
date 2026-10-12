@@ -1,14 +1,16 @@
 /**
  * poi's settings page for this plugin: the trial count, the rank display,
- * the automatic-run delay, the developer log switch and the development
- * optimizer override. poi derives
+ * the automatic-run delay, the developer log switch, the development
+ * optimizer override, and a button that refreshes the normal maps' enemy
+ * data. poi derives
  * no UI from config keys, so without this they could only be set by editing
  * config.cson.
  */
-import { HTMLSelect, RadioGroup, Switch } from '@blueprintjs/core'
+import { Button, HTMLSelect, RadioGroup, Switch } from '@blueprintjs/core'
 import React, { useState } from 'react'
 
 import { devLogPath } from '../devlog'
+import { SimError } from '../errors'
 import { t } from '../i18n'
 import { readConfig, writeConfig } from '../poi'
 import {
@@ -29,6 +31,9 @@ import {
   TRIAL_PRESETS,
   TRIALS_KEY,
 } from './inputs'
+import { errorSummary } from './ErrorView'
+import { queueProgressText, useQueueStatus } from './NormalMapFetchIndicator'
+import { fetchNormalMaps } from './runner'
 
 const CUSTOM = 'custom'
 
@@ -189,6 +194,30 @@ function DevLogSetting() {
   )
 }
 
+/** Downloads every normal map again; off while any queue of map fetches runs, which it then shows. */
+function RefreshMapsSetting() {
+  const status = useQueueStatus()
+  const [error, setError] = useState<string>()
+  const running = status?.kind === 'running'
+  const refresh = () => {
+    setError(undefined)
+    fetchNormalMaps({ force: true }).catch((err: unknown) =>
+      setError(err instanceof SimError ? errorSummary(err.code) : String(err)),
+    )
+  }
+  return (
+    <div className="battle-sim-setting">
+      <Button small icon="refresh" disabled={running} text={t('Refresh enemy data of normal maps')} onClick={refresh} />
+      <div className="bp6-text-muted">
+        {running
+          ? queueProgressText(status)
+          : t('Downloads the enemy data of every normal map again from kcnav, one map at a time')}
+      </div>
+      {error && <div className="bp6-text-danger">{error}</div>}
+    </div>
+  )
+}
+
 export function Settings() {
   return (
     <div className="battle-sim-settings" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -196,6 +225,7 @@ export function Settings() {
       <RankDisplaySetting />
       <AutoRunDelaySetting />
       <DevLogSetting />
+      <RefreshMapsSetting />
       <div>{t('Development optimizer')}</div>
       <PathSetting
         configKey={OPTIMIZER_BIN_KEY}

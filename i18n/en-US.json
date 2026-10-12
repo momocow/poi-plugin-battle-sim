@@ -103,5 +103,13 @@
   "The target node has no battle — pick a battle node as the target": "The target node has no battle — pick a battle node as the target",
   "{node} is always a night battle": "{node} is always a night battle",
   "Target reached": "Target reached",
-  "{node} (Boss)": "{node} (Boss)"
+  "{node} (Boss)": "{node} (Boss)",
+  "Fetching enemy data for normal maps {done} / {total}": "Fetching enemy data for normal maps {done} / {total}",
+  "Refreshing enemy data for normal maps {done} / {total}": "Refreshing enemy data for normal maps {done} / {total}",
+  "Now fetching {map}": "Now fetching {map}",
+  "Refresh enemy data of normal maps": "Refresh enemy data of normal maps",
+  "Downloads the enemy data of every normal map again from kcnav, one map at a time": "Downloads the enemy data of every normal map again from kcnav, one map at a time",
+  "Next {map}": "Next {map}",
+  "{count} maps not fetched": "{count} maps not fetched",
+  "Stopped at {map}; kcnav may be refusing requests for now": "Stopped at {map}; kcnav may be refusing requests for now"
 }

@@ -89,8 +89,11 @@ export const defaultSpawn: SpawnFn = (bin, args, opts) =>
 /** The optimizer's kcnav cache: in poi's app data, so it survives plugin updates. */
 export const kcnavDir = (workDir: string): string => join(workDir, 'kcnav')
 
-/** `kcnav fetch` for every node of `map`; nodes already cached are skipped by the optimizer. */
-export function kcnavFetchArgs(opts: Pick<RunOptions, 'dataDir' | 'workDir'> & { map: string }): string[] {
+/**
+ * `kcnav fetch` for every node of `map`; nodes already cached are skipped by
+ * the optimizer, unless `force` makes it download and overwrite them.
+ */
+export function kcnavFetchArgs(opts: Pick<RunOptions, 'dataDir' | 'workDir'> & { map: string; force?: boolean }): string[] {
   return [
     'kcnav',
     'fetch',
@@ -103,6 +106,7 @@ export function kcnavFetchArgs(opts: Pick<RunOptions, 'dataDir' | 'workDir'> & {
     kcnavDir(opts.workDir),
     '--log-file',
     join(opts.workDir, 'logs', `kcnav-fetch-${opts.map}.log`),
+    ...(opts.force ? ['--force'] : []),
   ]
 }
 

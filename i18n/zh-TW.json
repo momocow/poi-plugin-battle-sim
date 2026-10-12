@@ -103,5 +103,13 @@
   "The target node has no battle — pick a battle node as the target": "目標點沒有戰鬥 — 請選擇有戰鬥的節點為目標",
   "{node} is always a night battle": "{node} 點必定夜戰",
   "Target reached": "已抵達目標點",
-  "{node} (Boss)": "{node}（王點）"
+  "{node} (Boss)": "{node}（王點）",
+  "Fetching enemy data for normal maps {done} / {total}": "正在下載常設海域的敵方資料 {done} / {total}",
+  "Refreshing enemy data for normal maps {done} / {total}": "正在更新常設海域的敵方資料 {done} / {total}",
+  "Now fetching {map}": "正在下載 {map}",
+  "Refresh enemy data of normal maps": "更新常設海域的敵方資料",
+  "Downloads the enemy data of every normal map again from kcnav, one map at a time": "從 kcnav 逐一重新下載所有常設海域的敵方資料",
+  "Next {map}": "下一個 {map}",
+  "{count} maps not fetched": "{count} 個海域未下載",
+  "Stopped at {map}; kcnav may be refusing requests for now": "於 {map} 停止；kcnav 可能暫時拒絕請求"
 }

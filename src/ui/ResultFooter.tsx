@@ -4,7 +4,8 @@
  * margin of error, choices, a node target and night battle off — ending with a
  * marker when a mid-sortie result can't know the special attacks fired earlier
  * and one when the settings have moved on since, so neither adds a line; on the
- * right, the run's status.
+ * right, the run's status, then the normal-map fetch queue's spinner or
+ * failure marker at the far right.
  */
 import { Icon, Tooltip } from '@blueprintjs/core'
 import React from 'react'
@@ -12,6 +13,7 @@ import React from 'react'
 import { t } from '../i18n'
 import { describeChoices } from '../routes/choices'
 import type { RunInput } from './state'
+import { NormalMapFetchIndicator } from './NormalMapFetchIndicator'
 import { marginOfError, pct } from './views'
 
 export interface FooterResult {
@@ -38,6 +40,7 @@ export function ResultFooter({
         {result && <ResultLine {...result} stale={stale} />}
       </div>
       {status}
+      <NormalMapFetchIndicator />
     </div>
   )
 }

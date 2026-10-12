@@ -26,7 +26,8 @@ export const PANEL_CSS = `
 .battle-sim-map-select { width: 5.5em; }
 .battle-sim-map-select select { min-width: 0; }
 /*
- * The status sits at the right of the footer, the result line taking the rest.
+ * The status sits at the right of the footer, the result line taking the rest;
+ * the normal-map fetch marker, when there is one, comes last, at the far right.
  * When short of room the progress bar narrows, then the fetch note ends in "…".
  */
 .battle-sim-status { display: flex; flex: 0 1 auto; max-width: 50%; gap: 6px; align-items: center; justify-content: flex-end; min-width: 0; overflow: hidden; white-space: nowrap; }
@@ -38,6 +39,10 @@ export const PANEL_CSS = `
 .battle-sim-footer { flex: none; display: flex; gap: 8px; align-items: center; min-height: 26px; padding: 4px 8px; font-size: 12px; border-top: 1px solid rgba(128, 128, 128, 0.3); }
 .battle-sim-footer-result { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
 .battle-sim-footer-marker { margin-left: 6px; vertical-align: -1px; }
+.battle-sim-map-fetch { flex: none; margin-left: auto; display: inline-flex; align-items: center; }
+/* Opened against the panel's right edge, the tooltip would otherwise break "1 / 22" apart. */
+.battle-sim-map-fetch-tip { white-space: nowrap; }
+.battle-sim-map-fetch-failed { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; padding: 8px 10px; font-size: 12px; }
 .battle-sim-section-head { display: flex; gap: 6px; align-items: center; cursor: pointer; user-select: none; }
 .battle-sim-fleet-summary { display: flex; flex-wrap: wrap; gap: 2px 12px; margin: 2px 0; }
 .battle-sim-hover { text-decoration: underline dotted; cursor: help; }
