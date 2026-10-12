@@ -641,8 +641,9 @@ poi's plugin area is narrow and tall, so the panel SHALL use a single column tha
 
 The controls SHALL have these rows, each wrapping within the panel's width when it doesn't fit:
 1. on the left, the Fleet dropdown, the Map dropdown, and the Phase dropdown on maps that have one; the Plan mode / Sortie mode tag (see Mid-sortie runs) floating right. The Fleet dropdown's width SHALL be capped, a long fleet name cut short, so the row doesn't wrap for a long fleet name;
-2. on the left, the branch choices after an "Active branching" (能動分歧) label, on maps that have them (the label shows only then), then the Target dropdown and the Night battle switch, once the map's topology is cached (see Inputs), which SHALL wrap together. The row SHALL NOT be shown when it would be empty;
-3. the action bar, holding:
+2. on the left, the branch choices after an "Active branching" (能動分歧) label. The row SHALL be shown only on maps that have branch choices;
+3. on the left, the Target dropdown, the Night battle switch and the Formations button (see Node formations), which SHALL wrap together. The row SHALL be shown only once the shown map's topology is cached (see Inputs);
+4. the action bar, holding:
    - on the left, the Reset button (see Selection reset), a minimal icon-only button, as it is rarely used. Hovering over it, also while it is disabled, SHALL show a tooltip naming it "Reset" and saying what it does;
    - floating right, the Auto switch (see Automatic runs). Hovering over it SHALL show a tooltip naming it "Auto", saying that it simulates when the fleet or the settings change, and that in sortie mode it simulates again at each node the fleet reaches, with the supplies used and the damage taken;
      then the Simulate button, which reads Cancel while a run is in progress (see Progress and cancel), keeping the same width for both labels. It SHALL be primary, except while Auto is on or a run is in progress.
@@ -651,7 +652,7 @@ The controls SHALL have these rows, each wrapping within the panel's width when 
 
 Only the mode tag and the action bar's Auto switch and Simulate button float right; every other control keeps to the left. The controls' buttons and dropdowns SHALL be 24px tall, 20% shorter than the default.
 
-All but the fourth SHALL stay in place, the footer at the bottom of the plugin area. Only the fourth area SHALL scroll, vertically and on its own, when its content is taller than the room left.
+All but the fourth area SHALL stay in place, the footer at the bottom of the plugin area. Only the fourth area SHALL scroll, vertically and on its own, when its content is taller than the room left.
 
 The panel SHALL fit 400px wide without horizontal scrolling.
 
@@ -665,7 +666,11 @@ The panel SHALL fit 400px wide without horizontal scrolling.
 
 #### Scenario: Controls on 7-5
 - **WHEN** 7-5 is selected and its topology is cached
-- **THEN** the first row shows the Fleet and Map dropdowns with the Plan mode tag at the right end; the second row shows "Active branching" with the F →, H → and O → choices, the Target dropdown and the Night battle switch, from the left, wrapping onto more lines where the panel is too narrow, with Target and Night battle on the same line; and the last row shows Reset at the left end and Auto and Simulate at the right end
+- **THEN** the first row shows the Fleet and Map dropdowns with the Plan mode tag at the right end; the second row shows "Active branching" with the F →, H → and O → choices from the left; the third row shows the Target dropdown, the Night battle switch and the Formations button from the left; and the last row shows Reset at the left end and Auto and Simulate at the right end
+
+#### Scenario: Controls on a map without branch choices
+- **WHEN** 2-5, which has no branch choices, is selected and its topology is cached
+- **THEN** the fleet row is followed by the Target row, then the action bar; there is no "Active branching" label
 
 #### Scenario: Controls on a map with a phase
 - **WHEN** a map with a phase is selected
@@ -673,7 +678,11 @@ The panel SHALL fit 400px wide without horizontal scrolling.
 
 #### Scenario: Controls before the topology is cached
 - **WHEN** a map without branch choices is selected and its topology isn't cached yet
-- **THEN** there is no Route / Target row: the fleet row is followed directly by the action bar
+- **THEN** there is neither a branch row nor a Target row: the fleet row is followed directly by the action bar
+
+#### Scenario: Branches before the topology is cached
+- **WHEN** 7-5 is selected and its topology isn't cached yet
+- **THEN** the branch row is shown, and there is no Target row
 
 #### Scenario: Long fleet name
 - **WHEN** the selected fleet has a long name and a map with a phase is selected, at 400px wide
