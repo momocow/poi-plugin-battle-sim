@@ -8,11 +8,52 @@
  * is at the run's target: the boss, or the node the routes were cut at.
  */
 import type { Loadout } from '../fleet/snapshot'
+import type { SpecialAttack } from '../fleet/specialGates'
 import { t } from '../i18n'
 import { aggregate, aOrBetter, bOrBetter, type Aggregate } from '../optimizer/aggregate'
 import type { RankRates, SimulateDiag } from '../optimizer/run'
+import type { Formation } from '../routes/formation'
 import type { RankDisplay } from './inputs'
-import { isSimulated, type RouteRow, type RunInput } from './state'
+import { isSimulated, type BattleType, type NodeInfo, type RouteRow, type RunInput } from './state'
+
+/** Formation names, as i18n keys. */
+export const FORMATION_NAMES: Record<Formation, string> = {
+  LineAhead: 'Line ahead',
+  DoubleLine: 'Double line',
+  Diamond: 'Diamond',
+  Echelon: 'Echelon',
+  LineAbreast: 'Line abreast',
+  Vanguard: 'Vanguard',
+}
+
+/** Battle node types, as i18n keys; the first five are the default formation's reasons. */
+export const BATTLE_TYPE_NAMES: Record<BattleType, string> = {
+  submarines: 'Submarines only',
+  submarinesMixed: 'Submarines mixed',
+  night: 'Night battle',
+  air: 'Air battle',
+  normal: 'Normal battle',
+  airRaid: 'Air raid',
+}
+
+/** Types of a node without a battle, by the optimizer's kind, as i18n keys; any kind but a maelstrom is a pass-through. */
+const NO_BATTLE_TYPE_NAMES = {
+  maelstrom: 'Maelstrom',
+  pass: 'No battle',
+}
+
+/** Special-attack names, as i18n keys. */
+export const SPECIAL_NAMES: Record<SpecialAttack, string> = {
+  100: 'Nelson Touch',
+  101: 'Nagato cutin',
+  102: 'Mutsu cutin',
+  103: 'Colorado special attack',
+  104: 'Kongou-class night special attack',
+  105: 'Richelieu special attack',
+  106: 'Warspite special attack',
+  400: 'Yamato-class 3-ship special attack',
+  401: 'Yamato-class 2-ship special attack',
+}
 
 /** `['1','A','B','C2','D']` → `A-B-C2-D`, plus `[Boss]` when the last node is the boss. */
 export function formatRoute(nodes: string[], endsAtBoss: boolean): string {
@@ -84,6 +125,51 @@ export type RowCells =
 /** A and B from one set of rank rates, on their own or cumulative. */
 const rankPair = (r: RankRates, mode: RankDisplay): [number, number] =>
   mode === 'cumulative' ? [aOrBetter(r), bOrBetter(r)] : [r.A, r.B]
+
+/** S, then A and B as the rank display says, labeled as on the cards; undefined values show as "—". */
+export function rankCells(r: RankRates | undefined, mode: RankDisplay): { label: string; value: number | undefined }[] {
+  const plus = mode === 'cumulative' ? '+' : ''
+  const [a, b] = r ? rankPair(r, mode) : []
+  return [
+    { label: 'S', value: r?.S },
+    { label: `A${plus}`, value: a },
+    { label: `B${plus}`, value: b },
+  ]
+}
+
+export interface NodeTooltip {
+  /** Share of the route's trials that reached the node. */
+  reach: number
+  /** False for a resource, empty or maelstrom node, which shows only its type and reach. */
+  battle: boolean
+  /** The node's type, as an i18n key; undefined for a battle node the run knew no formation for. */
+  type?: string
+  /** Undefined when the run knew no formation for the node (no topology cached). */
+  info?: NodeInfo
+  /** Among trials that fought there; undefined when none did. */
+  ranks?: RankRates
+}
+
+/**
+ * The tooltip of the stepper's node `index` (start excluded) on a finished route; undefined for a node passed
+ * mid-sortie or a route without a result.
+ */
+export function nodeTooltip(row: RouteRow, index: number): NodeTooltip | undefined {
+  const d = row.diag
+  const i = index + 1 - (row.from ?? 1)
+  const meta = d?.route[i]
+  if (!d || i < 0 || !meta) return undefined
+  const reach = routeReach(d)[i]!.rate
+  if (meta.battleIndex === null) return { reach, battle: false, type: NO_BATTLE_TYPE_NAMES[meta.kind === 'maelstrom' ? 'maelstrom' : 'pass'] }
+  const info = row.nodeInfo?.[meta.node]
+  return {
+    reach,
+    battle: true,
+    type: info && BATTLE_TYPE_NAMES[info.type],
+    info,
+    ranks: d.ranks_per_node?.[meta.battleIndex] ?? undefined,
+  }
+}
 
 export function rowCells(row: RouteRow, mode: RankDisplay): RowCells {
   if (row.passedTarget) return { kind: 'passed' }

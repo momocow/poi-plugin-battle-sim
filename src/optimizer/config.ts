@@ -6,9 +6,10 @@
  * `nightBattles` gets its player formation and `do_night_battle` in its own
  * `[tactics.nodes.<letter>]` table; the optimizer requires `do_night_battle`
  * at a boss, and nodes without a battle must not be in either, as it rejects
- * tactics there. `[output] fields = ["ranks"]` selects the
- * diag channel that carries every boss rate the panel shows; a node target
- * adds `ranks-per-node` and `node-outcomes` for the rates at that node.
+ * tactics there. `[output]` selects `ranks`, the diag channel that carries
+ * every boss rate the panel shows, and `ranks-per-node`, free to collect, for
+ * the route cards' per-node tooltips; a node target adds `node-outcomes` for
+ * the flagship-sunk rate at that node.
  * `special_attacks_fired` lists the once-per-sortie specials already fired,
  * so the optimizer won't fire them again in the rest of a sortie.
  */
@@ -26,7 +27,7 @@ export function simulateToml(input: {
   trials: number
   /** Whether to pursue night battle at each node that gets `do_night_battle`, by letter. */
   nightBattles: Record<string, boolean>
-  /** Ask for the per-node channels, for a node target. */
+  /** Ask for `node-outcomes` too, for a node target. */
   perNode: boolean
   /** Special-attack ids fired earlier in the sortie, one per firing. */
   specialAttacksFired?: number[]
@@ -56,7 +57,7 @@ export function simulateToml(input: {
     `trials = ${input.trials}`,
     '',
     '[output]',
-    input.perNode ? 'fields = ["ranks", "ranks-per-node", "node-outcomes"]' : 'fields = ["ranks"]',
+    input.perNode ? 'fields = ["ranks", "ranks-per-node", "node-outcomes"]' : 'fields = ["ranks", "ranks-per-node"]',
     '',
   ].join('\n')
 }

@@ -36,13 +36,18 @@ describe('runSimulate', () => {
     expect(diag.boss_sunk_rate).toBeCloseTo(0.74333, 4)
     expect(diag.per_node_reach).toEqual([1.0, 0.9733333333333334, 0.8433333333333334, 0.76])
     expect(diag.route).toEqual([
-      { node: 'B', battleIndex: null },
-      { node: 'C', battleIndex: 0 },
-      { node: 'E', battleIndex: 1 },
-      { node: 'F', battleIndex: 2 },
-      { node: 'O', battleIndex: 3 },
+      { node: 'B', battleIndex: null, kind: 'pass' },
+      { node: 'C', battleIndex: 0, kind: 'airraid' },
+      { node: 'E', battleIndex: 1, kind: 'battle' },
+      { node: 'F', battleIndex: 2, kind: 'battle' },
+      { node: 'O', battleIndex: 3, kind: 'battle' },
     ])
     expect(children[0]?.stdinText()).toBe('[run]\ntrials = 10\n')
+  })
+
+  it('reads a Boss-target result without per-node ranks as having none, not as an error', async () => {
+    const diag = await run('recorded-0.2.1/success').promise
+    expect(diag.ranks_per_node).toBeUndefined()
   })
 
   it('reads a route through an empty node (2-3 B-E-F-J-N)', async () => {
@@ -114,7 +119,7 @@ describe('runSimulate', () => {
 
     it('accepts a complete result', () => {
       const diag = interpretOutput(resultLine({ per_node_reach: [1], _meta: { route } }), '', 0)
-      expect(diag.route).toEqual([{ node: 'A', battleIndex: 0 }])
+      expect(diag.route).toEqual([{ node: 'A', battleIndex: 0, kind: 'battle' }])
     })
 
     it('requires per-node reach rates', () => {

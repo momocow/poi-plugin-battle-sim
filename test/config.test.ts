@@ -21,9 +21,9 @@ describe('simulateToml', () => {
     )
   })
 
-  it('pursues night battle at the boss and asks for the ranks channel only, as before targets', () => {
+  it('pursues night battle at the boss and asks for the ranks and per-node ranks channels', () => {
     expect(simulateToml(input)).toContain(
-      '[tactics.nodes.O]\ndo_night_battle = true\n\n[run]\ntrials = 100\n\n[output]\nfields = ["ranks"]\n',
+      '[tactics.nodes.O]\ndo_night_battle = true\n\n[run]\ntrials = 100\n\n[output]\nfields = ["ranks", "ranks-per-node"]\n',
     )
   })
 

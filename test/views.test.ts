@@ -15,7 +15,9 @@ import {
   isAutoPaused,
   isStale,
   marginOfError,
+  nodeTooltip,
   pct,
+  rankCells,
   retreats,
   routeReach,
   rowCells,
@@ -202,6 +204,77 @@ describe('retreats by node', () => {
       ],
     })
     expect(retreats(routeReach(d))).toEqual([])
+  })
+})
+
+describe('node tooltips', () => {
+  // B is an empty node; C, E and O have battles, and no trial fought at E.
+  const d = diag(0.8, 0.5, 0, 0, {
+    per_node_reach: [1, 0, 0.8],
+    route: [
+      { node: 'B', battleIndex: null, kind: 'pass' },
+      { node: 'C', battleIndex: 0 },
+      { node: 'E', battleIndex: 1 },
+      { node: 'O', battleIndex: 2 },
+    ],
+    ranks_per_node: [ranks(0.6, 0.2, 0.1), null, ranks(0.5)],
+  })
+  const row: RouteRow = {
+    nodes: ['1', 'B', 'C', 'E', 'O'],
+    probability: 1,
+    reachesTarget: true,
+    endsAtBoss: true,
+    diag: d,
+    nodeInfo: { C: { type: 'submarinesMixed', formation: 'DoubleLine', special: 100 } },
+  }
+
+  it('gives a battle node its reach, info and ranks, picked by its battle index', () => {
+    expect(nodeTooltip(row, 1)).toEqual({
+      reach: 1,
+      battle: true,
+      type: 'Submarines mixed',
+      info: { type: 'submarinesMixed', formation: 'DoubleLine', special: 100 },
+      ranks: ranks(0.6, 0.2, 0.1),
+    })
+  })
+
+  it('gives a node no trial fought at no ranks', () => {
+    expect(nodeTooltip(row, 2)?.ranks).toBeUndefined()
+    expect(rankCells(undefined, 'individual').map((c) => pct(c.value))).toEqual(['—', '—', '—'])
+  })
+
+  it('gives a node without a battle only its type and reach', () => {
+    expect(nodeTooltip(row, 0)).toEqual({ reach: 1, battle: false, type: 'No battle' })
+    const maelstrom = { ...d, route: [{ node: 'B', battleIndex: null, kind: 'maelstrom' }, ...d.route.slice(1)] }
+    expect(nodeTooltip({ ...row, diag: maelstrom }, 0)?.type).toBe('Maelstrom')
+  })
+
+  it('gives a battle node without known info no type', () => {
+    expect(nodeTooltip(row, 2)?.type).toBeUndefined()
+  })
+
+  it('gives none for a route without a result', () => {
+    expect(nodeTooltip({ ...row, diag: undefined }, 1)).toBeUndefined()
+  })
+
+  it('gives none for a node passed mid-sortie, and indexes the rest from the node the fleet is at', () => {
+    const mid: RouteRow = { ...row, nodes: ['1', 'A', 'B', 'C', 'E', 'O'], from: 2 }
+    expect(nodeTooltip(mid, 0)).toBeUndefined()
+    expect(nodeTooltip(mid, 2)?.info?.formation).toBe('DoubleLine')
+  })
+
+  it('shows S, A and B as the rank display says', () => {
+    const r = ranks(0.6, 0.2, 0.1)
+    expect(rankCells(r, 'individual').map((c) => [c.label, pct(c.value)])).toEqual([
+      ['S', '60.0%'],
+      ['A', '20.0%'],
+      ['B', '10.0%'],
+    ])
+    expect(rankCells(r, 'cumulative').map((c) => [c.label, pct(c.value)])).toEqual([
+      ['S', '60.0%'],
+      ['A+', '80.0%'],
+      ['B+', '90.0%'],
+    ])
   })
 })
 

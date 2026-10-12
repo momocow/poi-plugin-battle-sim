@@ -8,7 +8,7 @@ const sources = (dir: string): string[] =>
     e.isDirectory() ? sources(join(dir, e.name)) : /\.tsx?$/.test(e.name) ? [join(dir, e.name)] : [],
   )
 
-/** Every string the panel passes through `t()`, the error summaries, the phase labels, and the formation names and reasons. */
+/** Every string the panel passes through `t()`, the error summaries, the phase labels, the formation and special-attack names, and the reasons. */
 function usedKeys(): Set<string> {
   const keys = new Set<string>(['Battle Sim', "Simulate your fleet's odds on a map"])
   for (const file of sources('src')) {
@@ -16,8 +16,14 @@ function usedKeys(): Set<string> {
     for (const m of text.matchAll(/\bt\('((?:[^'\\]|\\.)*)'/g)) keys.add(m[1]!)
     if (file.endsWith('ErrorView.tsx')) for (const m of text.matchAll(/^\s+[A-Z_]+: '([^']*)',/gm)) keys.add(m[1]!)
     if (file.endsWith('choices.ts')) for (const m of text.matchAll(/label: '([^']*)'/g)) keys.add(m[1]!)
-    // Formation names, default reasons and night battle settings, looked up from records.
+    // Default reasons and night battle settings, looked up from records.
     if (file.endsWith('NodeSettings.tsx')) for (const m of text.matchAll(/^\s+\w+: '([^']*)',/gm)) keys.add(m[1]!)
+    // Formation, node type and special-attack names, from the `*_NAMES` records.
+    if (file.endsWith('views.ts')) {
+      for (const [block] of text.matchAll(/^(?:export )?const \w+_NAMES\b[^=]*= \{[\s\S]*?^\}/gm)) {
+        for (const m of block.matchAll(/^\s+\w+: '([^']*)',/gm)) keys.add(m[1]!)
+      }
+    }
   }
   return keys
 }

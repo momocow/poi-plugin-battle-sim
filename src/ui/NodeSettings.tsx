@@ -27,16 +27,7 @@ import {
   type NightBattle,
   type NodeFormation,
 } from '../routes/formation'
-
-/** Full and short names, as i18n keys. */
-export const FORMATION_NAMES: Record<Formation, string> = {
-  LineAhead: 'Line ahead',
-  DoubleLine: 'Double line',
-  Diamond: 'Diamond',
-  Echelon: 'Echelon',
-  LineAbreast: 'Line abreast',
-  Vanguard: 'Vanguard',
-}
+import { FORMATION_NAMES } from './views'
 
 const REASONS: Record<FormationReason, string> = {
   submarines: 'Submarines only',

@@ -152,6 +152,11 @@ export const PANEL_CSS = `
 .bp6-dark .battle-sim-step-retreat { color: #fa999c; }
 .battle-sim-steps-two { padding: 28px 0; }
 .battle-sim-step-low { top: 36px; }
+/* A node's tooltip: its type, then label | value rows. */
+.battle-sim-node-tip { display: grid; grid-template-columns: auto auto; gap: 0 10px; font-size: 11px; line-height: 1.4; white-space: nowrap; }
+.battle-sim-node-tip > :nth-child(odd) { opacity: 0.75; }
+.battle-sim-node-tip > :nth-child(even) { text-align: right; }
+.battle-sim-node-tip-type { font-size: 11px; font-weight: bold; line-height: 1.4; white-space: nowrap; }
 .battle-sim-error pre {
   white-space: pre-wrap; overflow-wrap: anywhere; max-height: 240px; overflow-y: auto;
   /* Follow the theme's text colour; the global pre style is dark-on-grey in both themes. */

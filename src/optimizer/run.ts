@@ -48,6 +48,8 @@ export interface RouteNodeMeta {
   node: string
   /** Index into `per_node_reach`; null for a node without a battle (resource, empty, maelstrom). */
   battleIndex: number | null
+  /** The optimizer's node kind, such as "battle", "airraid", "pass" or "maelstrom"; undefined when it sends none. */
+  kind?: string
 }
 
 /** Raised when the caller's AbortSignal fires; never shown as an error. */
@@ -271,7 +273,11 @@ function readDiag(diag: unknown): SimulateDiag {
         missing.push(`a valid _meta.route entry (got ${JSON.stringify(entry)})`)
         break
       }
-      route.push({ node: entry.node as string, battleIndex: i as number | null })
+      route.push({
+        node: entry.node as string,
+        battleIndex: i as number | null,
+        ...(typeof entry.kind === 'string' ? { kind: entry.kind } : {}),
+      })
     }
   } else {
     missing.push('_meta.route')

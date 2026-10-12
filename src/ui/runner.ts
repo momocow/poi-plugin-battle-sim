@@ -7,7 +7,8 @@
  * after narrowing: a node target cuts the routes there and reads the rates at
  * that node; one without a battle fails before any simulation. Once the map's enemy data is in, each
  * battle node gets its formation and night battle: the user's for the node, else the default (see routes/formation). Each
- * step also goes to the developer log when it is on.
+ * finished route also gets, per battle node, the formation fought in and the special attack that can fire there, for
+ * the route cards' tooltips. Each step also goes to the developer log when it is on.
  *
  * The optimizer is resolved before compass is loaded, so a missing or corrupt
  * binary fails before any network use. The map's shared kcnav fetch starts
@@ -20,6 +21,7 @@ import { join } from 'node:path'
 
 import { devLog } from '../devlog'
 import { SimError } from '../errors'
+import { loadShipGateData } from '../fleet/specialGates'
 import { specialsFired } from '../fleet/specials'
 import { snapshotFleet } from '../fleet/snapshot'
 import { toDeckbuilder } from '../fleet/toDeckbuilder'
@@ -37,7 +39,7 @@ import { createPredictor, type PredictedRoute } from '../routes/predict'
 import { cellLetters, narrowToPath, takenBranches } from '../routes/sortie'
 import { battleNodes, nodeColors, readTopology } from '../routes/topology'
 import { loadOptimizerOverride } from './inputs'
-import { sortRoutes, targetRouteIndexes, type RouteRow, type RunAction, type RunInput } from './state'
+import { routeNodeInfo, sortRoutes, targetRouteIndexes, type NodeInfo, type RouteRow, type RunAction, type RunInput } from './state'
 
 /** One predictor for the poi session, so its cache lives as long as poi; the panel reads its node options. */
 export const predictor = createPredictor(runCompass)
@@ -193,6 +195,11 @@ export async function runSimulation(
       }
       return out
     }
+    const shipGates = await loadShipGateData(optimizer.dataDir)
+    if (signal.aborted) throw new Cancelled()
+    const fired = specials?.observed ? specials.fired : []
+    const nodeInfoFor = (nodes: string[]): Record<string, NodeInfo> =>
+      routeNodeInfo({ nodes, formations, colors, nightBattles: nightBattlesFor(nodes), snapshot, fired }, shipGates)
     const targets = indexes.map((i) => rows[i]!).map((row) => row.nodes.slice(row.from ?? 1))
     if (targets.length > 0) {
       // For the footer: whether any simulated route pursues night battle at its target.
@@ -258,6 +265,7 @@ export async function runSimulation(
             aOrBetter: m.S + m.A,
             bOrBetter: m.S + m.A + m.B,
             targetSunk: diag.boss_sunk_rate,
+            nodeInfo: nodeInfoFor(nodes),
           })
           return diag
         } catch (err) {
@@ -265,7 +273,10 @@ export async function runSimulation(
           throw err
         }
       },
-      onRouteDone: (i, diag) => dispatch({ type: 'routeDone', index: indexes[i]!, diag }),
+      onRouteDone: (i, diag) => {
+        const row = rows[indexes[i]!]!
+        dispatch({ type: 'routeDone', index: indexes[i]!, diag, nodeInfo: nodeInfoFor(row.nodes.slice(row.from ?? 1)) })
+      },
     })
     dispatch({ type: 'finished' })
     devLog('run.finished', { map: input.map })

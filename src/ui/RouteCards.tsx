@@ -7,14 +7,32 @@
  * among trials that reached the target, A and B on their own or as A+ and B+
  * by the rank display. Labels name the run's target (`targetLabels`). Past
  * the target mid-sortie, the card shows the route up to it as passed and says
- * the target has been reached.
+ * the target has been reached. On a finished card, each simulated node has a
+ * tooltip: its type and reach rate, and for a battle node the formation fought in, the
+ * special attack that can fire there, and S, A and B among the trials that
+ * fought there.
  */
+import { Tooltip } from '@blueprintjs/core'
 import React, { useLayoutEffect, useRef, useState } from 'react'
 
 import { t } from '../i18n'
 import type { RankDisplay } from './inputs'
 import type { RouteRow } from './state'
-import { formatRoute, pct, retreats, routeReach, rowCells, sortForCards, targetLabels, type RateCells } from './views'
+import {
+  FORMATION_NAMES,
+  formatRoute,
+  nodeTooltip,
+  pct,
+  rankCells,
+  retreats,
+  routeReach,
+  rowCells,
+  sortForCards,
+  SPECIAL_NAMES,
+  targetLabels,
+  type NodeTooltip,
+  type RateCells,
+} from './views'
 
 type Labels = ReturnType<typeof targetLabels>
 
@@ -38,7 +56,37 @@ function useNodeSpacing(nodeCount: number): [React.RefObject<HTMLDivElement>, nu
   return [ref, spacing]
 }
 
-function Stepper({ route }: { route: RouteRow }) {
+function NodeTooltipContent({ tip, mode }: { tip: NodeTooltip; mode: RankDisplay }) {
+  const { info } = tip
+  const special = info ? (info.special === null ? t('None') : t(SPECIAL_NAMES[info.special])) : '—'
+  return (
+    <div>
+      <div className="battle-sim-node-tip-type">{tip.type ? t(tip.type) : '—'}</div>
+      <div className="battle-sim-node-tip">
+        <span>{t('Reach')}</span>
+        <span>{pct(tip.reach)}</span>
+        {/* A node without a battle has only its type and reach. */}
+        {tip.battle && (
+          <>
+            <span>{t('Formation')}</span>
+            <span>{info ? t(FORMATION_NAMES[info.formation]) : '—'}</span>
+            <span>{t('Special attack')}</span>
+            <span>{special}</span>
+            {/* Uncoloured: the tooltip's background is the theme's opposite, so the card's rank colours would not read. */}
+            {rankCells(tip.ranks, mode).map(({ label, value }) => (
+              <React.Fragment key={label}>
+                <span>{label}</span>
+                <span>{pct(value)}</span>
+              </React.Fragment>
+            ))}
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function Stepper({ route, mode }: { route: RouteRow; mode: RankDisplay }) {
   const nodes = route.nodes.slice(1)
   const [ref, spacing] = useNodeSpacing(nodes.length)
   const turnedBack = new Map(route.diag ? retreats(routeReach(route.diag)).map((r) => [r.node, r.rate]) : [])
@@ -62,9 +110,18 @@ function Stepper({ route }: { route: RouteRow }) {
         // Passed mid-sortie: not simulated, so no retreat rate.
         const passed = i + 1 < (route.from ?? 1)
         const retreat = passed ? undefined : turnedBack.get(node)
+        const tip = nodeTooltip(route, i)
+        const circle = <div className={`battle-sim-step-node${mark}`}>{node}</div>
         return (
           <div key={i} className={passed ? 'battle-sim-step battle-sim-step-passed' : 'battle-sim-step'}>
-            <div className={`battle-sim-step-node${mark}`}>{node}</div>
+            {tip ? (
+              // An empty title keeps the stepper's route text from showing over the tooltip.
+              <Tooltip content={<NodeTooltipContent tip={tip} mode={mode} />} placement="top" targetTagName="div" targetProps={{ title: '' }}>
+                {circle}
+              </Tooltip>
+            ) : (
+              circle
+            )}
             {retreat !== undefined && (
               <div className={lowered[i] ? 'battle-sim-step-retreat battle-sim-step-low' : 'battle-sim-step-retreat'}>
                 −{pct(retreat)}
@@ -109,7 +166,7 @@ function RouteCard({ route, mode, labels }: { route: RouteRow; mode: RankDisplay
         <span>{labels.reach}</span>
         <span>{cells.kind === 'done' ? pct(cells.reachTarget) : cells.kind === 'passed' ? pct(1) : '—'}</span>
       </div>
-      <Stepper route={route} />
+      <Stepper route={route} mode={mode} />
       {cells.kind === 'not-simulated' ? (
         <div className="battle-sim-card-results-note battle-sim-muted">
           <span title={labels.notSimulated}>{t('Not simulated')}</span>

@@ -132,5 +132,20 @@
   "If target": "目標マスなら",
   "Always": "常に",
   "Never": "しない",
-  "An air raid has no night battle": "空襲戦には夜戦がありません"
+  "An air raid has no night battle": "空襲戦には夜戦がありません",
+  "Reach": "到達",
+  "Special attack": "特殊攻撃",
+  "None": "なし",
+  "Nelson Touch": "Nelson Touch",
+  "Nagato cutin": "長門一斉射",
+  "Mutsu cutin": "陸奥、一斉射",
+  "Colorado special attack": "Colorado特殊攻撃",
+  "Kongou-class night special attack": "金剛型夜戦特殊攻撃",
+  "Richelieu special attack": "Richelieu特殊攻撃",
+  "Warspite special attack": "Warspite特殊攻撃",
+  "Yamato-class 3-ship special attack": "大和型三隻特殊攻撃",
+  "Yamato-class 2-ship special attack": "大和型二隻特殊攻撃",
+  "No battle": "戦闘なし",
+  "Air raid": "空襲戦",
+  "Maelstrom": "渦潮"
 }
