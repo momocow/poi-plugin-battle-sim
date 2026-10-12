@@ -36,7 +36,7 @@ If compass fails, the prediction SHALL fail with an error that names the cause, 
 - **THEN** the prediction fails with a "page unreachable" error, and the user can retry by hand
 
 ### Requirement: Player-selected branches and phase
-For maps where the player chooses a branch (for example 4-5, 5-3, 5-5, 5-6, 6-3, 7-4, and 7-5) or a map phase (for example 5-6 and 7-3), prediction SHALL use the choices the user set in the panel. Each choice is applied to compass as a fixed decision before the routes are read. The returned candidates and their probabilities therefore apply only to those choices. Prediction SHALL fail with an "unexpected page structure" error when compass's set of choosable nodes for the map does not match the plugin's set. It SHALL NOT silently drop a choice or fall back to compass's defaults.
+For maps where the player chooses a branch (for example 4-5, 5-3, 5-5, 5-6, 6-3, 7-4, and 7-5, and many event maps) or a map phase (for example 5-6, 7-3, and event maps whose routes open by phase), prediction SHALL use the choices the user set in the panel. Which maps have choices, and each choice's options and default, SHALL come from the map-choices part of the game-data package version in use (see game-data-package); a map it doesn't list has no choices. Each choice is applied to compass as a fixed decision before the routes are read. The returned candidates and their probabilities therefore apply only to those choices. Prediction SHALL fail with an "unexpected page structure" error when compass's set of choosable nodes for the map does not match the plugin's set. It SHALL NOT silently drop a choice or fall back to compass's defaults.
 
 #### Scenario: Choice changes the route
 - **WHEN** the user sets 7-5 node F to J instead of G
@@ -50,9 +50,13 @@ For maps where the player chooses a branch (for example 4-5, 5-3, 5-5, 5-6, 6-3,
 - **WHEN** compass lists a choosable node for 7-5 that the plugin does not know about
 - **THEN** the prediction fails with an "unexpected page structure" error that names the map and node
 
+#### Scenario: Choices for a new event map
+- **WHEN** a package version adds the map choices of a new event's 63-2, with a phase and a branch at F
+- **THEN** the panel shows those controls for 63-2, and prediction applies them, without a plugin update
+
 ### Requirement: Target reach
 The target is Boss or a node letter. Each candidate SHALL be marked as reaching the target or not:
-- With the Boss target, a candidate reaches the target when its last node is one of the map's boss nodes, as listed in the optimizer's bundled map data. The candidate keeps all its nodes.
+- With the Boss target, a candidate reaches the target when its last node is one of the map's boss nodes, as listed in the optimizer data of the game-data package version in use (see game-data-package). The candidate keeps all its nodes.
 - With a node target, a candidate reaches the target when the target letter is among its nodes after the start node. The candidate is cut off right after the target's first occurrence, so the target becomes its last node. Candidates that do not reach the target keep all their nodes.
 - Mid-sortie, a target before the node the fleet is at has already been reached: the candidates are cut there as well, and marked as having passed the target. Their battle at the target is over, so they are not simulated (see battle-simulation).
 
@@ -63,7 +67,7 @@ Candidates that reach the target and have the same nodes after the cut SHALL be 
 Marking, cutting and merging SHALL NOT require any network request, and SHALL NOT be part of the prediction cache: changing only the target SHALL NOT load compass again.
 
 #### Scenario: Route ending before the boss
-- **WHEN** the target is Boss, a 2-5 candidate ends at node D, and the bundled data lists the boss node as O
+- **WHEN** the target is Boss, a 2-5 candidate ends at node D, and the optimizer data in use lists the boss node as O
 - **THEN** that candidate is marked as not reaching the target
 
 #### Scenario: Node target cuts and merges routes
@@ -125,3 +129,14 @@ The cache of predictions SHALL be unaffected: narrowing applies to the cached ca
 #### Scenario: Advancing reuses compass
 - **WHEN** the fleet advances from C to E on a map already predicted for the same fleet and choices
 - **THEN** compass is not loaded again
+
+### Requirement: Event maps
+Route prediction, its cache and sortie narrowing SHALL work for event maps as for normal maps. Mid-sortie, an event map sortie SHALL be recognised from poi's record of the sortie like a normal map's. When compass models the map's difficulty, prediction SHALL set it to the run's difficulty (see battle-simulation, Event state per run), and the cache key SHALL include it.
+
+#### Scenario: Sortie on an event map
+- **WHEN** the selected fleet is at E on 62-3
+- **THEN** the panel is in sortie mode for 62-3, and the candidates are narrowed to the fleet's path as on a normal map
+
+#### Scenario: Difficulty changes the routes
+- **WHEN** compass routes 62-3 differently on 丁 than on 甲, and the user changes the event state's difficulty from 甲 to 丁
+- **THEN** compass is loaded again with 丁, and the candidates are those for 丁

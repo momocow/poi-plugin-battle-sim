@@ -7,7 +7,7 @@ The poi plugin panel where the user picks a fleet and a map, checks or edits the
 ## Requirements
 
 ### Requirement: Inputs
-The panel SHALL let the user choose a fleet (1–4) and a normal map (worlds 1–7, including their sub-maps such as 7-2/7-3). Event maps SHALL NOT be offered. The map options SHALL be grouped by world, each group labeled with the world number and its sea-area name from the game data (for example "1: 鎮守府海域"), or the number only when the game data is not loaded. Each map option SHALL show the map number and its name from the game data, for example "1-1 鎮守府正面海域", in the open list and in the closed select alike; the closed select SHALL be width-capped like the fleet select, truncating a long name with an ellipsis. Hovering the fleet or map select SHALL show a tooltip with the selection's full label, also while the select is locked. Each fleet option SHALL show the fleet number and its in-game name, for example "1: 第一艦隊". When the game data is not loaded, the option SHALL show the number only.
+The panel SHALL let the user choose a fleet (1–4) and a map: a normal map (worlds 1–7, including their sub-maps such as 7-2/7-3), or a map of the current event, which is every map of an area numbered 21 or above in the game data. The map options SHALL be grouped by world, each group labeled with the world number and its sea-area name from the game data (for example "1: 鎮守府海域"), or the number only when the game data is not loaded. The event's maps SHALL come after world 7, as one group per event area, and each event map option SHALL also show its in-game number, for example "62-3 (E-3) …". When no event is running, the game data has no event area and no event group is shown. A remembered map that is no longer in the game data, such as a map of an event that has ended, SHALL be replaced by 1-1. Each map option SHALL show the map number and its name from the game data, for example "1-1 鎮守府正面海域", in the open list and in the closed select alike; the closed select SHALL be width-capped like the fleet select, truncating a long name with an ellipsis. Hovering the fleet or map select SHALL show a tooltip with the selection's full label, also while the select is locked. Each fleet option SHALL show the fleet number and its in-game name, for example "1: 第一艦隊". When the game data is not loaded, the option SHALL show the number only.
 
 The plugin's poi settings page, not the panel, SHALL let the user set the number of trials per route with these presets:
 - Quick (500)
@@ -102,6 +102,14 @@ The Target dropdown SHALL NOT be editable while a run is in progress. In sortie 
 #### Scenario: No trials control in the panel
 - **WHEN** the panel is open
 - **THEN** its controls bar shows no trials select or count field
+
+#### Scenario: Event running
+- **WHEN** the game data has the event area 62 with maps 62-1 to 62-4
+- **THEN** the map list shows, after world 7, a group for area 62 with 62-1 (E-1) to 62-4 (E-4), named from the game data
+
+#### Scenario: Event over
+- **WHEN** 62-3 was the remembered map and the event has ended, so the game data has no area 62
+- **THEN** the panel opens with 1-1 selected and no event group
 
 ### Requirement: Fleet display
 The panel SHALL show the fleet being simulated. Before a run, it SHALL show the selected fleet from live game state and update when that state changes, marked Live next to the fleet label. Once a run starts, it SHALL show the captured snapshot instead, and it SHALL keep showing that snapshot through the results, even if the game state changes.
@@ -582,46 +590,6 @@ When the selected fleet, map, choices, target, node settings, or trial count no 
 - **WHEN** a mid-sortie result whose sortie was not observed from its start goes stale
 - **THEN** the result line ends with both markers, the unobserved-sortie marker first, still on the one line
 
-### Requirement: Normal-map fetch status in the footer
-While a queue of normal-map fetches runs (startup, retry, or refresh; see battle-simulation), the panel SHALL show a small spinner at the far right of the footer, after the run's status. The marker SHALL NOT take a line of its own and SHALL NOT move the result line or the run's status. Hovering over the spinner SHALL show:
-- that enemy data for the normal maps is being fetched, or refreshed for a refresh,
-- how many maps are done out of the maps to fetch, for example "12 / 35",
-- the map being fetched now, for example "3-2", or, during the pause between maps or while the queue waits for a run's fetch, the map it will fetch next.
-
-The maps to fetch are, for the startup fetches, the normal maps not recorded as fetched when they begin; for a retry, the failed maps; and for a refresh, every normal map. A map counts as done once its fetch ends, whether it succeeded or failed, or when it is skipped because a run already fetched it.
-
-When the queue ends with no map remembered as failed, the spinner SHALL disappear. When maps are remembered as failed, a small warning-colored download marker, distinct from the development-optimizer triangle, SHALL take the spinner's place. Hovering over the marker SHALL open a popover that stays open while the pointer is over it. It SHALL say how many maps were not fetched, list them, say which map the fetches stopped at and that kcnav may be refusing requests for now, and it SHALL have a Retry button. Pressing Retry SHALL start a retry (see battle-simulation), and the marker SHALL turn back into the spinner. The marker SHALL disappear once no map is remembered as failed.
-
-Nothing SHALL appear when no queue runs and no map is remembered as failed, or when the plugin loads with nothing to fetch. The footer SHALL show the spinner or marker the same way whether or not a run is in progress, and a panel opened partway through SHALL show the current state at once.
-
-#### Scenario: First load
-- **WHEN** the plugin loads with no map recorded as fetched, and 1-1 to 3-1 are done
-- **THEN** the footer shows the spinner at its far right, and hovering over it shows "12 / 35" and that 3-2 is being fetched
-
-#### Scenario: Nothing to fetch
-- **WHEN** the plugin loads with every normal map recorded as fetched
-- **THEN** nothing appears at the right of the footer
-
-#### Scenario: All maps fetched
-- **WHEN** the last normal map's fetch ends and no map failed
-- **THEN** the spinner disappears
-
-#### Scenario: Some maps failed
-- **WHEN** the startup fetches stop at 6-4, leaving 6-4 to 7-5 not fetched
-- **THEN** a warning marker takes the spinner's place, and hovering over it opens a popover saying 7 maps were not fetched, listing 6-4 to 7-5, saying the fetches stopped at 6-4 and kcnav may be refusing requests for now, with a Retry button
-
-#### Scenario: Retry
-- **WHEN** 3-2 and 6-4 are remembered as failed, and the user presses Retry in the popover
-- **THEN** the marker turns into the spinner, hovering shows "0 / 2" and that 3-2 is being fetched, and if both succeed the spinner then disappears
-
-#### Scenario: Pause between maps
-- **WHEN** 1-1 has been fetched and the queue is in its pause before 1-2
-- **THEN** hovering over the spinner shows "1 / 35" and that 1-2 is next
-
-#### Scenario: Next to a running simulation
-- **WHEN** a run is simulating while a queue of normal-map fetches runs
-- **THEN** the footer shows the run's status, with the spinner to its right
-
 ### Requirement: Summary result
 Below the fleet display and above the route cards, the panel SHALL show a summary combining all routes, as defined by the battle-simulation weighted aggregate. It SHALL contain, in this order:
 1. **S**, then A and B as set by the rank display (see Rank display setting) — **A** and **B** individually, or **A or better** and **B or better** cumulatively — at the target as the primary, most prominent values. These are probability-weighted over all trials, so they are the chance per sortie. Each SHALL show its rate when the target is reached as a smaller secondary value, for example "56.7% (96.0% when reached)".
@@ -756,21 +724,6 @@ The plugin SHALL have a poi config setting for how the summary and route cards s
 #### Scenario: Invalid value
 - **WHEN** the config holds "both" for the rank display
 - **THEN** the panel shows ranks individually
-
-### Requirement: Refresh button on the settings page
-The plugin's settings page SHALL have a button to refresh the enemy data of the normal maps (see battle-simulation), with a short note that it downloads every normal map again. While any queue of normal-map fetches runs, the button SHALL be disabled, and the note SHALL show the progress, for example "12 / 35". Pressing the button SHALL start the refresh at once, with no confirmation step. The progress then also shows in the panel's footer, and failures show there for a retry. If the optimizer cannot be resolved, pressing the button SHALL show that error on the settings page.
-
-#### Scenario: Start a refresh
-- **WHEN** no queue runs and the user presses the refresh button
-- **THEN** the refresh starts, the button is disabled, the note shows "0 / 35", and the panel's footer shows the spinner
-
-#### Scenario: Startup fetches running
-- **WHEN** the user opens the settings page while the startup fetches are on their 12th of 35 maps
-- **THEN** the refresh button is disabled and the note shows "11 / 35"
-
-#### Scenario: Optimizer missing
-- **WHEN** the optimizer binary is missing and the user presses the refresh button
-- **THEN** no fetch starts, and the settings page shows the optimizer error
 
 ### Requirement: Selection reset
 The control bar SHALL have a Reset button that clears the fleet and map selection, so the panel has nothing to simulate until the user picks both again. After a reset, the fleet and map selects SHALL each show an empty choice. Picking a fleet or a map fills in that select again. The empty choice SHALL only come from Reset; the user cannot pick it from the select's list.
@@ -977,3 +930,84 @@ While the Auto switch is off, no fleet is selected, or the selected fleet has no
 #### Scenario: Auto state kept
 - **WHEN** Auto is paused, poi restarts, and the selected fleet now has every main slot filled
 - **THEN** the Auto switch is on, with no hint
+
+### Requirement: Data update prompt
+When a newer version of the game-data package is available (see game-data-package, Periodic update check), the panel SHALL show an update icon at the far right of the footer, after the run's status. The icon SHALL NOT take a line of its own and SHALL NOT move the result line or the run's status. Hovering over it SHALL say that a data update is available, with the version in use and the available version.
+
+The panel SHALL open the **update popup** by itself once per available version in a poi session: when the version is found, or, if the panel isn't in view or another popup is open, the next time the panel is in view with no other popup open. Clicking the icon SHALL open the popup at any time. The popup SHALL show the version in use and the available version, and have two buttons:
+- **Update**: starts the update (see game-data-package, Update with the user's approval). While it downloads, the popup SHALL show progress and SHALL NOT be closable by Update again. When it succeeds, the popup SHALL say the new version is in use from the next run, the icon SHALL disappear, and the popup SHALL close after a moment or when the user closes it. When it fails, the popup SHALL say why and offer Update again;
+- **Later**: closes the popup. The icon SHALL stay, and the popup SHALL NOT open by itself again for that version until poi restarts. A newer version found later SHALL open it again.
+
+Closing the popup any other way SHALL count as Later. The prompt SHALL NOT start, cancel or delay a run, and a finished result SHALL NOT become stale because of it.
+
+#### Scenario: Update found
+- **WHEN** a check finds 1.4.0 available while the panel is in view and no popup is open
+- **THEN** the footer shows the update icon, and the update popup opens with the version in use and 1.4.0, and Update and Later buttons
+
+#### Scenario: Found while away
+- **WHEN** a check finds 1.4.0 while another plugin's tab is shown
+- **THEN** the popup opens when the user next brings the plugin into view
+
+#### Scenario: Later
+- **WHEN** the user clicks Later
+- **THEN** the popup closes, the icon stays, and the popup doesn't open by itself again for 1.4.0 in this poi session
+
+#### Scenario: Reopen from the icon
+- **WHEN** the user clicked Later and then clicks the update icon
+- **THEN** the update popup opens again
+
+#### Scenario: Update succeeds
+- **WHEN** the user clicks Update and 1.4.0 is downloaded and verified
+- **THEN** the popup says 1.4.0 is in use from the next run, the icon disappears, and the new event's maps appear in the map list
+
+#### Scenario: Update fails
+- **WHEN** the download fails
+- **THEN** the popup says the update failed and why, offers Update again, and the icon stays
+
+### Requirement: Event state
+When the shown map is an event map, the panel SHALL show, next to the Target dropdown, the event state the run simulates (see battle-simulation, Event state per run), as three selects:
+- **Difficulty**: 丁, 丙, 乙, 甲;
+- **Gauge**: the gauge numbers the map has, from the game-data package's event gauges, or only the game's current gauge when the package doesn't list them;
+- **Gauge state**: Chip (消耗), Last dance (斬殺), Cleared (攻略済).
+
+Each select's first option SHALL be **From game**, the default, naming the value read from poi's map info for the map, for example "From game (甲)":
+- the difficulty is the one the player selected for the map;
+- the gauge is the map's current gauge number;
+- the gauge state is Cleared when the map is cleared. Otherwise it is Last dance when the gauge's remaining HP is at or below the package's last-dance threshold, and Chip when it is above. When the package has no threshold, it SHALL be shown as unknown, and the run uses no HP band.
+
+Picking another option overrides the value for that map. Overrides SHALL be remembered per map between poi sessions, and Reset SHALL NOT change them. In sortie mode, the event state SHALL be read from the game and SHALL NOT be changeable, since the sortie is at the state the game is in.
+
+When the difficulty is From game and the player has not selected one for the map, a run SHALL fail before any prediction with an error that asks to pick a difficulty.
+
+A change of the event state, from the game or by an override, SHALL start a run as a qualifying change does under Automatic runs, and SHALL make a finished result stale. The footer's result line SHALL name the event state of an event-map run, for example "甲 G2 斬殺".
+
+#### Scenario: State from the game
+- **WHEN** the player selected 甲 on 62-3, its gauge 2 is at 3000 HP, and the package gives that gauge's last-dance threshold as 4800
+- **THEN** the selects show From game (甲), From game (2) and From game (Last dance), and a run simulates 甲, gauge 2, last dance
+
+#### Scenario: Override to plan another difficulty
+- **WHEN** the user sets 62-3's difficulty to 乙
+- **THEN** a run starts for 乙, the override stays after poi restarts, and 62-4 is not affected
+
+#### Scenario: Difficulty not selected
+- **WHEN** the player hasn't selected a difficulty on 62-4 and no override is set
+- **THEN** a run fails with an error asking to pick a difficulty
+
+#### Scenario: Gauge advances in game
+- **WHEN** the event state is From game, and the player breaks 62-3's first gauge, so the game's current gauge becomes 2
+- **THEN** a run starts for gauge 2
+
+#### Scenario: Normal map
+- **WHEN** the shown map is 5-5
+- **THEN** no event state selects are shown
+
+### Requirement: Game data version on the settings page
+The plugin's settings page SHALL show the version of the game-data package in use (see game-data-package), and whether it is the version installed with the plugin or one installed by an update. It SHALL follow an update at once, without reopening the page. When no version is usable, it SHALL say the game data is not available.
+
+#### Scenario: Bundled version
+- **WHEN** the plugin uses the game data installed with it, version 1.0.0
+- **THEN** the settings page shows "1.0.0, installed with the plugin"
+
+#### Scenario: After an update
+- **WHEN** the user approves the update to 1.0.1 while the settings page is open
+- **THEN** the page shows "1.0.1, from an update"

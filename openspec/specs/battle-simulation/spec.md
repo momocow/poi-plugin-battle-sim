@@ -154,7 +154,7 @@ The result SHALL count as a failure, with a message that the optimizer version i
 - **THEN** the simulation asks for per-node rank results, and the route's result has the rank shares at each battle node where some trials fought
 
 ### Requirement: Optimizer binary resolution and integrity
-The system SHALL use the optimizer binary for the current platform at the version pinned in the package. Before first use it SHALL verify the binary's SHA-256 checksum. On a checksum mismatch or a missing binary, it SHALL refuse to run and say why. The plugin's settings page in poi SHALL let the user set a local optimizer binary and, optionally, its data directory for development; these are stored in poi's config. When no binary is set there, the `BATTLE_SIM_OPTIMIZER_BIN` and `BATTLE_SIM_OPTIMIZER_DATA` environment variables MAY supply them. Both paths SHALL come from the same source: a binary from config is never paired with a data directory from the environment. When a development binary is in use, the checksum check is skipped and the panel shows that a development binary is in use. A change to these settings takes effect from the next run.
+The system SHALL use the optimizer binary for the current platform at the version pinned in the package. Before first use it SHALL verify the binary's SHA-256 checksum. On a checksum mismatch or a missing binary, it SHALL refuse to run and say why. The optimizer's data directory SHALL be the one from the game-data package version in use (see game-data-package). The plugin's settings page in poi SHALL let the user set a local optimizer binary and, optionally, its data directory for development; these are stored in poi's config. When no binary is set there, the `BATTLE_SIM_OPTIMIZER_BIN` and `BATTLE_SIM_OPTIMIZER_DATA` environment variables MAY supply them. Both paths SHALL come from the same source: a binary from config is never paired with a data directory from the environment. A development data directory, when set, SHALL be used instead of the package's optimizer data. When a development binary is in use, the checksum check is skipped and the panel shows that a development binary is in use. A change to these settings takes effect from the next run.
 
 #### Scenario: Corrupted binary
 - **WHEN** the bundled binary's checksum does not match the pinned value
@@ -163,6 +163,10 @@ The system SHALL use the optimizer binary for the current platform at the versio
 #### Scenario: Development binary set in settings
 - **WHEN** the user enters a local binary path on the plugin's settings page and starts a simulation
 - **THEN** that binary runs without a checksum check, and the panel shows that a development binary is in use
+
+#### Scenario: Data from the package
+- **WHEN** no development data directory is set, and the game-data package 1.4.0 is in use
+- **THEN** the optimizer runs with 1.4.0's optimizer data
 
 ### Requirement: Writable state lives in poi's app data
 The optimizer's working directory, kcnav cache, and log files SHALL be inside poi's app data directory for this plugin. The plugin's install directory and the bundled game data SHALL NOT be written to.
@@ -183,96 +187,37 @@ The user SHALL be able to cancel a running simulation. Cancelling SHALL stop eve
 - **THEN** the panel returns to idle at once, and the fetch keeps running until it ends
 
 ### Requirement: Shared enemy-data fetch per map
-Before a map's routes are simulated, the system SHALL make sure that map's enemy data is fetched by a single optimizer fetch of every node of the map. Only one such fetch SHALL run per map at a time. A run that needs a map whose fetch is already running SHALL wait for that fetch instead of starting another. A map SHALL count as fetched only after its fetch exits successfully, and that SHALL be recorded in a file in the plugin's app data directory. The presence of the map's files in the kcnav cache SHALL NOT count as fetched. A map recorded as fetched SHALL NOT be fetched again. If the fetch fails, the run SHALL continue to simulation without showing an error. When a run is cancelled, a fetch it started or joined SHALL continue until it ends. A fetch still running when the plugin unloads SHALL be stopped.
+Before a map's routes are simulated, the system SHALL make sure the run's enemy data is available: for a normal map, the map; for an event map, the map's variant for the run's event state (see Event state per run). Data the game-data package version in use covers needs no fetch. Otherwise the system SHALL get the data with a single optimizer fetch of every node of the map, for that variant on an event map. Only one such fetch SHALL run per map and variant at a time. A run that needs one that is already running SHALL wait for that fetch instead of starting another. A map or variant SHALL count as fetched only after its fetch exits successfully, and that SHALL be recorded in a file in the plugin's app data directory. The presence of its files in the plugin's kcnav directory SHALL NOT count as fetched. A map or variant recorded as fetched SHALL NOT be fetched again, so the plugin asks kcnav for any one of them at most once. If the fetch fails, the run SHALL continue to simulation without showing an error. When a run is cancelled, a fetch it started or joined SHALL continue until it ends. A fetch still running when the plugin unloads SHALL be stopped.
+
+The plugin SHALL NOT fetch enemy data for any map or variant a run doesn't need. In particular it SHALL NOT fetch maps in the background at load.
+
+#### Scenario: Covered by the package
+- **WHEN** the package in use covers 5-5, and 5-5 is simulated
+- **THEN** no fetch runs
 
 #### Scenario: Routes share one fetch
-- **WHEN** a map that is not recorded as fetched is simulated with three boss routes
-- **THEN** one fetch runs for the map, and the three simulations start after it ends
+- **WHEN** an event map variant the package doesn't cover is simulated with three boss routes
+- **THEN** one fetch runs for that map and variant, and the three simulations start after it ends
 
 #### Scenario: Rerun joins a running fetch
-- **WHEN** a run is cancelled while its map's fetch is running, and the same map is simulated again before the fetch ends
+- **WHEN** a run is cancelled while its variant's fetch is running, and the same variant is simulated again before the fetch ends
 - **THEN** no second fetch starts, and the new run's simulations start after the first fetch ends
 
 #### Scenario: Map already fetched
-- **WHEN** a map recorded as fetched is simulated
+- **WHEN** a variant the package doesn't cover is recorded as fetched
 - **THEN** no fetch runs
 
+#### Scenario: Another variant of the same map
+- **WHEN** 62-3 甲 gauge 1 is recorded as fetched, and 62-3 甲 gauge 2 is simulated and not covered by the package
+- **THEN** gauge 2 is fetched
+
 #### Scenario: Partial cache does not count
-- **WHEN** the kcnav cache has files for a map, but the map is not recorded as fetched
-- **THEN** the map is fetched before simulating
+- **WHEN** the plugin's kcnav directory has files for a variant, but the variant is not recorded as fetched and the package doesn't cover it
+- **THEN** the variant is fetched before simulating
 
 #### Scenario: Fetch fails
 - **WHEN** the fetch exits with an error
-- **THEN** the map is not recorded as fetched, the simulations still run, and the next run on that map fetches it again
-
-### Requirement: Normal maps are fetched when the plugin loads
-When the plugin loads, the system SHALL start, in the background, the shared enemy-data fetch (see "Shared enemy-data fetch per map") for every normal map in the bundled game data that is not recorded as fetched. A normal map is one whose area number is below 21, the game's first event area; event maps SHALL NOT be fetched at load. The fetches SHALL run one map at a time, in map order, and SHALL NOT need any action from the user. To stay within what kcnav tolerates, the queue SHALL wait about 30 seconds after one map before starting the next, and SHALL NOT start a map while a run's own fetch of any map is running; it starts once that fetch ends. Their progress is shown in the panel's footer (see simulator-panel).
-
-A run SHALL NOT wait for the startup fetches of other maps. A run on a map whose startup fetch is running SHALL join that fetch. A run on a map the startup fetches have not reached yet SHALL fetch that map at once, and the startup fetches SHALL NOT fetch it a second time. A map whose startup fetch fails SHALL NOT be recorded as fetched. The startup fetches SHALL then stop, since kcnav is likely refusing requests, and that map and every map after it SHALL be remembered as failed. The maps that failed SHALL be remembered for the rest of the poi session, until they are fetched successfully or another queue of normal-map fetches starts. When the plugin unloads, the startup fetches SHALL stop, and no further map SHALL be fetched. If the optimizer cannot be resolved, no startup fetch SHALL run, and no error SHALL be shown for it.
-
-#### Scenario: First load fetches the normal maps
-- **WHEN** the plugin loads and no map is recorded as fetched
-- **THEN** each normal map is fetched in turn, never two at once, and no event map is fetched
-
-#### Scenario: Later load fetches nothing
-- **WHEN** the plugin loads and every normal map is recorded as fetched
-- **THEN** no fetch runs
-
-#### Scenario: Run on a map the startup fetches have not reached
-- **WHEN** the startup fetches are on 1-2, and the user simulates 5-5
-- **THEN** 5-5's fetch starts at once, its simulations start after it ends, and when the startup fetches reach 5-5 they skip it
-
-#### Scenario: Run on the map being fetched at startup
-- **WHEN** the startup fetches are on 2-5, and the user simulates 2-5
-- **THEN** no second fetch of 2-5 starts, and the run's simulations start after that fetch ends
-
-#### Scenario: One map's fetch fails
-- **WHEN** the startup fetches are on 3-4 of 1-1 to 7-5 and 3-4's fetch exits with an error
-- **THEN** 3-4 is not recorded as fetched, no later map is fetched, and 3-4 to 7-5 are remembered as failed
-
-#### Scenario: Pause between maps
-- **WHEN** 1-1's startup fetch ends
-- **THEN** 1-2's fetch starts about 30 seconds later
-
-#### Scenario: Hold while a run fetches
-- **WHEN** 1-1's startup fetch has ended, and a run is fetching 5-5 when the pause ends
-- **THEN** 1-2's fetch starts only after 5-5's fetch ends
-
-#### Scenario: A failed map is fetched by a run
-- **WHEN** 3-2 is remembered as failed, and a later run on 3-2 fetches it successfully
-- **THEN** 3-2 is no longer remembered as failed
-
-#### Scenario: Plugin unloads mid-way
-- **WHEN** the plugin unloads while the startup fetches are on a map
-- **THEN** that fetch is stopped, it is not recorded as fetched, and no later map is fetched
-
-#### Scenario: Optimizer missing at load
-- **WHEN** the plugin loads and the optimizer binary is missing or fails its checksum
-- **THEN** no fetch runs, the panel shows no error and no startup-fetch spinner, and the first simulation reports the optimizer error as before
-
-### Requirement: Retry failed normal maps
-The user SHALL be able to retry the normal maps that failed (see simulator-panel). A retry SHALL fetch the failed maps again the same way as the startup fetches (one at a time, in map order, with the same pause and hold, stopping at the first failure), and the same way as the queue that failed: a retry of a refresh SHALL download the maps again even if they are recorded as fetched. A map fetched successfully in the meantime SHALL be skipped. A map that fails again SHALL stay remembered as failed, with every map after it.
-
-#### Scenario: Retry after startup failures
-- **WHEN** 3-2 and 6-4 are remembered as failed, and the user retries
-- **THEN** 3-2 and then, about 30 seconds later, 6-4 are fetched, and each one that succeeds is recorded as fetched and no longer remembered as failed
-
-### Requirement: Refresh the normal maps' enemy data
-The user SHALL be able to refresh the enemy data of every normal map from the plugin's settings page (see simulator-panel). A refresh SHALL download every normal map's enemy data again, overwriting the cached data, even for maps recorded as fetched. It SHALL fetch the same way as the startup fetches (one map at a time, in map order, with the same pause and hold, stopping at the first failure): runs join or skip around it as described above, and failures are remembered for a retry. A map whose refresh succeeds SHALL be recorded as fetched again. A map whose refresh fails SHALL keep its earlier record, so the data already cached stays in use. If a run's fetch of a map is running when the refresh reaches that map, the refresh SHALL wait for it and then download the map again.
-
-Only one queue of normal-map fetches (startup, retry, or refresh) SHALL run at a time. A refresh or retry SHALL NOT be possible while one runs.
-
-#### Scenario: Refresh after the startup fetches
-- **WHEN** every normal map is recorded as fetched and the user starts a refresh
-- **THEN** each normal map is downloaded again in turn, overwriting its cached enemy data, and recorded as fetched with the new date
-
-#### Scenario: Refresh fails for one map
-- **WHEN** a refresh's download of 4-5 exits with an error
-- **THEN** 4-5 stays recorded as fetched from before, runs on 4-5 use the data already cached, the refresh stops, and 4-5 to 7-5 are remembered as failed for a retry
-
-#### Scenario: Refresh while startup fetches run
-- **WHEN** the startup fetches are still running
-- **THEN** a refresh can't be started until they end
+- **THEN** the variant is not recorded as fetched, the simulations still run, and the next run on it fetches it again
 
 ### Requirement: Player formation per node
 Each simulation SHALL set the player formation at every node with a battle on the simulated part of its route — from the node the fleet is at mid-sortie, else from the first node after the start — to the formation in effect there (see simulator-panel, Node formations). Nodes without a battle SHALL get no formation. A run SHALL use the formations in effect when it starts.
@@ -398,3 +343,54 @@ This decision SHALL NOT change what is sent to the optimizer.
 #### Scenario: Too few ships after the ship-count rule
 - **WHEN** a fleet of 3 ships with Nelson as flagship is set to 複縦陣 at a node
 - **THEN** no special attack can fire there, since the fleet fights in 単縦陣 with too few surface ships
+
+### Requirement: Where map and enemy data come from
+A map's topology data and a node's enemy data SHALL be read from the game-data package version in use (see game-data-package). When that version doesn't cover the map, or for an event map the run's variant (see Event state per run), they SHALL be read from the plugin's own kcnav fetch of it (see Shared enemy-data fetch per map). This applies wherever a requirement refers to the map's topology data or a node's enemy data "in the kcnav cache", for example for the Target dropdown, the default formations, and the night battle settings. A run SHALL read them from the version in use when it starts.
+
+Every simulation SHALL tell the optimizer not to fetch anything from kcnav by itself. A node the data doesn't cover then fails the route with the optimizer's error, instead of starting a request the plugin doesn't control.
+
+#### Scenario: Normal map from the snapshot
+- **WHEN** the package in use covers 5-2, and the user simulates 5-2 for the first time
+- **THEN** no kcnav request is made, and the simulations use the package's 5-2 enemy data
+
+#### Scenario: No silent fetch by the optimizer
+- **WHEN** a route passes a node whose enemy data is in neither the package nor the plugin's fetch
+- **THEN** the optimizer makes no kcnav request, and that route fails with an error naming the node
+
+### Requirement: Event state per run
+A run on an event map SHALL simulate one event state: a difficulty (丁, 丙, 乙 or 甲), a gauge number, and a gauge state: **chip** (消耗), **last dance** (斬殺) or **cleared** (攻略済). The state SHALL be the one in effect for the map (see simulator-panel, Event state) when the run starts. Each simulation SHALL send it to the optimizer as the kcnav variant to read:
+- the difficulty and the gauge number;
+- for chip and last dance, the gauge HP band, split at the gauge's last-dance threshold from the package: last dance is at or below it, chip is above. When the package has no threshold for the map, difficulty and gauge, no HP band SHALL be sent;
+- for cleared, only the difficulty and that the map is cleared.
+
+Each simulation on an event map SHALL also use the optimizer's event-map rules, which it applies from the map's number. A run on a normal map SHALL NOT send an event state.
+
+#### Scenario: Last dance on 甲
+- **WHEN** the event state for 62-3 is 甲, gauge 2, last dance, and the package gives that gauge's threshold as 4800
+- **THEN** each simulation reads the 62-3 variant for difficulty 4, gauge 2, gauge HP 1 to 4800
+
+#### Scenario: Threshold unknown
+- **WHEN** the package has no last-dance threshold for 62-3 甲 gauge 2
+- **THEN** each simulation reads the variant for difficulty 4 and gauge 2 with no HP band, for both chip and last dance
+
+#### Scenario: Cleared map
+- **WHEN** the event state for 62-1 is 乙, cleared
+- **THEN** each simulation reads the 62-1 variant for difficulty 3, cleared
+
+### Requirement: Map bonuses
+Each simulation on a map for which the optimizer data in use has map bonuses SHALL tell the optimizer to apply that map's bonuses. A map without bonus data SHALL get none.
+
+#### Scenario: Event bonus
+- **WHEN** the optimizer data in use has bonuses for 62-4, and a fleet with a bonus ship is simulated there
+- **THEN** the simulation applies 62-4's bonuses
+
+#### Scenario: Normal map with bonuses
+- **WHEN** the optimizer data in use has bonuses for 5-6
+- **THEN** simulations on 5-6 apply them
+
+### Requirement: Event maps limited to single fleets
+A run on an event map that the game's map data says can't be sortied by a single fleet SHALL fail before any prediction, with an error that says combined fleets aren't supported yet on that map.
+
+#### Scenario: Combined-only map
+- **WHEN** the user simulates an event map whose game data allows only combined fleets
+- **THEN** no prediction or simulation runs, and the panel says combined fleets aren't supported yet on that map
