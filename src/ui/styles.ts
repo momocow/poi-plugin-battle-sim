@@ -22,11 +22,13 @@ export const PANEL_CSS = `
  */
 .battle-sim-controls { flex: none; display: flex; flex-direction: column; gap: 6px; padding: 8px 8px 6px; border-bottom: 1px solid rgba(128, 128, 128, 0.3); }
 .battle-sim-control-row { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; }
-/* Label text centered on its select, also inside a tooltip's wrapper, so "路線" and "F →" line up. */
+/* Label text centered on its select, also inside a tooltip's wrapper, so "能動分歧" and "F →" line up. */
 .battle-sim-control-row > .bp6-popover-target, .battle-sim-target > .bp6-popover-target, .battle-sim-run > .bp6-popover-target { display: flex; align-items: center; }
 /* Target and Night battle wrap as one, so neither is left alone on a line. */
 .battle-sim-target { display: inline-flex; flex-wrap: nowrap; align-items: center; gap: 10px; }
-.battle-sim-controls label:not(.bp6-control) { display: inline-flex; align-items: center; gap: 4px; }
+/* No bottom margin from poi's global label style or Blueprint's control style, which would lift them above the row's plain text. */
+.battle-sim-controls label:not(.bp6-control) { display: inline-flex; align-items: center; gap: 4px; margin: 0; }
+.battle-sim-controls .bp6-switch { margin: 0; }
 /* The controls' buttons and dropdowns are 24px, 20% under Blueprint's 30px, as Blueprint's small size. */
 .battle-sim-controls .bp6-button { min-height: 24px; height: 24px; padding-top: 0; padding-bottom: 0; }
 .battle-sim-controls .bp6-html-select select { height: 24px; line-height: 24px; }
@@ -38,7 +40,6 @@ export const PANEL_CSS = `
 .battle-sim-run-label { display: grid; }
 .battle-sim-run-label > * { grid-area: 1 / 1; }
 .battle-sim-hidden { visibility: hidden; }
-.battle-sim-auto { margin: 0; }
 /* A branch already taken in a sortie: its tooltip's target carries the not-allowed cursor. */
 .battle-sim-decided { cursor: not-allowed; }
 .battle-sim-decided select, .battle-sim-decided .bp6-control { pointer-events: none; }

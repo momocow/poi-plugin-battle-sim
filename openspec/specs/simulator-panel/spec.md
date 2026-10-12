@@ -641,7 +641,7 @@ poi's plugin area is narrow and tall, so the panel SHALL use a single column tha
 
 The controls SHALL have these rows, each wrapping within the panel's width when it doesn't fit:
 1. on the left, the Fleet dropdown, the Map dropdown, and the Phase dropdown on maps that have one; the Plan mode / Sortie mode tag (see Mid-sortie runs) floating right. The Fleet dropdown's width SHALL be capped, a long fleet name cut short, so the row doesn't wrap for a long fleet name;
-2. on the left, the branch choices after a "Route" (路線) label, on maps that have them (the label shows only then), then the Target dropdown and the Night battle switch, once the map's topology is cached (see Inputs), which SHALL wrap together. The row SHALL NOT be shown when it would be empty;
+2. on the left, the branch choices after an "Active branching" (能動分歧) label, on maps that have them (the label shows only then), then the Target dropdown and the Night battle switch, once the map's topology is cached (see Inputs), which SHALL wrap together. The row SHALL NOT be shown when it would be empty;
 3. the action bar, holding:
    - on the left, the Reset button (see Selection reset), a minimal icon-only button, as it is rarely used. Hovering over it, also while it is disabled, SHALL show a tooltip naming it "Reset" and saying what it does;
    - floating right, the Auto switch (see Automatic runs). Hovering over it SHALL show a tooltip naming it "Auto", saying that it simulates when the fleet or the settings change, and that in sortie mode it simulates again at each node the fleet reaches, with the supplies used and the damage taken;
@@ -665,7 +665,7 @@ The panel SHALL fit 400px wide without horizontal scrolling.
 
 #### Scenario: Controls on 7-5
 - **WHEN** 7-5 is selected and its topology is cached
-- **THEN** the first row shows the Fleet and Map dropdowns with the Plan mode tag at the right end; the second row shows "Route" with the F →, H → and O → choices, the Target dropdown and the Night battle switch, from the left, wrapping onto more lines where the panel is too narrow, with Target and Night battle on the same line; and the last row shows Reset at the left end and Auto and Simulate at the right end
+- **THEN** the first row shows the Fleet and Map dropdowns with the Plan mode tag at the right end; the second row shows "Active branching" with the F →, H → and O → choices, the Target dropdown and the Night battle switch, from the left, wrapping onto more lines where the panel is too narrow, with Target and Night battle on the same line; and the last row shows Reset at the left end and Auto and Simulate at the right end
 
 #### Scenario: Controls on a map with a phase
 - **WHEN** a map with a phase is selected

@@ -173,7 +173,7 @@ export function Controls(p: ControlsProps) {
       </div>
       {(mapChoices.branches.length > 0 || p.target) && (
         <div className="battle-sim-control-row">
-          {mapChoices.branches.length > 0 && <span>{t('Route')}</span>}
+          {mapChoices.branches.length > 0 && <span>{t('Active branching')}</span>}
           {mapChoices.branches.map((b) => (
             // A disabled select gets no mouse events, so a taken branch lets the pointer through to the tooltip's target.
             <Tooltip
@@ -238,7 +238,6 @@ export function Controls(p: ControlsProps) {
             targetTagName="span"
           >
             <Switch
-              className="battle-sim-auto"
               checked={p.auto}
               label={t('Auto')}
               onChange={(e: CheckEvent) => p.onAuto(e.currentTarget.checked)}
